@@ -2,12 +2,12 @@
 
 #include "utils.h"
 
-class WaylandServer
+struct WaylandServerBase;
+
+typedef shared_ptr<WaylandServerBase> WaylandServer;
+
+struct WaylandServerBase
 {
-public:
-	WaylandServer();
-	~WaylandServer();
-	
-private:
-	
+	static WaylandServer make();
 };
+

@@ -1,12 +1,16 @@
 #include "../h/WaylandServer.h"
 
-WaylandServer::WaylandServer()
+struct WaylandServerImpl: WaylandServerBase
 {
+	WaylandServerImpl()
+	{
+		
+	}
 	
-}
+};
 
-WaylandServer::~WaylandServer()
+WaylandServer WaylandServerBase::make()
 {
-	
+	return WaylandServer(new WaylandServerImpl());
 }
 
