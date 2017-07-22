@@ -1,0 +1,11 @@
+
+Import('env')
+
+
+sources = Glob('*.cpp')
+
+objects = []
+for i in sources:
+	objects.append(env.Object(i))
+
+Return('objects')
