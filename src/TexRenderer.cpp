@@ -5,7 +5,7 @@
 void TexRenderer::setup(int width, int height)
 {
 	glewInit();
-	shaderProgram=ShaderProgram("shader0.vert", "shader0.frag", true);
+	shaderProgram=ShaderProgram(shaderVertPath, shaderFragPath, true);
 	
 	GLuint VBO, EBO;
 	
@@ -73,7 +73,7 @@ void TexRenderer::setupTexture()
 
 	// Load and generate the texture
 	int width, height;
-	unsigned char* image = SOIL_load_image("orange.jpg", &width, &height, 0, SOIL_LOAD_RGB);
+	unsigned char* image = SOIL_load_image(imagePath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
 	if (!image)
 	{
 		cout << "image loading error: " << SOIL_last_result() << endl;
