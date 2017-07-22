@@ -1,19 +1,15 @@
 #pragma once
 
-#include <GL/glx.h>
-#include <GL/gl.h>
+#include "utils.h"
 
-class GLXContextManager
+struct GLXContextManagerBase;
+
+typedef shared_ptr<GLXContextManagerBase> GLXContextManager;
+
+struct GLXContextManagerBase
 {
-	public:
-	GLXContextManager(int width, int height);
-	~GLXContextManager();
+	static GLXContextManager make(V2i dim);
 	
-	void swapBuffer();
-	
-	//private:
-	Display * display = nullptr;
-	GLXContext ctx;
-	Window win;
+	virtual void swapBuffer() = 0;
 };
 

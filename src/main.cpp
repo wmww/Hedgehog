@@ -10,7 +10,7 @@
 
 int main (int argc, char ** argv)
 {
-    auto manager = GLXContextManager(600, 600);
+    auto manager = GLXContextManagerBase::make(V2i(600, 600));
     
     auto renderer = TexRenderer();
     
@@ -18,7 +18,7 @@ int main (int argc, char ** argv)
     
     renderer.draw();
     
-    manager.swapBuffer();
+    manager->swapBuffer();
     
     sleep(4);
     
