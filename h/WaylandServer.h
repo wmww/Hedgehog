@@ -6,7 +6,7 @@ struct WaylandServerBase;
 
 typedef shared_ptr<WaylandServerBase> WaylandServer;
 
-struct WaylandServerBase
+struct WaylandServerBase: std::enable_shared_from_this<WaylandServerBase>
 {
 	static WaylandServer make(bool verbose);
 };
