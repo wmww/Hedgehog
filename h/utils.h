@@ -26,5 +26,7 @@ struct V2
 typedef V2<int> V2i;
 typedef V2<double> V2d;
 
+void logError(string msg);
+
 // loads an entire file into the contents string, returns if it succeeded
 bool loadFile(string filename, string& contents, bool debug);

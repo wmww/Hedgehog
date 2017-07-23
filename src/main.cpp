@@ -7,12 +7,15 @@
 
 #include "../h/TexRenderer.h"
 #include "../h/GLXContextManager.h"
+#include "../h/WaylandServer.h"
 
 int main (int argc, char ** argv)
 {
     auto manager = GLXContextManagerBase::make(V2i(600, 600));
     
     auto renderer = TexRenderer();
+    
+    auto waylandServer = WaylandServerBase::make(true);
     
     renderer.setup(600, 600);
     

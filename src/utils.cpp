@@ -5,6 +5,11 @@
 #include <sstream>
 using std::stringstream;
 
+void logError(string msg)
+{
+	std::cerr << "error: " << msg << std::endl;
+}
+
 bool loadFile(string filename, string& contents, bool debug)
 {
 	std::fstream inFile;

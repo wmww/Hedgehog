@@ -6,8 +6,10 @@ libs = [
 	'X11',
 	'GL',
 	'GLU',
+	'EGL',
 	'GLEW',
 	'SOIL',
+	'wayland-server',
 ]
 
 objects = []
