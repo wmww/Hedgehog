@@ -9,7 +9,7 @@ public:
 	//TexRenderer();
 	//~TexRenderer();
 	
-	void setup(int width, int height);
+	void setup(bool verbose);
 	void draw();
 	
 	float blurRds=0;
@@ -25,4 +25,6 @@ private:
 	ShaderProgram shaderProgram;
 	GLuint squareVAO;
 	GLuint texture;
+	
+	bool verbose = false;
 };

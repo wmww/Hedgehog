@@ -7,15 +7,20 @@ typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXC
 
 struct GLXContextManagerImpl: GLXContextManagerBase
 {
-	GLXContextManagerImpl(V2i dim)
+	GLXContextManagerImpl(V2i dim, bool verboseIn)
 	{
+		verbose = verboseIn;
+		
+		if (verbose)
+			cout << "opening X display..." << endl;
+		
 		display = XOpenDisplay(0);
-	 
+		
 		glXCreateContextAttribsARBProc glXCreateContextAttribsARB = NULL;
-	 
-		const char *extensions = glXQueryExtensionsString(display, DefaultScreen(display));
-		std::cout << extensions << std::endl;
-	 
+		
+		//const char *extensions = glXQueryExtensionsString(display, DefaultScreen(display));
+		//cout << extensions << endl;
+		
 		static int visual_attribs[] =
 		{
 			GLX_RENDER_TYPE, GLX_RGBA_BIT,
@@ -25,22 +30,29 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 			GLX_GREEN_SIZE, 1,
 			GLX_BLUE_SIZE, 1,
 			None
-		 };
-	 
-		std::cout << "Getting framebuffer config" << std::endl;
+		};
+		
+		if (verbose)
+			cout << "getting framebuffer config..." << endl;
+		
 		int fbcount;
 		GLXFBConfig *fbc = glXChooseFBConfig(display, DefaultScreen(display), visual_attribs, &fbcount);
 		if (!fbc)
 		{
-			std::cout << "Failed to retrieve a framebuffer config" << std::endl;
+			logError("Failed to retrieve a framebuffer config");
 			exit(1);
 		}
-	 
-		std::cout << "Getting XVisualInfo" << std::endl;
+		
+		if (verbose)
+			cout << "getting XVisualInfo..." << endl;
+		
 		XVisualInfo *vi = glXGetVisualFromFBConfig(display, fbc[0]);
 	 
 		XSetWindowAttributes swa;
-		std::cout << "Creating colormap" << std::endl;
+		
+		if (verbose)
+			cout << "creating colormap..." << endl;
+		
 		swa.colormap = XCreateColormap(display, RootWindow(display, vi->screen), vi->visual, AllocNone);
 		swa.border_pixel = 0;
 		swa.event_mask = StructureNotifyMask;
@@ -48,15 +60,19 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 		int x = 0;
 		int y = 0;
 		
-		std::cout << "Creating window" << std::endl;
+		if (verbose)
+			cout << "creating window..." << endl;
+		
 		win = XCreateWindow(display, RootWindow(display, vi->screen), x, y, dim.x, dim.y, 0, vi->depth, InputOutput, vi->visual, CWBorderPixel|CWColormap|CWEventMask, &swa);
 		if (!win)
 		{
-			std::cout << "Failed to create window." << std::endl;
+			logError("failed to create window");
 			exit(1);
 		}
-	 
-		std::cout << "Mapping window" << std::endl;
+		
+		if (verbose)
+			cout << "mapping window..." << endl;
+		
 		XMapWindow(display, win);
 	 
 		// Create an oldstyle context first, to get the correct function pointer for glXCreateContextAttribsARB
@@ -67,7 +83,7 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 	 
 		if (glXCreateContextAttribsARB == NULL)
 		{
-			std::cout << "glXCreateContextAttribsARB entry point not found. Aborting." << std::endl;
+			logError("glXCreateContextAttribsARB entry point not found");
 			exit(1);
 		}
 	 
@@ -77,12 +93,14 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 			GLX_CONTEXT_MINOR_VERSION_ARB, 3,
 			None
 		};
-	 
-		std::cout << "Creating context" << std::endl;
+		
+		if (verbose)
+			cout << "creating context..." << endl;
+		
 		ctx = glXCreateContextAttribsARB(display, fbc[0], NULL, true, context_attribs);
 		if (!ctx)
 		{
-			std::cout << "Failed to create GL3 context." << std::endl;
+			logError("failed to create GL3 context");
 			exit(1);
 		}
 	 
@@ -92,7 +110,9 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 	
 	~GLXContextManagerImpl()
 	{
-		std::cout << "cleaning up context..." << std::endl;
+		if (verbose)
+			cout << "cleaning up context..." << endl;
+		
 		ctx = glXGetCurrentContext();
 		glXMakeCurrent(display, 0, 0);
 		glXDestroyContext(display, ctx);
@@ -106,10 +126,12 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 	Display * display = nullptr;
 	GLXContext ctx;
 	Window win;
+	
+	bool verbose = false;
 };
 
-GLXContextManager GLXContextManagerBase::make(V2i dim)
+GLXContextManager GLXContextManagerBase::make(V2i dim, bool verbose)
 {
-	return GLXContextManager(new GLXContextManagerImpl(dim));
+	return GLXContextManager(new GLXContextManagerImpl(dim, verbose));
 }
 

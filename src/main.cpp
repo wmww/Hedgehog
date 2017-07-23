@@ -11,13 +11,13 @@
 
 int main (int argc, char ** argv)
 {
-    auto manager = GLXContextManagerBase::make(V2i(600, 600));
+    auto manager = GLXContextManagerBase::make(V2i(600, 600), VERBOSE_OFF);
     
     auto renderer = TexRenderer();
     
-    auto waylandServer = WaylandServerBase::make(true);
+    auto waylandServer = WaylandServerBase::make(VERBOSE_OFF);
     
-    renderer.setup(600, 600);
+    renderer.setup(VERBOSE_OFF);
     
     renderer.draw();
     

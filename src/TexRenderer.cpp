@@ -2,10 +2,19 @@
 #include "../h/TexRenderer.h"
 #include <SOIL/SOIL.h>
 
-void TexRenderer::setup(int width, int height)
+void TexRenderer::setup(bool verboseIn)
 {
+	verbose = verboseIn;
+	
+	if (verbose)
+		cout << "initializing GLEW..." << endl;
+	
 	glewInit();
-	shaderProgram=ShaderProgram(shaderVertPath, shaderFragPath, true);
+	
+	if (verbose)
+		cout << "initializing shaders..." << endl;
+	
+	shaderProgram=ShaderProgram(shaderVertPath, shaderFragPath, verbose);
 	
 	GLuint VBO, EBO;
 	
@@ -24,6 +33,9 @@ void TexRenderer::setup(int width, int height)
 	};
 	
 	//glViewport(0, 0, width, height);
+	
+	if (verbose)
+		cout << "creating OpenGL stuff..." << endl;
 	
 	glGenVertexArrays(1, &squareVAO);
 	glGenBuffers(1, &VBO);
@@ -62,6 +74,9 @@ void TexRenderer::setup(int width, int height)
 
 void TexRenderer::setupTexture()
 {
+	if (verbose)
+		cout << "initializing texture..." << endl;
+	
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
@@ -70,7 +85,10 @@ void TexRenderer::setupTexture()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
+	
+	if (verbose)
+		cout << "loading image..." << endl;
+	
 	// Load and generate the texture
 	int width, height;
 	unsigned char* image = SOIL_load_image(imagePath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
@@ -78,6 +96,10 @@ void TexRenderer::setupTexture()
 	{
 		cout << "image loading error: " << SOIL_last_result() << endl;
 	}
+	
+	if (verbose)
+		cout << "creating texture from image..." << endl;
+	
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	SOIL_free_image_data(image);
@@ -90,7 +112,8 @@ void TexRenderer::draw()
 	//glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	//glClear(GL_COLOR_BUFFER_BIT);
 	
-	cout << blurRds << endl;
+	//if (verbose)
+	//	cout << blurRds << endl;
 	
 	// Draw our first triangle
 	glUseProgram(shaderProgram);
