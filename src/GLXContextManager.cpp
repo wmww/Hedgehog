@@ -113,8 +113,8 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 		if (verbose)
 			cout << "cleaning up context..." << endl;
 		
-		ctx = glXGetCurrentContext();
-		glXMakeCurrent(display, 0, 0);
+		//ctx = glXGetCurrentContext();
+		//glXMakeCurrent(display, 0, 0);
 		glXDestroyContext(display, ctx);
 	}
 	

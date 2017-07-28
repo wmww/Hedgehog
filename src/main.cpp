@@ -15,7 +15,7 @@ int main (int argc, char ** argv)
     
     auto renderer = TexRenderer();
     
-    auto waylandServer = WaylandServerBase::make(VERBOSE_OFF);
+    auto waylandServer = WaylandServerBase::make(VERBOSE_ON);
     
     renderer.setup(VERBOSE_OFF);
     
@@ -23,7 +23,7 @@ int main (int argc, char ** argv)
     
     manager->swapBuffer();
     
-    sleep(4);
+    sleep(3);
     
 	/*
 	glClearColor (0, 0.5, 1, 1);
