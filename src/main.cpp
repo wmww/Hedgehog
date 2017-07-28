@@ -19,11 +19,13 @@ int main (int argc, char ** argv)
     
     renderer.setup(VERBOSE_OFF);
     
-    renderer.draw();
-    
-    manager->swapBuffer();
-    
-    sleep(3);
+    while (true)
+    {
+		waylandServer->iteration();
+		renderer.draw();
+		manager->swapBuffer();
+		sleep(1);
+	}
     
 	/*
 	glClearColor (0, 0.5, 1, 1);

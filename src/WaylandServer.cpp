@@ -63,6 +63,11 @@ struct WaylandServerImpl: WaylandServerBase
 		// create global objects
 		wl_global_create(display, &wl_compositor_interface, 3, nullptr, compositorBindCallback);
 		
+		wl_display_init_shm (display);
+		
+		eventLoop = wl_display_get_event_loop(display);
+		eventLoopFileDescriptor = wl_event_loop_get_fd(eventLoop);
+		
 		if (verbose)
 			cout << "Wayland server setup done" << endl;
 	}
@@ -73,6 +78,21 @@ struct WaylandServerImpl: WaylandServerBase
 			cout << "shutting down Wayland server" << endl;
 		wl_display_destroy(display);
 		instance = nullptr;
+	}
+	
+	void iteration()
+	{
+		wl_event_loop_dispatch(eventLoop, 0);
+		//backend_dispatch_nonblocking();
+		wl_display_flush_clients(display);
+		if (needsRedraw)
+		{
+			//draw();
+			needsRedraw = 0;
+		}
+		else {
+			//backend_wait_for_events(eventLoopFileDescriptor);
+		}
 	}
 	
 	void fail(string msg)
@@ -95,6 +115,11 @@ struct WaylandServerImpl: WaylandServerBase
 	
 	wl_list clients;
 	wl_list surfaces;
+	
+	struct wl_event_loop *eventLoop = nullptr;
+	int eventLoopFileDescriptor = 0;
+	
+	bool needsRedraw = false;
 };
 
 WaylandServerImpl * WaylandServerImpl::instance = nullptr;
