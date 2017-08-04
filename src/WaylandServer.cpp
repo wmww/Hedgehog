@@ -84,9 +84,37 @@ struct WaylandServerImpl: WaylandServerBase
 			wl_resource_set_implementation(resource, &shellInterface, nullptr, nullptr);
 		};
 		
+		auto seatBindCallback = +[](wl_client * client, void * data, uint32_t version, uint32_t id)
+		{
+			cout << "seatBindCallback called" << endl;
+			/*
+			if (instance == nullptr)
+			{
+				logError("oh shit, there's no WaylandServerImpl instance!");
+				return;
+			}
+			
+			if (instance->verbose)
+				cout << "shellBindCallback called" << endl;
+			
+			struct wl_shell_interface shellInterface {
+				+[](wl_client * client, wl_resource * resource, uint32_t id, wl_resource * surface) {
+					
+					cout << "shellInterface called" << endl;
+					//struct wl_resource *shell_surface = wl_resource_create (client, &wl_shell_surface_interface, 1, id);
+					//wl_resource_set_implementation (shell_surface, &shell_surface_interface, NULL, NULL);
+				}
+			};
+			
+			wl_resource * resource = wl_resource_create(client, &wl_shell_interface, 1, id);
+			wl_resource_set_implementation(resource, &shellInterface, nullptr, nullptr);
+			*/
+		};
+		
 		// create global objects
-		//wl_global_create(display, &wl_compositor_interface, 3, nullptr, compositorBindCallback);
-		//wl_global_create(display, &wl_shell_interface, 1, nullptr, shellBindCallback);
+		wl_global_create(display, &wl_compositor_interface, 3, nullptr, compositorBindCallback);
+		wl_global_create(display, &wl_shell_interface, 1, nullptr, shellBindCallback);
+		wl_global_create(display, &wl_seat_interface, 1, nullptr, seatBindCallback);
 		
 		wl_display_init_shm (display);
 		
@@ -108,15 +136,13 @@ struct WaylandServerImpl: WaylandServerBase
 	void iteration()
 	{
 		wl_event_loop_dispatch(eventLoop, 0);
-		//backend_dispatch_nonblocking();
 		wl_display_flush_clients(display);
 		if (needsRedraw)
 		{
-			//draw();
-			needsRedraw = 0;
+			needsRedraw = false;
 		}
 		else {
-			//backend_wait_for_events(eventLoopFileDescriptor);
+			
 		}
 	}
 	
