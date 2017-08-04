@@ -5,6 +5,9 @@
 #include <sstream>
 using std::stringstream;
 
+#include <chrono>
+#include <thread>
+
 void logError(string msg)
 {
 	std::cerr << "error: " << msg << std::endl;
@@ -41,3 +44,9 @@ bool loadFile(string filename, string& contents, bool debug)
 		return true;
 	}
 }
+
+void sleepForSeconds(double seconds)
+{
+	std::this_thread::sleep_for(std::chrono::milliseconds((int)(seconds * 1000)));
+}
+

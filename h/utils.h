@@ -36,3 +36,6 @@ void logError(string msg);
 
 // loads an entire file into the contents string, returns if it succeeded
 bool loadFile(string filename, string& contents, bool debug);
+
+// sleep for the given number of seconds (millisecond precision)
+void sleepForSeconds(double seconds);

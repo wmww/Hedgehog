@@ -24,7 +24,7 @@ int main (int argc, char ** argv)
 		waylandServer->iteration();
 		renderer.draw();
 		manager->swapBuffer();
-		//nanosleep(100);
+		sleepForSeconds(0.2);
 	}
     
 	/*
