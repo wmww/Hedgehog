@@ -11,20 +11,20 @@
 
 int main (int argc, char ** argv)
 {
-    auto manager = GLXContextManagerBase::make(V2i(600, 600), VERBOSE_OFF);
+    //auto manager = GLXContextManagerBase::make(V2i(600, 600), VERBOSE_OFF);
     
-    auto renderer = TexRenderer();
+    //auto renderer = TexRenderer();
     
     auto waylandServer = WaylandServerBase::make(VERBOSE_ON);
     
-    renderer.setup(VERBOSE_OFF);
+    //renderer.setup(VERBOSE_OFF);
     
     while (true)
     {
 		waylandServer->iteration();
-		renderer.draw();
-		manager->swapBuffer();
-		sleepForSeconds(0.2);
+		//renderer.draw();
+		//manager->swapBuffer();
+		//sleepForSeconds(0.2);
 	}
     
 	/*

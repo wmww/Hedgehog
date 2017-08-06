@@ -1,5 +1,7 @@
 env = Environment()
 
+env.Append(CCFLAGS='-g')
+
 sources = Glob('src/*.cpp')
 
 libs = [

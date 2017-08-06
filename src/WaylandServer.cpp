@@ -42,7 +42,7 @@ struct WaylandServerImpl: WaylandServerBase
 			if (instance->verbose)
 				cout << "compositorBindCallback called" << endl;
 			
-			struct wl_compositor_interface compositorInterface {
+			instance->compositorInterface = {
 				
 				// create surface
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
@@ -58,7 +58,7 @@ struct WaylandServerImpl: WaylandServerBase
 			};
 			
 			wl_resource * resource = wl_resource_create(client, &wl_compositor_interface, 1, id);
-			wl_resource_set_implementation(resource, &compositorInterface, nullptr, nullptr);
+			wl_resource_set_implementation(resource, &instance->compositorInterface, nullptr, nullptr);
 		};
 		
 		auto shellBindCallback = +[](wl_client * client, void * data, uint32_t version, uint32_t id)
@@ -72,7 +72,7 @@ struct WaylandServerImpl: WaylandServerBase
 			if (instance->verbose)
 				cout << "shellBindCallback called" << endl;
 			
-			struct wl_shell_interface shellInterface {
+			instance->shellInterface = {
 				// get shell surface
 				+[](wl_client * client, wl_resource * resource, uint32_t id, wl_resource * surface) {
 					
@@ -83,7 +83,7 @@ struct WaylandServerImpl: WaylandServerBase
 			};
 			
 			wl_resource * resource = wl_resource_create(client, &wl_shell_interface, 1, id);
-			wl_resource_set_implementation(resource, &shellInterface, nullptr, nullptr);
+			wl_resource_set_implementation(resource, &instance->shellInterface, nullptr, nullptr);
 		};
 		
 		auto seatBindCallback = +[](wl_client * client, void * data, uint32_t version, uint32_t id)
@@ -97,41 +97,65 @@ struct WaylandServerImpl: WaylandServerBase
 			if (instance->verbose)
 				cout << "seatBindCallback called" << endl;
 			
-			struct wl_seat_interface seatInterface
-			{
+			instance->seatInterface = {
 				// get pointer
-				+[](struct wl_client *client, struct wl_resource *resource, uint32_t id)
+				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
 					cout << "seat interface get pointer called" << endl;
-					/*
-					struct wl_resource *pointer = wl_resource_create (client, &wl_pointer_interface, 1, id);
-					wl_resource_set_implementation (pointer, &pointer_interface, NULL, NULL);
-					get_client(client)->pointer = pointer;
-					*/
+					
+					if (instance == nullptr)
+					{
+						logError("oh shit, there's no WaylandServerImpl instance!");
+						return;
+					}
+					
+					instance->pointerInterface = {
+						// set cursor
+						+[](wl_client * client, wl_resource * resource, uint32_t serial, wl_resource * _surface, int32_t hotspot_x,
+						int32_t hotspot_y)
+						{
+							cout << "set cursor called" << endl;
+							//surface * surface = wl_resource_get_user_data(_surface);
+							//cursor = surface;
+						},
+						
+						// pointer release
+						+[](wl_client * client, wl_resource *resource)
+						{
+							cout << "pointer release called" << endl;
+						}
+					};
+					
+					wl_resource * pointer = wl_resource_create(client, &wl_pointer_interface, 1, id);
+					wl_resource_set_implementation(pointer, &instance->pointerInterface, nullptr, nullptr);
+					//get_client(client)->pointer = pointer;
+					cout << "seat interface get pointer over" << endl;
 				},
 				// get keyboard
-				+[](struct wl_client *client, struct wl_resource *resource, uint32_t id)
+				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
 					cout << "seat interface get keyboard called" << endl;
-					/*struct wl_resource *keyboard = wl_resource_create (client, &wl_keyboard_interface, 1, id);
-					wl_resource_set_implementation (keyboard, &keyboard_interface, NULL, NULL);
-					get_client(client)->keyboard = keyboard;
-					int fd, size;
-					backend_get_keymap (&fd, &size);
-					wl_keyboard_send_keymap (keyboard, WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, fd, size);
-					//close (fd);
-					*/
+					//struct wl_resource *keyboard = wl_resource_create (client, &wl_keyboard_interface, 1, id);
+					//wl_resource_set_implementation (keyboard, &keyboard_interface, NULL, NULL);
+		//			//get_client(client)->keyboard = keyboard;
+					//int fd, size;
+					//backend_get_keymap (&fd, &size);
+					//wl_keyboard_send_keymap (keyboard, WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, fd, size);
+					////close (fd);
 				},
 				// get touch
-				+[](struct wl_client *client, struct wl_resource *resource, uint32_t id)
+				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
 					cout << "seat interface get touch called" << endl;
 				}
 			};
 			
+			//cout << "1" << endl;
 			wl_resource * seat = wl_resource_create(client, &wl_seat_interface, 1, id);
-			wl_resource_set_implementation(seat, &seatInterface, nullptr, nullptr);
-			wl_seat_send_capabilities(seat, WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
+			//cout << "2" << endl;
+			wl_resource_set_implementation(seat, &instance->seatInterface, nullptr, nullptr);
+			//wl_seat_send_capabilities(seat, WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
+			wl_seat_send_capabilities(seat, 0);
 		};
 		
 		// create global objects
@@ -139,7 +163,7 @@ struct WaylandServerImpl: WaylandServerBase
 		wl_global_create(display, &wl_shell_interface, 1, nullptr, shellBindCallback);
 		wl_global_create(display, &wl_seat_interface, 1, nullptr, seatBindCallback);
 		
-		wl_display_init_shm (display);
+		wl_display_init_shm(display);
 		
 		eventLoop = wl_display_get_event_loop(display);
 		eventLoopFileDescriptor = wl_event_loop_get_fd(eventLoop);
@@ -160,13 +184,13 @@ struct WaylandServerImpl: WaylandServerBase
 	{
 		wl_event_loop_dispatch(eventLoop, 0);
 		wl_display_flush_clients(display);
-		if (needsRedraw)
-		{
-			needsRedraw = false;
-		}
-		else {
-			
-		}
+		//if (needsRedraw)
+		//{
+		//	needsRedraw = false;
+		//}
+		//else {
+		//	
+		//}
 	}
 	
 	void fail(string msg)
@@ -192,6 +216,11 @@ struct WaylandServerImpl: WaylandServerBase
 	
 	struct wl_event_loop *eventLoop = nullptr;
 	int eventLoopFileDescriptor = 0;
+	
+	struct wl_compositor_interface compositorInterface;
+	struct wl_shell_interface shellInterface;
+	struct wl_seat_interface seatInterface;
+	struct wl_pointer_interface pointerInterface;
 	
 	bool needsRedraw = false;
 };
