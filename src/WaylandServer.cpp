@@ -15,8 +15,7 @@ struct WaylandServerImpl: WaylandServerBase
 	{
 		verbose = verboseIn;
 		
-		if (verbose)
-			cout << "starting Wayland server" << endl;
+		message("starting Wayland server");
 		
 		// get function pointers
 		eglBindWaylandDisplayWL = (PFNEGLBINDWAYLANDDISPLAYWL)eglGetProcAddress("eglBindWaylandDisplayWL");
@@ -33,27 +32,22 @@ struct WaylandServerImpl: WaylandServerBase
 		
 		auto compositorBindCallback = +[](wl_client * client, void * data, uint32_t version, uint32_t id)
 		{
-			if (instance == nullptr)
-			{
-				logError("oh shit, there's no WaylandServerImpl instance!");
-				return;
-			}
+			assertInstance();
 			
-			if (instance->verbose)
-				cout << "compositorBindCallback called" << endl;
+			message("compositorBindCallback called");
 			
 			instance->compositorInterface = {
 				
 				// create surface
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
-					cout << "compositorCreateSurfaceCallback called" << endl;
+					message("compositorCreateSurfaceCallback called (not yet implemented)");
 				},
 				
 				// create region
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
-					cout << "compositorCreateRegionCallback called" << endl;
+					message("compositorCreateRegionCallback called (not yet implemented)");
 				}
 			};
 			
@@ -63,20 +57,15 @@ struct WaylandServerImpl: WaylandServerBase
 		
 		auto shellBindCallback = +[](wl_client * client, void * data, uint32_t version, uint32_t id)
 		{
-			if (instance == nullptr)
-			{
-				logError("oh shit, there's no WaylandServerImpl instance!");
-				return;
-			}
+			assertInstance();
 			
-			if (instance->verbose)
-				cout << "shellBindCallback called" << endl;
+			message("shellBindCallback called");
 			
 			instance->shellInterface = {
 				// get shell surface
 				+[](wl_client * client, wl_resource * resource, uint32_t id, wl_resource * surface) {
 					
-					cout << "shellInterface called" << endl;
+					message("shellInterface called (not yet implemented)");
 					//struct wl_resource *shell_surface = wl_resource_create (client, &wl_shell_surface_interface, 1, id);
 					//wl_resource_set_implementation (shell_surface, &shell_surface_interface, NULL, NULL);
 				}
@@ -88,33 +77,24 @@ struct WaylandServerImpl: WaylandServerBase
 		
 		auto seatBindCallback = +[](wl_client * client, void * data, uint32_t version, uint32_t id)
 		{
-			if (instance == nullptr)
-			{
-				logError("oh shit, there's no WaylandServerImpl instance!");
-				return;
-			}
+			message("seatBindCallback called");
 			
-			if (instance->verbose)
-				cout << "seatBindCallback called" << endl;
+			assertInstance();
 			
 			instance->seatInterface = {
 				// get pointer
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
-					cout << "seat interface get pointer called" << endl;
+					message("seat interface get pointer called");
 					
-					if (instance == nullptr)
-					{
-						logError("oh shit, there's no WaylandServerImpl instance!");
-						return;
-					}
+					assertInstance();
 					
 					instance->pointerInterface = {
 						// set cursor
 						+[](wl_client * client, wl_resource * resource, uint32_t serial, wl_resource * _surface, int32_t hotspot_x,
 						int32_t hotspot_y)
 						{
-							cout << "set cursor called" << endl;
+							message("set cursor called (not yet implemented)");
 							//surface * surface = wl_resource_get_user_data(_surface);
 							//cursor = surface;
 						},
@@ -122,19 +102,19 @@ struct WaylandServerImpl: WaylandServerBase
 						// pointer release
 						+[](wl_client * client, wl_resource *resource)
 						{
-							cout << "pointer release called" << endl;
+							message("pointer release called (not yet implemented)");
 						}
 					};
 					
 					wl_resource * pointer = wl_resource_create(client, &wl_pointer_interface, 1, id);
 					wl_resource_set_implementation(pointer, &instance->pointerInterface, nullptr, nullptr);
 					//get_client(client)->pointer = pointer;
-					cout << "seat interface get pointer over" << endl;
+					message("seat interface get pointer over");
 				},
 				// get keyboard
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
-					cout << "seat interface get keyboard called" << endl;
+					message("seat interface get keyboard called (not yet implemented)");
 					//struct wl_resource *keyboard = wl_resource_create (client, &wl_keyboard_interface, 1, id);
 					//wl_resource_set_implementation (keyboard, &keyboard_interface, NULL, NULL);
 		//			//get_client(client)->keyboard = keyboard;
@@ -146,7 +126,7 @@ struct WaylandServerImpl: WaylandServerBase
 				// get touch
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
-					cout << "seat interface get touch called" << endl;
+					message("seat interface get touch called (not yet implemented)");
 				}
 			};
 			
@@ -168,17 +148,17 @@ struct WaylandServerImpl: WaylandServerBase
 		eventLoop = wl_display_get_event_loop(display);
 		eventLoopFileDescriptor = wl_event_loop_get_fd(eventLoop);
 		
-		if (verbose)
-			cout << "Wayland server setup done" << endl;
+		message("Wayland server setup done");
 	}
 	
 	~WaylandServerImpl()
 	{
-		if (verbose)
-			cout << "shutting down Wayland server" << endl;
+		message("shutting down Wayland server");
 		wl_display_destroy(display);
 		instance = nullptr;
 	}
+	
+	void init();
 	
 	void iteration()
 	{
@@ -193,16 +173,26 @@ struct WaylandServerImpl: WaylandServerBase
 		//}
 	}
 	
-	void fail(string msg)
+	inline static void message(string msg)
 	{
-		error = true;
-		logError(msg);
+		if (verbose)
+		{
+			cout << "wayland server: " << msg << endl;
+		}
+	}
+	
+	inline static void assertInstance()
+	{
+		if (!instance)
+		{
+			cout << "error: wayland server: oh shit, WaylandServerImpl::instance is null!" << endl;
+			exit(1);
+		}
 	}
 	
 	static WaylandServerImpl * instance;
 	
-	bool error = false;
-	bool verbose = false;
+	static bool verbose;
 	
 	// function pointers that need to be retrieved at run time. This is Cs sad, pathetic attempt at duck typing.
 	PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES = nullptr;
@@ -226,6 +216,7 @@ struct WaylandServerImpl: WaylandServerBase
 };
 
 WaylandServerImpl * WaylandServerImpl::instance = nullptr;
+bool WaylandServerImpl::verbose = false;
 
 WaylandServer WaylandServerBase::make(bool verbose)
 {
