@@ -22,9 +22,6 @@ struct WaylandServerImpl: WaylandServerBase
 		eglQueryWaylandBufferWL = (PFNEGLQUERYWAYLANDBUFFERWL)eglGetProcAddress("eglQueryWaylandBufferWL");
 		glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
 		
-		wl_list_init(&clients);
-		wl_list_init(&surfaces);
-		
 		display = wl_display_create();
 		
 		// automatically find a free socket and connect it to the display
@@ -41,13 +38,108 @@ struct WaylandServerImpl: WaylandServerBase
 				// create surface
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
-					message("compositorCreateSurfaceCallback called (not yet implemented)");
+					message("compositor interface create surface callback called");
+					assertInstance();
+					//struct surface *surface = calloc (1, sizeof(struct surface));
+					instance->surfaceInterface = {
+						// surface destroy
+						+[](wl_client * client, wl_resource * resource)
+						{
+							message("surface interface surface destroy callback called (not yet implemented)");
+						},
+						// surface attach
+						+[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y)
+						{
+							message("surface interface surface attach callback called (not yet implemented)");
+							//struct surface *surface = wl_resource_get_user_data (resource);
+							//surface->buffer = buffer;
+						},
+						// surface damage
+						+[](wl_client * client, wl_resource * resource, int32_t x, int32_t y, int32_t width, int32_t height)
+						{
+							message("surface interface surface damage callback called (not yet implemented)");
+						},
+						// surface frame
+						+[](wl_client * client, wl_resource * resource, uint32_t callback)
+						{
+							message("surface interface surface frame callback called (not yet implemented)");
+							//struct surface *surface = wl_resource_get_user_data (resource);
+							//surface->frame_callback = wl_resource_create (client, &wl_callback_interface, 1, callback);
+						},
+						// surface set opaque region
+						+[](wl_client * client, wl_resource * resource, wl_resource * region)
+						{
+							message("surface interface surface set opaque region callback called (not yet implemented)");
+						},
+						// surface set input region
+						+[](wl_client * client, wl_resource * resource, wl_resource * region)
+						{
+							message("surface interface surface set input region callback called (not yet implemented)");
+						},
+						// surface commit
+						+[](wl_client * client, wl_resource * resource)
+						{
+							message("surface interface surface commit callback called (not yet implemented)");
+							/*
+							struct surface *surface = wl_resource_get_user_data (resource);
+							EGLint texture_format;
+							if (eglQueryWaylandBufferWL (backend_get_egl_display(), surface->buffer, EGL_TEXTURE_FORMAT, &texture_format)) {
+								EGLint width, height;
+								eglQueryWaylandBufferWL (backend_get_egl_display(), surface->buffer, EGL_WIDTH, &width);
+								eglQueryWaylandBufferWL (backend_get_egl_display(), surface->buffer, EGL_WIDTH, &height);
+								EGLAttrib attribs = EGL_NONE;
+								EGLImage image = eglCreateImage (backend_get_egl_display(), EGL_NO_CONTEXT, EGL_WAYLAND_BUFFER_WL, surface->buffer, &attribs);
+								texture_delete (&surface->texture);
+								texture_create_from_egl_image (&surface->texture, width, height, image);
+								eglDestroyImage (backend_get_egl_display(), image);
+							}
+							else {
+								struct wl_shm_buffer *shm_buffer = wl_shm_buffer_get (surface->buffer);
+								uint32_t width = wl_shm_buffer_get_width (shm_buffer);
+								uint32_t height = wl_shm_buffer_get_height (shm_buffer);
+								void *data = wl_shm_buffer_get_data (shm_buffer);
+								texture_delete (&surface->texture);
+								texture_create (&surface->texture, width, height, data);
+							}
+							wl_buffer_send_release (surface->buffer);
+							redraw_needed = 1;
+							*/
+						},
+						// surface set buffer transform
+						+[](wl_client * client, wl_resource * resource, int32_t transform)
+						{
+							message("surface interface surface set buffer transform callback called (not yet implemented)");
+						},
+						// surface set buffer scale
+						+[](wl_client * client, wl_resource * resource, int32_t scale)
+						{
+							message("surface interface surface set buffer scale callback called (not yet implemented)");
+						},
+					};
+					
+					auto deleteSurface = [](wl_resource * resource)
+					{
+						message("delete surface callback called (not yet implemented)");
+						/*
+						struct surface *surface = wl_resource_get_user_data (resource);
+						wl_list_remove (&surface->link);
+						if (surface == active_surface) active_surface = NULL;
+						if (surface == pointer_surface) pointer_surface = NULL;
+						free (surface);
+						redraw_needed = 1;
+						*/
+					};
+					
+					instance->surface = wl_resource_create(client, &wl_surface_interface, 3, id);
+					wl_resource_set_implementation(instance->surface, &instance->surfaceInterface, nullptr, +deleteSurface);
+					//surface->client = get_client (client);
+					//wl_list_insert (&surfaces, &surface->link);
 				},
 				
 				// create region
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
-					message("compositorCreateRegionCallback called (not yet implemented)");
+					message("compositor interface create region called (not yet implemented)");
 				}
 			};
 			
@@ -65,7 +157,7 @@ struct WaylandServerImpl: WaylandServerBase
 				// get shell surface
 				+[](wl_client * client, wl_resource * resource, uint32_t id, wl_resource * surface) {
 					
-					message("shellInterface called (not yet implemented)");
+					message("shell interface get shell surface called (not yet implemented)");
 					//struct wl_resource *shell_surface = wl_resource_create (client, &wl_shell_surface_interface, 1, id);
 					//wl_resource_set_implementation (shell_surface, &shell_surface_interface, NULL, NULL);
 				}
@@ -94,7 +186,7 @@ struct WaylandServerImpl: WaylandServerBase
 						+[](wl_client * client, wl_resource * resource, uint32_t serial, wl_resource * _surface, int32_t hotspot_x,
 						int32_t hotspot_y)
 						{
-							message("set cursor called (not yet implemented)");
+							message("pointer interface set cursor called (not yet implemented)");
 							//surface * surface = wl_resource_get_user_data(_surface);
 							//cursor = surface;
 						},
@@ -102,14 +194,13 @@ struct WaylandServerImpl: WaylandServerBase
 						// pointer release
 						+[](wl_client * client, wl_resource *resource)
 						{
-							message("pointer release called (not yet implemented)");
+							message("pointer interface pointer release called (not yet implemented)");
 						}
 					};
 					
 					wl_resource * pointer = wl_resource_create(client, &wl_pointer_interface, 1, id);
 					wl_resource_set_implementation(pointer, &instance->pointerInterface, nullptr, nullptr);
 					//get_client(client)->pointer = pointer;
-					message("seat interface get pointer over");
 				},
 				// get keyboard
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
@@ -201,9 +292,6 @@ struct WaylandServerImpl: WaylandServerBase
 	
 	wl_display * display = nullptr;
 	
-	wl_list clients;
-	wl_list surfaces;
-	
 	struct wl_event_loop *eventLoop = nullptr;
 	int eventLoopFileDescriptor = 0;
 	
@@ -211,6 +299,9 @@ struct WaylandServerImpl: WaylandServerBase
 	struct wl_shell_interface shellInterface;
 	struct wl_seat_interface seatInterface;
 	struct wl_pointer_interface pointerInterface;
+	
+	struct wl_surface_interface surfaceInterface;
+	struct wl_resource * surface = nullptr;
 	
 	bool needsRedraw = false;
 };
