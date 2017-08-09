@@ -11,14 +11,14 @@
 
 int main (int argc, char ** argv)
 {
-	auto manager = GLXContextManagerBase::make(V2i(1200, 1200), VERBOSE_OFF);
-
+	auto manager = GLXContextManagerBase::make(V2i(880, 880), VERBOSE_OFF);
+	
 	auto renderer = TexRenderer();
-
+	
 	auto waylandServer = WaylandServerBase::make(VERBOSE_ON);
-
+	
 	renderer.setup(VERBOSE_OFF);
-
+	
 	while (true)
 	{
 		waylandServer->iteration();
@@ -26,7 +26,7 @@ int main (int argc, char ** argv)
 		manager->swapBuffer();
 		sleepForSeconds(0.2);
 	}
-
+	
 	/*
 	glClearColor (0, 0.5, 1, 1);
 	glClear (GL_COLOR_BUFFER_BIT);

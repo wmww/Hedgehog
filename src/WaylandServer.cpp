@@ -120,6 +120,18 @@ struct WaylandServerImpl: WaylandServerBase
 					auto deleteSurface = [](wl_resource * resource)
 					{
 						message("delete surface callback called (not yet implemented)");
+						assertInstance();
+						int i = 0;
+						for (; i < (int)instance->surfaces.size(); i++)
+						{
+							if (instance->surfaces[i] == resource)
+								break;
+						}
+						if (i < (int)instance->surfaces.size())
+						{
+							instance->surfaces.erase(instance->surfaces.begin() + i);
+						}
+						
 						/*
 						struct surface *surface = wl_resource_get_user_data (resource);
 						wl_list_remove (&surface->link);
@@ -130,8 +142,9 @@ struct WaylandServerImpl: WaylandServerBase
 						*/
 					};
 					
-					instance->surface = wl_resource_create(client, &wl_surface_interface, 3, id);
-					wl_resource_set_implementation(instance->surface, &instance->surfaceInterface, nullptr, +deleteSurface);
+					struct wl_resource * surface = wl_resource_create(client, &wl_surface_interface, 3, id);
+					instance->surfaces.push_back(surface);
+					wl_resource_set_implementation(surface, &instance->surfaceInterface, nullptr, +deleteSurface);
 					//surface->client = get_client (client);
 					//wl_list_insert (&surfaces, &surface->link);
 				},
@@ -157,59 +170,59 @@ struct WaylandServerImpl: WaylandServerBase
 				// get shell surface
 				+[](wl_client * client, wl_resource * resource, uint32_t id, wl_resource * surface) {
 					
-					message("shell interface get shell surface called (not yet implemented)");
+					message("shell interface get shell surface called");
 					
 					struct wl_shell_surface_interface shellSurfaceInterface = {
 						
 						// shell surface pong
 						+[](struct wl_client *client, wl_resource * resource, uint32_t serial)
 						{
-							message("shell surface interface shell surface pong callback called (not yet implemented)");
+							message("shell surface interface pong callback called (not yet implemented)");
 						},
 						// shell surface move
 						+[](wl_client * client, wl_resource * resource, wl_resource * seat, uint32_t serial)
 						{
-							message("shell surface interface shell surface move callback called (not yet implemented)");
+							message("shell surface interface move callback called (not yet implemented)");
 						},
 						// shell surface resize
 						+[](wl_client * client, wl_resource * resource, wl_resource * seat, uint32_t serial, uint32_t edges)
 						{
-							message("shell surface interface shell surface resize callback called (not yet implemented)");
+							message("shell surface interface resize callback called (not yet implemented)");
 						},
 						// shell surface set toplevel
 						+[](wl_client * client, wl_resource * resource)
 						{
-							message("shell surface interface shell surface set toplevel callback called (not yet implemented)");
+							message("shell surface interface set toplevel callback called");
 						},
 						// shell surface set transient
 						+[](wl_client * client, wl_resource * resource, wl_resource * parent, int32_t x, int32_t y, uint32_t flags)
 						{
-							message("shell surface interface shell surface set transient callback called (not yet implemented)");
+							message("shell surface interface set transient callback called (not yet implemented)");
 						},
 						// shell surface set fullscreen
 						+[](wl_client * client, wl_resource * resource, uint32_t method, uint32_t framerate, wl_resource * output)
 						{
-							message("shell surface interface shell surface set fullscreen callback called (not yet implemented)");
+							message("shell surface interface set fullscreen callback called (not yet implemented)");
 						},
 						// shell surface set popup
 						+[](wl_client * client, wl_resource * resource, wl_resource * seat, uint32_t serial, wl_resource * parent, int32_t x, int32_t y, uint32_t flags)
 						{
-							
+							message("shell surface interface set popup callback called (not yet implemented)");
 						},
 						// shell surface set maximized
 						+[](wl_client * client, wl_resource * resource, wl_resource * output)
 						{
-							message("shell surface interface shell surface set maximized callback called (not yet implemented)");
+							message("shell surface interface set maximized callback called (not yet implemented)");
 						},
 						// shell surface set title
 						+[](wl_client * client, wl_resource * resource, const char * title)
 						{
-							message("shell surface interface shell surface set title callback called (not yet implemented)");
+							message("shell surface interface set title callback called (not yet implemented)");
 						},
 						// shell surface set class
 						+[](wl_client * client, wl_resource * resource, const char * class_)
 						{
-							message("shell surface interface shell surface set class callback called (not yet implemented)");
+							message("shell surface interface set class callback called (not yet implemented)");
 						},
 					};
 					
@@ -263,7 +276,7 @@ struct WaylandServerImpl: WaylandServerBase
 					message("seat interface get keyboard called (not yet implemented)");
 					//struct wl_resource *keyboard = wl_resource_create (client, &wl_keyboard_interface, 1, id);
 					//wl_resource_set_implementation (keyboard, &keyboard_interface, NULL, NULL);
-		//			//get_client(client)->keyboard = keyboard;
+					//get_client(client)->keyboard = keyboard;
 					//int fd, size;
 					//backend_get_keymap (&fd, &size);
 					//wl_keyboard_send_keymap (keyboard, WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, fd, size);
@@ -356,7 +369,7 @@ struct WaylandServerImpl: WaylandServerBase
 	struct wl_pointer_interface pointerInterface;
 	
 	struct wl_surface_interface surfaceInterface;
-	struct wl_resource * surface = nullptr;
+	vector<struct wl_resource *> surfaces;
 	
 	bool needsRedraw = false;
 };
