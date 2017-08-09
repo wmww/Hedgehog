@@ -18,7 +18,7 @@ private:
 	
 	const string shaderVertPath = "shaders/shader0.vert";
 	const string shaderFragPath = "shaders/shader0.frag";
-	const string imagePath = "assets/orange.jpg";
+	const string imagePath = "assets/hedgehog.jpg";
 	
 	void setupTexture();
 	

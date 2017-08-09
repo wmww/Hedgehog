@@ -11,33 +11,33 @@
 
 int main (int argc, char ** argv)
 {
-    //auto manager = GLXContextManagerBase::make(V2i(600, 600), VERBOSE_OFF);
-    
-    //auto renderer = TexRenderer();
-    
-    auto waylandServer = WaylandServerBase::make(VERBOSE_ON);
-    
-    //renderer.setup(VERBOSE_OFF);
-    
-    while (true)
-    {
+	auto manager = GLXContextManagerBase::make(V2i(1200, 1200), VERBOSE_OFF);
+
+	auto renderer = TexRenderer();
+
+	auto waylandServer = WaylandServerBase::make(VERBOSE_ON);
+
+	renderer.setup(VERBOSE_OFF);
+
+	while (true)
+	{
 		waylandServer->iteration();
-		//renderer.draw();
-		//manager->swapBuffer();
-		//sleepForSeconds(0.2);
+		renderer.draw();
+		manager->swapBuffer();
+		sleepForSeconds(0.2);
 	}
-    
+
 	/*
 	glClearColor (0, 0.5, 1, 1);
 	glClear (GL_COLOR_BUFFER_BIT);
 	glXSwapBuffers (display, win);
-	
+
 	sleep(1);
-	
+
 	glClearColor (1, 0.5, 0, 1);
 	glClear (GL_COLOR_BUFFER_BIT);
 	glXSwapBuffers (display, win);
-	
+
 	sleep(1);
 	*/
 }
