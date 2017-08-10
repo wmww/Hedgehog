@@ -9,6 +9,17 @@
 // no clue what this means
 typedef void (*PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) (GLenum target, EGLImage image);
 
+struct SurfaceData
+{
+	struct wl_resource *surface;
+	//struct wl_resource *xdg_surface;
+	struct wl_resource *buffer;
+	//struct wl_resource *frame_callback;
+	//int x, y;
+	//struct texture texture;
+	//struct client *client;
+};
+
 struct WaylandServerImpl: WaylandServerBase
 {
 	WaylandServerImpl(bool verboseIn)
@@ -51,8 +62,8 @@ struct WaylandServerImpl: WaylandServerBase
 						+[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y)
 						{
 							message("surface interface surface attach callback called (not yet implemented)");
-							//struct surface *surface = wl_resource_get_user_data (resource);
-							//surface->buffer = buffer;
+							auto surface = (SurfaceData *)wl_resource_get_user_data(resource);
+							surface->buffer = buffer;
 						},
 						// surface damage
 						+[](wl_client * client, wl_resource * resource, int32_t x, int32_t y, int32_t width, int32_t height)
@@ -86,7 +97,7 @@ struct WaylandServerImpl: WaylandServerBase
 							// query the texture format of the buffer
 							bool idkThisVarMeans = eglQueryWaylandBufferWL(backend_get_egl_display(), surface->buffer, EGL_TEXTURE_FORMAT, &texture_format);
 							
-							if () {
+							if (idkThisVarMeans) {
 								EGLint width, height;
 								eglQueryWaylandBufferWL (backend_get_egl_display(), surface->buffer, EGL_WIDTH, &width);
 								eglQueryWaylandBufferWL (backend_get_egl_display(), surface->buffer, EGL_WIDTH, &height);
@@ -105,8 +116,7 @@ struct WaylandServerImpl: WaylandServerBase
 								texture_create (&surface->texture, width, height, data);
 							}
 							wl_buffer_send_release (surface->buffer);
-							redraw_needed = 1;
-							*/
+							redraw_needed = 1;*/
 						},
 						// surface set buffer transform
 						+[](wl_client * client, wl_resource * resource, int32_t transform)
@@ -127,7 +137,7 @@ struct WaylandServerImpl: WaylandServerBase
 						int i = 0;
 						for (; i < (int)instance->surfaces.size(); i++)
 						{
-							if (instance->surfaces[i] == resource)
+							if (instance->surfaces[i]->surface == resource)
 								break;
 						}
 						if (i < (int)instance->surfaces.size())
@@ -146,8 +156,9 @@ struct WaylandServerImpl: WaylandServerBase
 					};
 					
 					struct wl_resource * surface = wl_resource_create(client, &wl_surface_interface, 3, id);
-					instance->surfaces.push_back(surface);
-					wl_resource_set_implementation(surface, &instance->surfaceInterface, nullptr, +deleteSurface);
+					auto surfaceData = shared_ptr<SurfaceData>(new SurfaceData{(struct wl_resource *)surface, (struct wl_resource *)nullptr});
+					instance->surfaces.push_back(surfaceData);
+					wl_resource_set_implementation(surface, &instance->surfaceInterface, &*surfaceData, +deleteSurface);
 					//surface->client = get_client (client);
 					//wl_list_insert (&surfaces, &surface->link);
 				},
@@ -372,7 +383,7 @@ struct WaylandServerImpl: WaylandServerBase
 	struct wl_pointer_interface pointerInterface;
 	
 	struct wl_surface_interface surfaceInterface;
-	vector<struct wl_resource *> surfaces;
+	vector<shared_ptr<SurfaceData>> surfaces;
 	
 	bool needsRedraw = false;
 };
