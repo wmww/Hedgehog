@@ -11,7 +11,7 @@
 
 int main (int argc, char ** argv)
 {
-	auto manager = GLXContextManagerBase::make(V2i(880, 880), VERBOSE_OFF);
+	auto manager = GLXContextManagerBase::make(V2i(800, 800), VERBOSE_OFF);
 	
 	auto renderer = TexRenderer();
 	

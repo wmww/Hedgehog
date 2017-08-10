@@ -80,10 +80,13 @@ struct WaylandServerImpl: WaylandServerBase
 						+[](wl_client * client, wl_resource * resource)
 						{
 							message("surface interface surface commit callback called (not yet implemented)");
-							/*
-							struct surface *surface = wl_resource_get_user_data (resource);
+							/*struct surface *surface = wl_resource_get_user_data (resource);
 							EGLint texture_format;
-							if (eglQueryWaylandBufferWL (backend_get_egl_display(), surface->buffer, EGL_TEXTURE_FORMAT, &texture_format)) {
+							
+							// query the texture format of the buffer
+							bool idkThisVarMeans = eglQueryWaylandBufferWL(backend_get_egl_display(), surface->buffer, EGL_TEXTURE_FORMAT, &texture_format);
+							
+							if () {
 								EGLint width, height;
 								eglQueryWaylandBufferWL (backend_get_egl_display(), surface->buffer, EGL_WIDTH, &width);
 								eglQueryWaylandBufferWL (backend_get_egl_display(), surface->buffer, EGL_WIDTH, &height);

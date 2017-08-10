@@ -2,6 +2,7 @@
 
 #include <GL/glx.h>
 #include <GL/gl.h>
+#include <cstring>
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 
@@ -64,6 +65,22 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 			cout << "creating window..." << endl;
 		
 		win = XCreateWindow(display, RootWindow(display, vi->screen), x, y, dim.x, dim.y, 0, vi->depth, InputOutput, vi->visual, CWBorderPixel|CWColormap|CWEventMask, &swa);
+		
+		string winName = "Hedgehog";
+		
+		// We use the XTextProperty structure to store the title.
+        XTextProperty windowName;
+        windowName.value    = (unsigned char *) winName.c_str();
+        
+        // XA_STRING is not defined, but its value appears to be 31
+        //windowName.encoding = XA_STRING;
+        windowName.encoding = 31;
+        
+        windowName.format   = 8;
+        windowName.nitems   = strlen((char *) windowName.value);
+		
+		XSetWMName(display, win, &windowName);
+		
 		if (!win)
 		{
 			logError("failed to create window");
