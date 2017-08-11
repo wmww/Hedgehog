@@ -15,6 +15,9 @@ using std::endl;
 using std::shared_ptr;
 using std::unique_ptr;
 
+#include <GL/glew.h>
+#include <GL/gl.h>
+
 template<typename T>
 struct V2
 {
@@ -39,3 +42,19 @@ bool loadFile(string filename, string& contents, bool debug);
 
 // sleep for the given number of seconds (millisecond precision)
 void sleepForSeconds(double seconds);
+
+// returns the path to the folder containing all shaders (ends in slash)
+// this is abstracted into a function because in the future it may need to be determined dynamically
+inline string getShaderPath() {return "shaders/";}
+
+template<typename T>
+void setupIfFirstInstance(T * type)
+{
+	static bool hasInitialized = false;
+	
+	if (!hasInitialized)
+	{
+		T::firstInstanceSetup();
+		hasInitialized = true;
+	}
+}

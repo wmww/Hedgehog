@@ -1,10 +1,13 @@
+#include "../h/utils.h"
+#include "../h/Texture.h"
 #include "../h/WaylandServer.h"
 
 #include <wayland-server-protocol.h>
 #include <wayland-server.h>
-#include <GL/gl.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+
+#include "../h/GLXContextManager.h"
 
 // no clue what this means
 typedef void (*PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) (GLenum target, EGLImage image);
@@ -16,7 +19,7 @@ struct SurfaceData
 	struct wl_resource *buffer;
 	//struct wl_resource *frame_callback;
 	//int x, y;
-	//struct texture texture;
+	//struct texture texture_;
 	//struct client *client;
 };
 
@@ -62,7 +65,7 @@ struct WaylandServerImpl: WaylandServerBase
 						+[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y)
 						{
 							message("surface interface surface attach callback called (not yet implemented)");
-							auto surface = (SurfaceData *)wl_resource_get_user_data(resource);
+							SurfaceData * surface = (SurfaceData *)wl_resource_get_user_data(resource);
 							surface->buffer = buffer;
 						},
 						// surface damage
@@ -91,21 +94,31 @@ struct WaylandServerImpl: WaylandServerBase
 						+[](wl_client * client, wl_resource * resource)
 						{
 							message("surface interface surface commit callback called (not yet implemented)");
-							/*struct surface *surface = wl_resource_get_user_data (resource);
+							
+							assertInstance();
+							/*
+							SurfaceData * surface = (SurfaceData *)wl_resource_get_user_data(resource);
+							
+							//struct surface *surface = wl_resource_get_user_data (resource);
 							EGLint texture_format;
 							
 							// query the texture format of the buffer
-							bool idkThisVarMeans = eglQueryWaylandBufferWL(backend_get_egl_display(), surface->buffer, EGL_TEXTURE_FORMAT, &texture_format);
+							bool idkThisVarMeans = instance->eglQueryWaylandBufferWL(
+									GLXContextManagerBase::instance->getDisplay(),
+									surface->buffer,
+									EGL_TEXTURE_FORMAT,
+									&texture_format
+								);
 							
 							if (idkThisVarMeans) {
 								EGLint width, height;
-								eglQueryWaylandBufferWL (backend_get_egl_display(), surface->buffer, EGL_WIDTH, &width);
-								eglQueryWaylandBufferWL (backend_get_egl_display(), surface->buffer, EGL_WIDTH, &height);
+								instance->eglQueryWaylandBufferWL (GLXContextManagerBase::instance->getDisplay(), surface->buffer, EGL_WIDTH, &width);
+								instance->eglQueryWaylandBufferWL (GLXContextManagerBase::instance->getDisplay(), surface->buffer, EGL_WIDTH, &height);
 								EGLAttrib attribs = EGL_NONE;
-								EGLImage image = eglCreateImage (backend_get_egl_display(), EGL_NO_CONTEXT, EGL_WAYLAND_BUFFER_WL, surface->buffer, &attribs);
+								EGLImage image = eglCreateImage (GLXContextManagerBase::instance->getDisplay(), EGL_NO_CONTEXT, EGL_WAYLAND_BUFFER_WL, surface->buffer, &attribs);
 								texture_delete (&surface->texture);
 								texture_create_from_egl_image (&surface->texture, width, height, image);
-								eglDestroyImage (backend_get_egl_display(), image);
+								eglDestroyImage (GLXContextManagerBase::instance->getDisplay(), image);
 							}
 							else {
 								struct wl_shm_buffer *shm_buffer = wl_shm_buffer_get (surface->buffer);
@@ -116,7 +129,8 @@ struct WaylandServerImpl: WaylandServerBase
 								texture_create (&surface->texture, width, height, data);
 							}
 							wl_buffer_send_release (surface->buffer);
-							redraw_needed = 1;*/
+							//redraw_needed = 1;
+							*/
 						},
 						// surface set buffer transform
 						+[](wl_client * client, wl_resource * resource, int32_t transform)

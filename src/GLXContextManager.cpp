@@ -135,6 +135,11 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 		glXDestroyContext(display, ctx);
 	}
 	
+	Display * getDisplay()
+	{
+		return display;
+	}
+	
 	void swapBuffer()
 	{
 		glXSwapBuffers(display, win);
@@ -147,8 +152,12 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 	bool verbose = false;
 };
 
+GLXContextManager GLXContextManagerBase::instance = nullptr;
+
 GLXContextManager GLXContextManagerBase::make(V2i dim, bool verbose)
 {
-	return GLXContextManager(new GLXContextManagerImpl(dim, verbose));
+	auto instance = GLXContextManager(new GLXContextManagerImpl(dim, verbose));
+	GLXContextManagerBase::instance = instance;
+	return instance;
 }
 
