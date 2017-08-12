@@ -7,7 +7,7 @@ class Texture
 public:
 	Texture(VerboseToggle verboseToggle);
 	void draw();
-	GLuint getId();
+	GLuint getTextureId();
 	
 private:
 	struct Impl;
