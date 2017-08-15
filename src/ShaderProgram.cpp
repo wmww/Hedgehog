@@ -26,6 +26,7 @@ SingleShader SingleShader::fromFile(string file, GLenum type, VerboseToggle verb
 SingleShader SingleShader::fromCode(string code, GLenum type, VerboseToggle verbose)
 {
 	SingleShader shader;
+	shader.impl->status("compiling " + typeToString(type) + "...");
 	shader.impl->verbose = verbose;
 
 	const char* codeCharPtr=code.c_str();
@@ -39,7 +40,7 @@ SingleShader SingleShader::fromCode(string code, GLenum type, VerboseToggle verb
 	{
 		shader.impl->important("shader failed to compile:\n" + shader.getInfoLog());
 	}
-
+	
 	return shader;
 }
 
@@ -56,9 +57,27 @@ string SingleShader::getInfoLog()
 	return out;
 }
 
+string SingleShader::typeToString(GLenum type)
+{
+	switch (type)
+	{
+		case GL_VERTEX_SHADER:
+			return "vertex shader";
+		case GL_FRAGMENT_SHADER:
+			return "fragment shader";
+		default:
+			return "unknown shader type";
+	}
+}
+
 struct ShaderProgram::Impl: MessageLogger
 {
 	GLuint programId = 0;
+	
+	~Impl()
+	{
+		glDeleteProgram(programId);
+	}
 };
 
 ShaderProgram::ShaderProgram()
@@ -89,7 +108,11 @@ ShaderProgram ShaderProgram::fromShaders(SingleShader vertShader, SingleShader f
 {
 	ShaderProgram program;
 	program.impl->verbose = verbose;
+	
+	program.impl->status("creating shader program...");
+	
 	program.impl->programId = glCreateProgram();
+	
 	glAttachShader(program.impl->programId, vertShader.getShaderId());
 	glAttachShader(program.impl->programId, fragShader.getShaderId());
 	glLinkProgram(program.impl->programId);
@@ -99,13 +122,10 @@ ShaderProgram ShaderProgram::fromShaders(SingleShader vertShader, SingleShader f
 	if (!success) {
 		program.impl->important("shader linking failed:\n" + program.getInfoLog());
 	}
+	
+	program.impl->status("info log: " + program.getInfoLog());
 
 	return program;
-}
-
-ShaderProgram::~ShaderProgram()
-{
-	glDeleteProgram(impl->programId);
 }
 
 void ShaderProgram::activete()
@@ -124,6 +144,11 @@ string ShaderProgram::getInfoLog()
 	glGetProgramInfoLog(impl->programId, 1024, nullptr, infoLog);
 	string out(infoLog);
 	return out;
+}
+
+GLuint ShaderProgram::getProgramId()
+{
+	return impl->programId;
 }
 
 /*

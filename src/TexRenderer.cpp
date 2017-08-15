@@ -76,7 +76,7 @@ void TexRenderer::setupTexture()
 	
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
-
+	
 	// Set the texture wrapping/filtering options (on the currently bound texture object)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
@@ -98,7 +98,7 @@ void TexRenderer::setupTexture()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	SOIL_free_image_data(image);
-	glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
+	glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentally mess up our texture.
 }
 
 
@@ -106,14 +106,15 @@ void TexRenderer::draw()
 {
 	//cout << "drawing texture" << endl;
 	
-	//glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-	//glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 	
 	//if (verbose)
 	//	cout << blurRds << endl;
 	
 	// Draw our first triangle
 	//glUseProgram(shaderProgram);
+	//status("drawing...");
 	shaderProgram.activete();
 	{
 		glBindTexture(GL_TEXTURE_2D, texture);
@@ -124,6 +125,7 @@ void TexRenderer::draw()
 				glUniform1f(1, blurRds);
 				
 				//glDrawArrays(GL_TRIANGLES, 0, 6);
+				
 				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 			}
 			glBindVertexArray(false);

@@ -14,6 +14,7 @@ private:
 	SingleShader();
 	
 	string getInfoLog();
+	static string typeToString(GLenum type);
 	
 	struct Impl;
 	shared_ptr<Impl> impl = nullptr;
@@ -27,7 +28,6 @@ public:
 	static ShaderProgram fromFiles(string vertFile, string fragFile, VerboseToggle verbose);
 	static ShaderProgram fromCode(string vertCode, string fragCode, VerboseToggle verbose);
 	static ShaderProgram fromShaders(SingleShader vertShader, SingleShader fragShader, VerboseToggle verbose);
-	~ShaderProgram();
 	
 	void activete();
 	void deactivate();
