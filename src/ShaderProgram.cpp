@@ -1,5 +1,38 @@
 #include "../h/ShaderProgram.h"
 
+struct ShaderProgram::Impl: MessageSender
+{
+	GLuint programId = 0;
+	
+	ShaderProgram()
+	{
+		programId = glCreateProgram();
+	}
+};
+
+ShaderProgram ShaderProgram::fromFiles(string vertFile, string fragFile, VerboseToggle verbose)
+{
+	return ShaderProgram::fromShaders(
+		SingleShader::fromFile(vertFile),
+		SingleShader::fromFile(fragFile),
+		verbose
+	);
+}
+
+ShaderProgram ShaderProgram::fromCode(string vertCode, string fragCode, VerboseToggle verbose)
+{
+	return ShaderProgram::fromShaders(
+		SingleShader::fromCode(vertCode),
+		SingleShader::fromCode(fragCode),
+		verbose
+	);
+}
+
+ShaderProgram ShaderProgram::fromShaders(SingleShader vertShader, SingleShader fragShader, VerboseToggle verbose)
+{
+	
+}
+
 ShaderProgram::ShaderProgram(string vertFile, string fragFile, bool debug)
 {
 	Shader vertShader(vertFile, GL_VERTEX_SHADER, debug);

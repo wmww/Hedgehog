@@ -35,6 +35,23 @@ enum VerboseToggle
 	VERBOSE_OFF = 0,
 };
 
+class MessageLogger
+{
+public:
+	MessageLogger(string tagIn, VerboseToggle verboseIn, MessageLogger * parentIn = nullptr);
+	void status(string msg);
+	void important(string msg);
+	void warning(string msg);
+	void error(string msg);
+	void fatal(string msg);
+	
+private:
+	VerboseToggle verbose;
+	string tag;
+	MessageLogger * parent = nullptr;
+	static void log(string msg);
+};
+
 void logError(string msg);
 
 // loads an entire file into the contents string, returns if it succeeded

@@ -2,31 +2,35 @@
 
 #include "utils.h"
 
+class SingleShader
+{
+public:
+	static SingleShader fromFile(string file, GLenum type, VerboseToggle verbose);
+	static SingleShader fromCode(string code, GLenum type, VerboseToggle verbose);
+	
+	GLuint getShaderId();
+	
+private:
+	ShaderProgram() {}
+	
+	struct Impl;
+	shared_ptr<impl> impl = nullptr;
+};
+
 class ShaderProgram
 {
 public:
 	
-	ShaderProgram() {data=0;};
-	ShaderProgram(string vertFile, string fragFile, bool debug);
-	inline operator GLuint() {return data;}
-	~ShaderProgram();
+	static ShaderProgram fromFiles(string vertFile, string fragFile, VerboseToggle verbose);
+	static ShaderProgram fromCode(string vertCode, string fragCode, VerboseToggle verbose);
+	static ShaderProgram fromShaders(SingleShader vertShader, SingleShader fragShader, VerboseToggle verbose);
+	
+	GLuint getProgramId();
 	
 private:
+	ShaderProgram() {}
 	
-	class Shader
-	{
-	public:
-		Shader(string file, GLenum type, bool debug);
-		inline operator GLuint() {return data;}
-		~Shader();
-		
-	private:
-		string getInfoLog();
-		GLuint data;
-	};
-	
-	string getInfoLog();
-	
-	GLuint data;
+	struct Impl;
+	shared_ptr<Impl> impl = nullptr;
 };
 

@@ -105,7 +105,7 @@ struct Texture::Impl
 	{
 		glewInit();
 		
-		shaderProgram = ShaderProgram(textureShaderVertFile, textureShaderFragFile, VERBOSE_OFF);
+		shaderProgram = ShaderProgram::fromFiles(textureShaderVertFile, textureShaderFragFile, VERBOSE_OFF);
 	}
 };
 

@@ -20,6 +20,7 @@ void main()
 		for (float y=0; y<blurIter; y++)
 		{
 			clrAvg+=texture(ourTexture, vec2(baseTexCord.x+x*blurSize/blurIter, baseTexCord.y+y*blurSize/blurIter)).rgb;
+			clrAvg+=texture(ourTexture, vec2(baseTexCord.x+x*blurSize/blurIter, baseTexCord.y+y*blurSize/blurIter)).rgb;
 		}
 	}
 	
