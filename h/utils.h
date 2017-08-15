@@ -48,7 +48,7 @@ public:
 	string tag = "[unknown]";
 };
 
-#define assert(condition) if (!(condition)) { MessageLogger::show(__FILE__ ", " __LINE__ ": assertion failed: " #condition); exit(1); }
+#define assert(condition) if (!(condition)) { MessageLogger::show(__FILE__ ":" + to_string(__LINE__) + ": assertion failed: " #condition); exit(1); }
 
 void logError(string msg);
 

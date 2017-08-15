@@ -1,7 +1,7 @@
 #include "../h/Texture.h"
 #include "../h/ShaderProgram.h"
 
-ShaderProgram shaderProgram = ShaderProgram();
+ShaderProgram shaderProgram(nullptr);
 
 struct Texture::Impl
 {

@@ -23,7 +23,10 @@ private:
 class ShaderProgram
 {
 public:
-	ShaderProgram();
+	struct Impl;
+	
+	ShaderProgram(shared_ptr<Impl> implIn);
+	//ShaderProgram(const ShaderProgram&) = default;
 	
 	static ShaderProgram fromFiles(string vertFile, string fragFile, VerboseToggle verbose);
 	static ShaderProgram fromCode(string vertCode, string fragCode, VerboseToggle verbose);
@@ -34,10 +37,10 @@ public:
 	
 	GLuint getProgramId();
 	
-private:	
+private:
+	ShaderProgram();
 	string getInfoLog();
 	
-	struct Impl;
 	shared_ptr<Impl> impl = nullptr;
 };
 

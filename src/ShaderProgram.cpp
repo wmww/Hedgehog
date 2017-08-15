@@ -86,6 +86,11 @@ ShaderProgram::ShaderProgram()
 	impl->tag = "ShaderProgram";
 }
 
+ShaderProgram::ShaderProgram(shared_ptr<Impl> implIn)
+{
+	impl = implIn;
+}
+
 ShaderProgram ShaderProgram::fromFiles(string vertFile, string fragFile, VerboseToggle verbose)
 {
 	return ShaderProgram::fromShaders(
@@ -130,6 +135,8 @@ ShaderProgram ShaderProgram::fromShaders(SingleShader vertShader, SingleShader f
 
 void ShaderProgram::activete()
 {
+	assert(impl);
+	
 	glUseProgram(impl->programId);
 }
 
@@ -140,6 +147,7 @@ void ShaderProgram::deactivate()
 
 string ShaderProgram::getInfoLog()
 {
+	assert(impl);
 	GLchar infoLog[1024];
 	glGetProgramInfoLog(impl->programId, 1024, nullptr, infoLog);
 	string out(infoLog);
@@ -148,6 +156,7 @@ string ShaderProgram::getInfoLog()
 
 GLuint ShaderProgram::getProgramId()
 {
+	assert(impl);
 	return impl->programId;
 }
 

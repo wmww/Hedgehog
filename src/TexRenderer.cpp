@@ -2,18 +2,13 @@
 #include "../h/TexRenderer.h"
 #include <SOIL/SOIL.h>
 
-void TexRenderer::setup(VerboseToggle verboseIn)
+TexRenderer::TexRenderer(VerboseToggle verboseIn)
+	: shaderProgram(ShaderProgram::fromFiles(shaderVertPath, shaderFragPath, verboseIn))
 {
 	tag = "TexRenderer";
 	verbose = verboseIn;
 	
-	status("initializing GLEW...");
-	
-	glewInit();
-	
 	status("initializing shaders...");
-	
-	shaderProgram = ShaderProgram::fromFiles(shaderVertPath, shaderFragPath, verbose);
 	
 	GLuint VBO, EBO;
 	

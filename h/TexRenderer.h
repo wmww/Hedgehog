@@ -6,10 +6,9 @@
 class TexRenderer: MessageLogger
 {
 public:
-	//TexRenderer();
+	TexRenderer(VerboseToggle verbose);
 	//~TexRenderer();
 	
-	void setup(VerboseToggle verbose);
 	void draw();
 	
 	float blurRds=0;
