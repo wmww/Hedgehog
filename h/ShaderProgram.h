@@ -26,7 +26,6 @@ public:
 	struct Impl;
 	
 	ShaderProgram(shared_ptr<Impl> implIn);
-	//ShaderProgram(const ShaderProgram&) = default;
 	
 	static ShaderProgram fromFiles(string vertFile, string fragFile, VerboseToggle verbose);
 	static ShaderProgram fromCode(string vertCode, string fragCode, VerboseToggle verbose);
@@ -41,6 +40,7 @@ private:
 	ShaderProgram();
 	string getInfoLog();
 	
+	// this can be null and assertions should be done whenever assuming its not
 	shared_ptr<Impl> impl = nullptr;
 };
 

@@ -3,14 +3,40 @@
 
 ShaderProgram shaderProgram(nullptr);
 
-struct Texture::Impl
+const string vertShaderCode = "#version 330 core "
+"layout (location = 0) in vec3 position; "
+"layout (location = 1) in vec3 color; "
+"layout (location = 2) in vec2 texCoord; "
+"out vec3 ourColor; "
+"out vec2 TexCoord; "
+"void main() "
+"{ "
+	"gl_Position = vec4(position.x, position.y, position.z, 1.0); "
+	"gl_Position = vec4(position, 1.0f); "
+    "ourColor = color; "
+    "TexCoord = texCoord; "
+"} ";
+
+const string fragShaderCode = "#version 330 core"
+"in vec3 ourColor; "
+"in vec2 TexCoord; "
+"out vec4 color; "
+"uniform sampler2D ourTexture; "
+"void main() "
+"{ "
+	"color = texture(ourTexture, TexCoord); "
+"} ";
+
+struct Texture::Impl: MessageLogger
 {
-	VerboseToggle verbose = VERBOSE_OFF;
 	GLuint squareVAOId;
 	GLuint textureId;
 	
-	Impl()
+	Impl(VerboseToggle verboseToggle)
 	{
+		verbose = verboseToggle;
+		tag = "Texture";
+		
 		setupIfFirstInstance(this);
 		
 		setupVAO();
@@ -20,7 +46,7 @@ struct Texture::Impl
 	
 	void setupVAO()
 	{
-		message("setting up a VAO");
+		status("setting up a VAO");
 		
 		GLuint VBO, EBO;
 		
@@ -78,7 +104,7 @@ struct Texture::Impl
 	
 	void setupGlTexture()
 	{
-		message("setting up OpenGL texture");
+		status("setting up OpenGL texture");
 		
 		glGenTextures(1, &textureId);
 		
@@ -93,34 +119,37 @@ struct Texture::Impl
 		glBindTexture(GL_TEXTURE_2D, false);
 	}
 	
-	inline void message(string msg)
-	{
-		if (verbose)
-		{
-			cout << "texture: " << msg << endl;
-		}
-	}
-	
 	static void firstInstanceSetup()
 	{
-		glewInit();
-		
-		shaderProgram = ShaderProgram::fromFiles(textureShaderVertFile, textureShaderFragFile, VERBOSE_OFF);
+		shaderProgram = ShaderProgram::fromCode(vertShaderCode, fragShaderCode, VERBOSE_OFF);
 	}
 };
 
 Texture::Texture(VerboseToggle verboseToggle)
 {
-	impl = shared_ptr<Impl>(new Impl);
-	impl->verbose = verboseToggle;
+	impl = shared_ptr<Impl>(new Impl(verboseToggle));
 }
 
 void Texture::draw()
 {
-	
+	assert(impl);
+	shaderProgram.activete();
+	{
+		glBindTexture(GL_TEXTURE_2D, impl->textureId);
+		{
+			glBindVertexArray(impl->squareVAOId);
+			{
+				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+			}
+			glBindVertexArray(false);
+		}
+		glBindTexture(GL_TEXTURE_2D, false);
+	}
+	shaderProgram.deactivate();
 }
 
 GLuint Texture::getTextureId()
 {
+	assert(impl);
 	return impl->textureId;
 }

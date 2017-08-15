@@ -14,5 +14,5 @@ private:
 	shared_ptr<Impl> impl = nullptr;
 };
 
-const string textureShaderVertFile = "shader0.vert";
-const string textureShaderFragFile = "shader0.frag";
+//const string textureShaderVertFile = "shader0.vert";
+//const string textureShaderFragFile = "shader0.frag";
