@@ -38,19 +38,17 @@ enum VerboseToggle
 class MessageLogger
 {
 public:
-	MessageLogger(string tagIn, VerboseToggle verboseIn, MessageLogger * parentIn = nullptr);
 	void status(string msg);
 	void important(string msg);
-	void warning(string msg);
-	void error(string msg);
 	void fatal(string msg);
 	
-private:
-	VerboseToggle verbose;
-	string tag;
-	MessageLogger * parent = nullptr;
-	static void log(string msg);
+	static void show(string msg);
+	
+	VerboseToggle verbose = VERBOSE_ON;
+	string tag = "[unknown]";
 };
+
+#define assert(condition) if (!(condition)) { MessageLogger::show(__FILE__ ", " __LINE__ ": assertion failed: " #condition); exit(1); }
 
 void logError(string msg);
 

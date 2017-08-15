@@ -3,13 +3,13 @@
 #include "utils.h"
 #include "ShaderProgram.h"
 
-class TexRenderer
+class TexRenderer: MessageLogger
 {
 public:
 	//TexRenderer();
 	//~TexRenderer();
 	
-	void setup(bool verbose);
+	void setup(VerboseToggle verbose);
 	void draw();
 	
 	float blurRds=0;
@@ -25,6 +25,4 @@ private:
 	ShaderProgram shaderProgram;
 	GLuint squareVAO;
 	GLuint texture;
-	
-	bool verbose = false;
 };

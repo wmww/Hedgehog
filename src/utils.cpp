@@ -50,28 +50,27 @@ void sleepForSeconds(double seconds)
 	std::this_thread::sleep_for(std::chrono::milliseconds((int)(seconds * 1000)));
 }
 
-MessageLogger::MessageLogger(string tagIn, VerboseToggle verboseIn, MessageLogger * parentIn = nullptr)
-{
-	verbose = verboseIn;
-	tag = tagIn;
-	if (tag == "")
-		tag = "[unknown]";
-	parent = parentIn;
-}
-
 void MessageLogger::status(string msg)
 {
 	if (verbose)
 	{
-		if (parent)
-		cout << tag << ": " << 
+		important(msg);
 	}
 }
 
-void MessageLogger::log(string msg)
+void MessageLogger::important(string msg)
 {
-	if (parent)
-		parent->log(tag + ": " + msg);
-	else
-		cout << tag << ": " << msg;
+	show(tag + ": " + msg);
+}
+
+void MessageLogger::fatal(string msg)
+{
+	cout << "fatal error: ";
+	important(msg);
+	exit(1);
+}
+
+void MessageLogger::show(string msg)
+{
+	cout << msg << endl;
 }

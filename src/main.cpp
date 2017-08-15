@@ -14,10 +14,9 @@ int main (int argc, char ** argv)
 	auto manager = GLXContextManagerBase::make(V2i(800, 800), VERBOSE_OFF);
 	
 	auto renderer = TexRenderer();
+	renderer.setup(VERBOSE_ON);
 	
-	auto waylandServer = WaylandServerBase::make(VERBOSE_ON);
-	
-	renderer.setup(VERBOSE_OFF);
+	auto waylandServer = WaylandServerBase::make(VERBOSE_OFF);
 	
 	while (true)
 	{

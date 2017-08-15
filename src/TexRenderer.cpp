@@ -2,19 +2,18 @@
 #include "../h/TexRenderer.h"
 #include <SOIL/SOIL.h>
 
-void TexRenderer::setup(bool verboseIn)
+void TexRenderer::setup(VerboseToggle verboseIn)
 {
+	tag = "TexRenderer";
 	verbose = verboseIn;
 	
-	if (verbose)
-		cout << "initializing GLEW..." << endl;
+	status("initializing GLEW...");
 	
 	glewInit();
 	
-	if (verbose)
-		cout << "initializing shaders..." << endl;
+	status("initializing shaders...");
 	
-	shaderProgram=ShaderProgram(shaderVertPath, shaderFragPath, verbose);
+	shaderProgram = ShaderProgram::fromFiles(shaderVertPath, shaderFragPath, verbose);
 	
 	GLuint VBO, EBO;
 	
@@ -34,8 +33,7 @@ void TexRenderer::setup(bool verboseIn)
 	
 	//glViewport(0, 0, width, height);
 	
-	if (verbose)
-		cout << "creating OpenGL stuff..." << endl;
+	status("creating OpenGL stuff...");
 	
 	glGenVertexArrays(1, &squareVAO);
 	glGenBuffers(1, &VBO);
@@ -74,8 +72,7 @@ void TexRenderer::setup(bool verboseIn)
 
 void TexRenderer::setupTexture()
 {
-	if (verbose)
-		cout << "initializing texture..." << endl;
+	status("initializing texture...");
 	
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -86,19 +83,17 @@ void TexRenderer::setupTexture()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	
-	if (verbose)
-		cout << "loading image..." << endl;
+	status("loading image...");
 	
 	// Load and generate the texture
 	int width, height;
 	unsigned char* image = SOIL_load_image(imagePath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
 	if (!image)
 	{
-		cout << "image loading error: " << SOIL_last_result() << endl;
+		important(string() + "image loading error: " + SOIL_last_result());
 	}
 	
-	if (verbose)
-		cout << "creating texture from image..." << endl;
+	status("creating texture from image...");
 	
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 	glGenerateMipmap(GL_TEXTURE_2D);
@@ -118,14 +113,23 @@ void TexRenderer::draw()
 	//	cout << blurRds << endl;
 	
 	// Draw our first triangle
-	glUseProgram(shaderProgram);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glBindVertexArray(squareVAO);
-	blurRds*=1.1;
-	glUniform1f(1, blurRds);
-	
-	//glDrawArrays(GL_TRIANGLES, 0, 6);
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(false);
+	//glUseProgram(shaderProgram);
+	shaderProgram.activete();
+	{
+		glBindTexture(GL_TEXTURE_2D, texture);
+		{
+			glBindVertexArray(squareVAO);
+			{
+				blurRds*=1.1;
+				glUniform1f(1, blurRds);
+				
+				//glDrawArrays(GL_TRIANGLES, 0, 6);
+				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+			}
+			glBindVertexArray(false);
+		}
+		glBindTexture(GL_TEXTURE_2D, false);
+	}
+	shaderProgram.deactivate();
 }
 
