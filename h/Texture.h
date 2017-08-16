@@ -6,6 +6,7 @@ class Texture
 {
 public:
 	Texture(VerboseToggle verboseToggle);
+	void loadFromImage(string filepath);
 	void draw();
 	GLuint getTextureId();
 	

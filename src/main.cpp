@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include "../h/TexRenderer.h"
+#include "../h/Texture.h"
 #include "../h/GLXContextManager.h"
 #include "../h/WaylandServer.h"
 
@@ -17,7 +18,11 @@ int main (int argc, char ** argv)
 	
 	//auto renderer = TexRenderer();
 	//renderer.setup(VERBOSE_ON);
-	auto renderer = TexRenderer(VERBOSE_ON);
+	//auto renderer = TexRenderer(VERBOSE_ON);
+	
+	auto texture = Texture(VERBOSE_ON);
+	
+	texture.loadFromImage("assets/hedgehog.jpg");
 	
 	auto waylandServer = WaylandServerBase::make(VERBOSE_OFF);
 	
@@ -25,7 +30,7 @@ int main (int argc, char ** argv)
 	while (true)
 	{
 		waylandServer->iteration();
-		renderer.draw();
+		texture.draw();
 		manager->swapBuffer();
 		sleepForSeconds(0.2);
 	}

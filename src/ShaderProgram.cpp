@@ -38,7 +38,7 @@ SingleShader SingleShader::fromCode(string code, GLenum type, VerboseToggle verb
 	glGetShaderiv(shader.impl->shaderId, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
-		shader.impl->important("shader failed to compile:\n" + shader.getInfoLog());
+		shader.impl->important("shader failed to compile:\n\n" + shader.getInfoLog() + "\n");
 	}
 	
 	return shader;
@@ -125,7 +125,7 @@ ShaderProgram ShaderProgram::fromShaders(SingleShader vertShader, SingleShader f
 	GLint success;
 	glGetProgramiv(program.impl->programId, GL_LINK_STATUS, &success);
 	if (!success) {
-		program.impl->important("shader linking failed:\n" + program.getInfoLog());
+		program.impl->important("shader linking failed:\n\n" + program.getInfoLog() + "\n");
 	}
 	
 	program.impl->status("info log: " + program.getInfoLog());

@@ -1,9 +1,10 @@
 #include "../h/Texture.h"
 #include "../h/ShaderProgram.h"
+#include <SOIL/SOIL.h>
 
 ShaderProgram shaderProgram(nullptr);
 
-const string vertShaderCode = "#version 330 core "
+const string vertShaderCode = "#version 330 core\n"
 "layout (location = 0) in vec3 position; "
 "layout (location = 1) in vec3 color; "
 "layout (location = 2) in vec2 texCoord; "
@@ -11,20 +12,21 @@ const string vertShaderCode = "#version 330 core "
 "out vec2 TexCoord; "
 "void main() "
 "{ "
-	"gl_Position = vec4(position.x, position.y, position.z, 1.0); "
 	"gl_Position = vec4(position, 1.0f); "
     "ourColor = color; "
     "TexCoord = texCoord; "
 "} ";
 
-const string fragShaderCode = "#version 330 core"
+const string fragShaderCode = "#version 330 core\n"
 "in vec3 ourColor; "
 "in vec2 TexCoord; "
 "out vec4 color; "
+"uniform float blurSize; "
 "uniform sampler2D ourTexture; "
 "void main() "
 "{ "
 	"color = texture(ourTexture, TexCoord); "
+	//"color = vec4(1.0f, 0.0f, 0.5f, 1.0f); "
 "} ";
 
 struct Texture::Impl: MessageLogger
@@ -130,15 +132,40 @@ Texture::Texture(VerboseToggle verboseToggle)
 	impl = shared_ptr<Impl>(new Impl(verboseToggle));
 }
 
+void Texture::loadFromImage(string imagePath)
+{
+	impl->status("loading '" + imagePath + "' into texture...");
+	// Load and generate the texture
+	int width, height;
+	unsigned char* image = SOIL_load_image(imagePath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+	if (!image)
+	{
+		impl->important(string() + "image loading error: " + SOIL_last_result());
+	}
+	
+	impl->status("creating texture from image...");
+	
+	glBindTexture(GL_TEXTURE_2D, impl->textureId);
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentally mess up our texture.
+	
+	SOIL_free_image_data(image);
+}
+
 void Texture::draw()
 {
 	assert(impl);
+	//impl->status("drawing...");
 	shaderProgram.activete();
 	{
 		glBindTexture(GL_TEXTURE_2D, impl->textureId);
 		{
 			glBindVertexArray(impl->squareVAOId);
 			{
+				glUniform1f(1, 8.3);
 				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 			}
 			glBindVertexArray(false);
