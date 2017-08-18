@@ -14,9 +14,10 @@ typedef void (*PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) (GLenum target, EGLImage ima
 
 struct SurfaceData
 {
-	struct wl_resource *surface;
+	struct wl_resource * surface;
 	//struct wl_resource *xdg_surface;
-	struct wl_resource *buffer;
+	struct wl_resource * buffer;
+	Texture texture;
 	//struct wl_resource *frame_callback;
 	//int x, y;
 	//struct texture texture_;
@@ -96,41 +97,44 @@ struct WaylandServerImpl: WaylandServerBase
 							message("surface interface surface commit callback called (not yet implemented)");
 							
 							assertInstance();
-							/*
-							SurfaceData * surface = (SurfaceData *)wl_resource_get_user_data(resource);
+								
+							SurfaceData * surfaceData = (SurfaceData *)wl_resource_get_user_data(resource);
 							
 							//struct surface *surface = wl_resource_get_user_data (resource);
 							EGLint texture_format;
+							auto display = GLXContextManagerBase::instance->getDisplay();
+							auto buffer = surfaceData->buffer;
 							
 							// query the texture format of the buffer
 							bool idkThisVarMeans = instance->eglQueryWaylandBufferWL(
-									GLXContextManagerBase::instance->getDisplay(),
-									surface->buffer,
+									display,
+									buffer,
 									EGL_TEXTURE_FORMAT,
 									&texture_format
 								);
 							
 							if (idkThisVarMeans) {
 								EGLint width, height;
-								instance->eglQueryWaylandBufferWL (GLXContextManagerBase::instance->getDisplay(), surface->buffer, EGL_WIDTH, &width);
-								instance->eglQueryWaylandBufferWL (GLXContextManagerBase::instance->getDisplay(), surface->buffer, EGL_WIDTH, &height);
+								instance->eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &width);
+								instance->eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &height);
 								EGLAttrib attribs = EGL_NONE;
-								EGLImage image = eglCreateImage (GLXContextManagerBase::instance->getDisplay(), EGL_NO_CONTEXT, EGL_WAYLAND_BUFFER_WL, surface->buffer, &attribs);
-								texture_delete (&surface->texture);
-								texture_create_from_egl_image (&surface->texture, width, height, image);
-								eglDestroyImage (GLXContextManagerBase::instance->getDisplay(), image);
+								EGLImage image = eglCreateImage(display, EGL_NO_CONTEXT, EGL_WAYLAND_BUFFER_WL, buffer, &attribs);
+								//texture_delete(&surface->texture);
+								surfaceData->texture.loadFromEGLImage(image, V2i(width, height));
+								//texture_create_from_egl_image (&surface->texture, width, height, image);
+								eglDestroyImage (display, image);
 							}
 							else {
-								struct wl_shm_buffer *shm_buffer = wl_shm_buffer_get (surface->buffer);
-								uint32_t width = wl_shm_buffer_get_width (shm_buffer);
-								uint32_t height = wl_shm_buffer_get_height (shm_buffer);
-								void *data = wl_shm_buffer_get_data (shm_buffer);
-								texture_delete (&surface->texture);
-								texture_create (&surface->texture, width, height, data);
+								struct wl_shm_buffer *shm_buffer = wl_shm_buffer_get(buffer);
+								uint32_t width = wl_shm_buffer_get_width(shm_buffer);
+								uint32_t height = wl_shm_buffer_get_height(shm_buffer);
+								void *data = wl_shm_buffer_get_data(shm_buffer);
+								//texture_delete(&surface->texture);
+								//texture_create(&surface->texture, width, height, data);
+								surfaceData->texture.loadFromData(data, V2i(width, height));
 							}
-							wl_buffer_send_release (surface->buffer);
+							wl_buffer_send_release (buffer);
 							//redraw_needed = 1;
-							*/
 						},
 						// surface set buffer transform
 						+[](wl_client * client, wl_resource * resource, int32_t transform)
@@ -170,7 +174,12 @@ struct WaylandServerImpl: WaylandServerBase
 					};
 					
 					struct wl_resource * surface = wl_resource_create(client, &wl_surface_interface, 3, id);
-					auto surfaceData = shared_ptr<SurfaceData>(new SurfaceData{(struct wl_resource *)surface, (struct wl_resource *)nullptr});
+					auto surfaceData = shared_ptr<SurfaceData>(new SurfaceData
+						{
+							(struct wl_resource *)surface,
+							(struct wl_resource *)nullptr,
+							Texture(VERBOSE_OFF),
+						});
 					instance->surfaces.push_back(surfaceData);
 					wl_resource_set_implementation(surface, &instance->surfaceInterface, &*surfaceData, +deleteSurface);
 					//surface->client = get_client (client);
@@ -351,6 +360,10 @@ struct WaylandServerImpl: WaylandServerBase
 	{
 		wl_event_loop_dispatch(eventLoop, 0);
 		wl_display_flush_clients(display);
+		for (auto i: surfaces)
+		{
+			i->texture.draw();
+		}
 		//if (needsRedraw)
 		//{
 		//	needsRedraw = false;

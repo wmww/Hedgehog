@@ -29,8 +29,8 @@ int main (int argc, char ** argv)
 	
 	while (true)
 	{
-		waylandServer->iteration();
 		texture.draw();
+		waylandServer->iteration();
 		manager->swapBuffer();
 		sleepForSeconds(0.2);
 	}

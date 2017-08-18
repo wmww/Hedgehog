@@ -1,5 +1,10 @@
 #include "../h/Texture.h"
 #include "../h/ShaderProgram.h"
+#include <wayland-server-protocol.h>
+#include <wayland-server.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <EGL/eglext.h>
 #include <SOIL/SOIL.h>
 
 ShaderProgram shaderProgram(nullptr);
@@ -23,6 +28,9 @@ const string fragShaderCode = "#version 330 core\n"
 	"color = texture(textureData, texturePosition); "
 "} ";
 
+typedef void (*PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) (GLenum target, EGLImage image);
+PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES = nullptr;
+
 struct Texture::Impl: MessageLogger
 {
 	GLuint squareVAOId;
@@ -38,6 +46,11 @@ struct Texture::Impl: MessageLogger
 		setupVAO();
 		
 		setupGlTexture();
+	}
+	
+	~Impl()
+	{
+		important("Texture::~Impl() not yet implemented");
 	}
 	
 	void setupVAO()
@@ -115,6 +128,7 @@ struct Texture::Impl: MessageLogger
 	static void firstInstanceSetup()
 	{
 		shaderProgram = ShaderProgram::fromCode(vertShaderCode, fragShaderCode, VERBOSE_OFF);
+		glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
 	}
 };
 
@@ -144,6 +158,29 @@ void Texture::loadFromImage(string imagePath)
 	glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentally mess up our texture.
 	
 	SOIL_free_image_data(image);
+}
+
+void Texture::loadFromData(void * data, V2i dim)
+{
+	glBindTexture(GL_TEXTURE_2D, impl->textureId);
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dim.x, dim.y, 0, GL_BGRA, GL_UNSIGNED_BYTE, data);
+	}
+	glBindTexture(GL_TEXTURE_2D, false);
+}
+
+void Texture::loadFromEGLImage(EGLImage image, V2i dim)
+{
+	glBindTexture(GL_TEXTURE_2D, impl->textureId);
+	{
+		glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);
+	}
+	glBindTexture(GL_TEXTURE_2D, false);
+}
+
+void Texture::clear()
+{
+	
 }
 
 void Texture::draw()
