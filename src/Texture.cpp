@@ -5,28 +5,22 @@
 ShaderProgram shaderProgram(nullptr);
 
 const string vertShaderCode = "#version 330 core\n"
-"layout (location = 0) in vec3 position; "
-"layout (location = 1) in vec3 color; "
-"layout (location = 2) in vec2 texCoord; "
-"out vec3 ourColor; "
-"out vec2 TexCoord; "
+"layout (location = 0) in vec2 position; "
+"layout (location = 1) in vec2 texturePositionIn; "
+"out vec2 texturePosition; "
 "void main() "
 "{ "
-	"gl_Position = vec4(position, 1.0f); "
-    "ourColor = color; "
-    "TexCoord = texCoord; "
+	"gl_Position = vec4(position, 0.0f, 1.0f); "
+    "texturePosition = texturePositionIn; "
 "} ";
 
 const string fragShaderCode = "#version 330 core\n"
-"in vec3 ourColor; "
-"in vec2 TexCoord; "
+"in vec2 texturePosition; "
 "out vec4 color; "
-"uniform float blurSize; "
-"uniform sampler2D ourTexture; "
+"uniform sampler2D textureData; "
 "void main() "
 "{ "
-	"color = texture(ourTexture, TexCoord); "
-	//"color = vec4(1.0f, 0.0f, 0.5f, 1.0f); "
+	"color = texture(textureData, texturePosition); "
 "} ";
 
 struct Texture::Impl: MessageLogger
@@ -54,11 +48,11 @@ struct Texture::Impl: MessageLogger
 		
 		GLfloat vertices[] =
 		{
-			//Positions				Colors					Texture Coords
-			1.0f,	1.0f,	0.0f,	0.0f,	1.0f,	0.0f,	1.0f,	0.0f,	// Top Right
-			1.0f,	-1.0f,	0.0f,	0.0f,	0.5f,	0.5f,	1.0f,	1.0f,	// Bottom Right
-			-1.0f,	-1.0f,	0.0f,	0.0f,	0.0f,	1.0f,	0.0f,	1.0f,	// Bottom Left
-			-1.0f,	1.0f,	0.0f,	0.0f,	0.0f,	0.5f,	0.0f,	0.0f,	// Top Left 
+			// position		// texture position
+			1.0f,	1.0f,	1.0f,	0.0f,	// Top Right
+			1.0f,	-1.0f,	1.0f,	1.0f,	// Bottom Right
+			-1.0f,	-1.0f,	0.0f,	1.0f,	// Bottom Left
+			-1.0f,	1.0f,	0.0f,	0.0f,	// Top Left 
 		};
 		
 		GLuint indices[] =
@@ -80,14 +74,11 @@ struct Texture::Impl: MessageLogger
 			{
 				glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 				
-				glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
+				glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0);
 				glEnableVertexAttribArray(0);
 				
-				glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3*sizeof(GL_FLOAT)));
+				glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*) (2 * sizeof(GLfloat)));
 				glEnableVertexAttribArray(1);
-				
-				glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6*sizeof(GL_FLOAT)));
-				glEnableVertexAttribArray(2);
 			}
 			glBindBuffer(GL_ARRAY_BUFFER, false); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
 			
@@ -165,7 +156,6 @@ void Texture::draw()
 		{
 			glBindVertexArray(impl->squareVAOId);
 			{
-				glUniform1f(1, 8.3);
 				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 			}
 			glBindVertexArray(false);
