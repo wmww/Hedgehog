@@ -65,7 +65,7 @@ struct WaylandServerImpl: WaylandServerBase
 						// surface attach
 						+[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y)
 						{
-							message("surface interface surface attach callback called (not yet implemented)");
+							message("surface interface surface attach callback called");
 							SurfaceData * surface = (SurfaceData *)wl_resource_get_user_data(resource);
 							surface->buffer = buffer;
 						},
@@ -94,7 +94,7 @@ struct WaylandServerImpl: WaylandServerBase
 						// surface commit
 						+[](wl_client * client, wl_resource * resource)
 						{
-							message("surface interface surface commit callback called (not yet implemented)");
+							message("surface interface surface commit callback called");
 							
 							assertInstance();
 								
@@ -125,10 +125,10 @@ struct WaylandServerImpl: WaylandServerBase
 								eglDestroyImage (display, image);
 							}
 							else {
-								struct wl_shm_buffer *shm_buffer = wl_shm_buffer_get(buffer);
-								uint32_t width = wl_shm_buffer_get_width(shm_buffer);
-								uint32_t height = wl_shm_buffer_get_height(shm_buffer);
-								void *data = wl_shm_buffer_get_data(shm_buffer);
+								struct wl_shm_buffer * shmBuffer = wl_shm_buffer_get(buffer);
+								uint32_t width = wl_shm_buffer_get_width(shmBuffer);
+								uint32_t height = wl_shm_buffer_get_height(shmBuffer);
+								void * data = wl_shm_buffer_get_data(shmBuffer);
 								//texture_delete(&surface->texture);
 								//texture_create(&surface->texture, width, height, data);
 								surfaceData->texture.loadFromData(data, V2i(width, height));
@@ -180,6 +180,7 @@ struct WaylandServerImpl: WaylandServerBase
 							(struct wl_resource *)nullptr,
 							Texture(VERBOSE_OFF),
 						});
+					message("adding surface!");
 					instance->surfaces.push_back(surfaceData);
 					wl_resource_set_implementation(surface, &instance->surfaceInterface, &*surfaceData, +deleteSurface);
 					//surface->client = get_client (client);
@@ -360,6 +361,7 @@ struct WaylandServerImpl: WaylandServerBase
 	{
 		wl_event_loop_dispatch(eventLoop, 0);
 		wl_display_flush_clients(display);
+		//message("drawing " + to_string(surfaces.size()) + " textures...");
 		for (auto i: surfaces)
 		{
 			i->texture.draw();

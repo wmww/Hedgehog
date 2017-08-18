@@ -35,6 +35,7 @@ struct Texture::Impl: MessageLogger
 {
 	GLuint squareVAOId;
 	GLuint textureId;
+	bool isLoaded = false;
 	
 	Impl(VerboseToggle verboseToggle)
 	{
@@ -158,15 +159,27 @@ void Texture::loadFromImage(string imagePath)
 	glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentally mess up our texture.
 	
 	SOIL_free_image_data(image);
+	
+	impl->isLoaded = true;
 }
 
 void Texture::loadFromData(void * data, V2i dim)
 {
+	//impl->important("(" + to_string(dim.x) + ", " + to_string(dim.y) + ")");
+	
+	
 	glBindTexture(GL_TEXTURE_2D, impl->textureId);
 	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dim.x, dim.y, 0, GL_BGRA, GL_UNSIGNED_BYTE, data);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dim.x, dim.y, 0, GL_BGRA, GL_UNSIGNED_BYTE, data);
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dim.x, dim.y, 0, GL_BGRA, GL_UNSIGNED_BYTE, data);
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dim.x, dim.y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		//glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	glBindTexture(GL_TEXTURE_2D, false);
+	
+	impl->isLoaded = true;
 }
 
 void Texture::loadFromEGLImage(EGLImage image, V2i dim)
@@ -176,6 +189,8 @@ void Texture::loadFromEGLImage(EGLImage image, V2i dim)
 		glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);
 	}
 	glBindTexture(GL_TEXTURE_2D, false);
+	
+	impl->isLoaded = true;
 }
 
 void Texture::clear()
@@ -186,6 +201,9 @@ void Texture::clear()
 void Texture::draw()
 {
 	assert(impl);
+	//assert(impl->isLoaded);
+	if (!impl->isLoaded)
+		return;
 	//impl->status("drawing...");
 	shaderProgram.activete();
 	{

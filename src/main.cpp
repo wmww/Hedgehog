@@ -20,11 +20,11 @@ int main (int argc, char ** argv)
 	//renderer.setup(VERBOSE_ON);
 	//auto renderer = TexRenderer(VERBOSE_ON);
 	
-	auto texture = Texture(VERBOSE_ON);
+	auto texture = Texture(VERBOSE_OFF);
 	
 	texture.loadFromImage("assets/hedgehog.jpg");
 	
-	auto waylandServer = WaylandServerBase::make(VERBOSE_OFF);
+	auto waylandServer = WaylandServerBase::make(VERBOSE_ON);
 	
 	
 	while (true)

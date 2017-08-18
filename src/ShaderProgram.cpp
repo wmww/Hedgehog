@@ -26,8 +26,8 @@ SingleShader SingleShader::fromFile(string file, GLenum type, VerboseToggle verb
 SingleShader SingleShader::fromCode(string code, GLenum type, VerboseToggle verbose)
 {
 	SingleShader shader;
-	shader.impl->status("compiling " + typeToString(type) + "...");
 	shader.impl->verbose = verbose;
+	shader.impl->status("compiling " + typeToString(type) + "...");
 
 	const char* codeCharPtr=code.c_str();
 	shader.impl->shaderId = glCreateShader(type);
