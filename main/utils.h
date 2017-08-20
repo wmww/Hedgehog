@@ -23,8 +23,11 @@ struct V2
 {
 	T x, y;
 	
-	V2(T xIn, T yIn) {x = xIn; y = yIn;}
+	V2(T xIn, T yIn) { x = xIn; y = yIn; }
 };
+
+template<typename T>
+string to_string(V2<T> in) { return "(" + to_string(in.x) + ", " + to_string(in.y) + ")"; }
 
 typedef V2<int> V2i;
 typedef V2<double> V2d;

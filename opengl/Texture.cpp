@@ -166,7 +166,20 @@ void Texture::loadFromImage(string imagePath)
 void Texture::loadFromData(void * data, V2i dim)
 {
 	//impl->important("(" + to_string(dim.x) + ", " + to_string(dim.y) + ")");
+	/*
+	impl->important("loading from data, dim: " + to_string(dim));
 	
+	for (int i = 0; i < dim.x * dim.y; i += 600)
+	{
+		impl->important(
+				"color: "
+				+ to_string(((unsigned char *)data)[i * 4 + 0]) + ", "
+				+ to_string(((unsigned char *)data)[i * 4 + 1]) + ", "
+				+ to_string(((unsigned char *)data)[i * 4 + 2]) + ", "
+				+ to_string(((unsigned char *)data)[i * 4 + 3])
+			);
+	}
+	*/
 	
 	glBindTexture(GL_TEXTURE_2D, impl->textureId);
 	{

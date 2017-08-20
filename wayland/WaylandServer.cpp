@@ -15,13 +15,8 @@ typedef void (*PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) (GLenum target, EGLImage ima
 struct SurfaceData
 {
 	struct wl_resource * surface;
-	//struct wl_resource *xdg_surface;
 	struct wl_resource * buffer;
 	Texture texture;
-	//struct wl_resource *frame_callback;
-	//int x, y;
-	//struct texture texture_;
-	//struct client *client;
 };
 
 struct WaylandServerImpl: WaylandServerBase

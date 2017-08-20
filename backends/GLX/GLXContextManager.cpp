@@ -1,4 +1,4 @@
-#include "../h/GLXContextManager.h"
+#include "GLXContextManager.h"
 
 #include <GL/glx.h>
 #include <GL/gl.h>

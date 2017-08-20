@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils.h"
+#include "../../main/utils.h"
 #include <GL/glx.h>
 
 struct GLXContextManagerBase;
