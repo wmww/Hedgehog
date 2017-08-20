@@ -1,13 +1,13 @@
-#include "../h/utils.h"
-#include "../h/Texture.h"
-#include "../h/WaylandServer.h"
+#include "../main/utils.h"
+#include "../opengl/Texture.h"
+#include "WaylandServer.h"
 
 #include <wayland-server-protocol.h>
 #include <wayland-server.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
-#include "../h/GLXContextManager.h"
+#include "../backends/GLX/GLXContextManager.h"
 
 // no clue what this means
 typedef void (*PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) (GLenum target, EGLImage image);

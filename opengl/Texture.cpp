@@ -1,5 +1,5 @@
-#include "../h/Texture.h"
-#include "../h/ShaderProgram.h"
+#include "Texture.h"
+#include "ShaderProgram.h"
 #include <wayland-server-protocol.h>
 #include <wayland-server.h>
 #include <EGL/egl.h>

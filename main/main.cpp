@@ -5,10 +5,10 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "../h/TexRenderer.h"
-#include "../h/Texture.h"
-#include "../h/GLXContextManager.h"
-#include "../h/WaylandServer.h"
+#include "../opengl/TexRenderer.h"
+#include "../opengl/Texture.h"
+#include "../backends/GLX/GLXContextManager.h"
+#include "../wayland/WaylandServer.h"
 
 int main (int argc, char ** argv)
 {

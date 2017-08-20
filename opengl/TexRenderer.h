@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils.h"
+#include "../main/utils.h"
 #include "ShaderProgram.h"
 
 class TexRenderer: MessageLogger

@@ -1,5 +1,5 @@
 
-#include "../h/TexRenderer.h"
+#include "TexRenderer.h"
 #include <SOIL/SOIL.h>
 
 TexRenderer::TexRenderer(VerboseToggle verboseIn)

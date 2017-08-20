@@ -1,4 +1,4 @@
-#include "../h/ShaderProgram.h"
+#include "ShaderProgram.h"
 
 struct SingleShader::Impl: MessageLogger
 {
