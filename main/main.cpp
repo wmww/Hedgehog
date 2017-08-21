@@ -9,6 +9,7 @@
 #include "../opengl/Texture.h"
 #include "../backends/GLX/GLXContextManager.h"
 #include "../wayland/WaylandServer.h"
+#include "Surface2D.h"
 
 int main (int argc, char ** argv)
 {
@@ -31,6 +32,7 @@ int main (int argc, char ** argv)
 	{
 		texture.draw();
 		waylandServer->iteration();
+		Surface2D::drawAll();
 		manager->swapBuffer();
 		sleepForSeconds(0.2);
 	}

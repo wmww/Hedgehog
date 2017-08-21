@@ -156,7 +156,8 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id, VerboseToggle ve
 
 WaylandSurface WaylandSurface::getFrom(wl_resource * resource)
 {
-	assert(wl_resource_get_class(resource) == "wl_surface_interface");
+	MessageLogger::show(wl_resource_get_class(resource));
+	assert(string(wl_resource_get_class(resource)) == "wl_surface");
 	Impl * impl = (Impl *)wl_resource_get_user_data(resource);
 	return WaylandSurface(impl->shared_from_this());
 }

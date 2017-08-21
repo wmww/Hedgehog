@@ -10,6 +10,8 @@ public:
 	Texture getTexture();
 	void draw();
 	
+	static void drawAll();
+	
 private:
 	struct Impl;
 	shared_ptr<Impl> impl = nullptr;
