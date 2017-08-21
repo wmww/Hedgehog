@@ -1,11 +1,14 @@
 #include "WaylandSurface.h"
 #include "WaylandServer.h"
+#include "../backends/GLX/GLXContextManager.h"
 
 #include <wayland-server-protocol.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
-struct WaylandSurface::Impl: MessageLogger, public enable_shared_from_this<WaylandSurface>
+#include <set>
+
+struct WaylandSurface::Impl: MessageLogger, public enable_shared_from_this<Impl>
 {
 	// instance data
 	Surface2D surface2D;
@@ -24,14 +27,14 @@ struct WaylandSurface::Impl: MessageLogger, public enable_shared_from_this<Wayla
 	static PFNEGLBINDWAYLANDDISPLAYWL eglBindWaylandDisplayWL;
 	static PFNEGLQUERYWAYLANDBUFFERWL eglQueryWaylandBufferWL;
 	
-	Impl(VerboseToggle verboseIn)
+	Impl(VerboseToggle verboseIn): surface2D(verboseIn)
 	{
 		verbose = verboseIn;
 		tag = "WaylandSurface";
 		setupIfFirstInstance(this);
 	}
 	
-	void firstInstanceSetup()
+	static void firstInstanceSetup()
 	{
 		eglBindWaylandDisplayWL = (PFNEGLBINDWAYLANDDISPLAYWL)eglGetProcAddress("eglBindWaylandDisplayWL");
 		eglQueryWaylandBufferWL = (PFNEGLQUERYWAYLANDBUFFERWL)eglGetProcAddress("eglQueryWaylandBufferWL");
@@ -40,6 +43,7 @@ struct WaylandSurface::Impl: MessageLogger, public enable_shared_from_this<Wayla
 
 PFNEGLBINDWAYLANDDISPLAYWL WaylandSurface::Impl::eglBindWaylandDisplayWL = nullptr;
 PFNEGLQUERYWAYLANDBUFFERWL WaylandSurface::Impl::eglQueryWaylandBufferWL = nullptr;
+std::set<shared_ptr<WaylandSurface::Impl>> WaylandSurface::Impl::surfaceImplSet;
 
 const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface destroy
@@ -50,9 +54,9 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface attach
 	+[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y)
 	{
-		getFrom(resource).impl->status("surface interface surface attach callback called");
-		SurfaceData * surface = (SurfaceData *)wl_resource_get_user_data(resource);
-		surface->buffer = buffer;
+		auto self = getFrom(resource);
+		self.impl->status("surface interface surface attach callback called");
+		self.impl->bufferResource = buffer;
 	},
 	// surface damage
 	+[](wl_client * client, wl_resource * resource, int32_t x, int32_t y, int32_t width, int32_t height)
@@ -86,20 +90,20 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 		// get the data we'll need
 		EGLint texture_format;
 		Display * display = GLXContextManagerBase::instance->getDisplay();
-		struct wl_resource buffer = self.impl->buffer;
+		struct wl_resource * buffer = self.impl->bufferResource;
 		
 		// make sure this function pointer has been initialized
-		assert(WaylandSurface::eglQueryWaylandBufferWL);
+		assert(Impl::eglQueryWaylandBufferWL);
 		
 		// query the texture format of the buffer
-		bool idkWhatThisVarMeans = WaylandSurface::eglQueryWaylandBufferWL(display, buffer, EGL_TEXTURE_FORMAT, &texture_format);
+		bool idkWhatThisVarMeans = Impl::eglQueryWaylandBufferWL(display, buffer, EGL_TEXTURE_FORMAT, &texture_format);
 		
 		if (idkWhatThisVarMeans) {
 			// I think this is for using EGL to share a buffer directly on the GPU
 			// this code path is currently untested
 			EGLint width, height;
-			WaylandSurface::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &width);
-			WaylandSurface::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &height);
+			Impl::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &width);
+			Impl::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &height);
 			EGLAttrib attribs = EGL_NONE;
 			EGLImage image = eglCreateImage(display, EGL_NO_CONTEXT, EGL_WAYLAND_BUFFER_WL, buffer, &attribs);
 			self.impl->surface2D.getTexture().loadFromEGLImage(image, V2i(width, height));
@@ -130,7 +134,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 void WaylandSurface::Impl::deleteSurface(wl_resource * resource)
 {
 	auto self = getFrom(resource);
-	self.impl->message("delete surface callback called");
+	self.impl->status("delete surface callback called");
 	auto iter = Impl::surfaceImplSet.find(self.impl);
 	if (iter == Impl::surfaceImplSet.end())
 	{
@@ -142,22 +146,17 @@ void WaylandSurface::Impl::deleteSurface(wl_resource * resource)
 	}
 };
 
-WaylandSurface::WaylandSurface(VerboseToggle verboseToggle)
+WaylandSurface::WaylandSurface(wl_client * client, uint32_t id, VerboseToggle verboseToggle)
 {
 	impl = shared_ptr<Impl>(new Impl(verboseToggle));
+	impl->surfaceResource = wl_resource_create(client, &wl_surface_interface, 3, id);
+	wl_resource_set_implementation(impl->surfaceResource, &Impl::surfaceInterface, &*impl, Impl::deleteSurface);
+	Impl::surfaceImplSet.insert(impl);
 }
 
-shared_ptr<WaylandSurface> WaylandSurface::make(wl_client * client, uint32_t id, VerboseToggle verboseToggle);
-{
-	obj = WaylandSurface(verboseToggle);
-	obj.impl->surfaceResource = wl_resource_create(client, &wl_surface_interface, 3, id);
-	wl_resource_set_implementation(obj.impl->surfaceResource, &Impl::surfaceInterface, &*obj.impl, Impl::deleteSurface);
-	Impl::surfaceImplSet.insert(obj.impl);
-	return obj;
-}
-
-static WaylandSurface WaylandSurface::getFrom(wl_resource * resource)
+WaylandSurface WaylandSurface::getFrom(wl_resource * resource)
 {
 	assert(wl_resource_get_class(resource) == "wl_surface_interface");
-	return WaylandSurface(((Impl *)wl_resource_get_user_data(resource))->shared_from_this());
+	Impl * impl = (Impl *)wl_resource_get_user_data(resource);
+	return WaylandSurface(impl->shared_from_this());
 }
