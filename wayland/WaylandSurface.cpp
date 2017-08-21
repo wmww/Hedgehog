@@ -1,16 +1,47 @@
+#include "WaylandSurface.h"
 #include "WaylandServer.h"
 
-PFNEGLBINDWAYLANDDISPLAYWL WaylandSurface::eglBindWaylandDisplayWL = nullptr;
-PFNEGLQUERYWAYLANDBUFFERWL WaylandSurface::eglQueryWaylandBufferWL = nullptr;
+#include <wayland-server-protocol.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 
 struct WaylandSurface::Impl: MessageLogger, public enable_shared_from_this<WaylandSurface>
 {
+	// instance data
 	Surface2D surface2D;
 	struct wl_resource * bufferResource = nullptr;
 	struct wl_resource * surfaceResource = nullptr;
+	
+	// callbacks to be sent to libwayland
+	static void deleteSurface(wl_resource * resource);
+	static const struct wl_surface_interface surfaceInterface;
+	
+	// the sole responsibility of this set is to keep the objects alive as long as libwayland has raw pointers to them
+	static std::set<shared_ptr<Impl>> surfaceImplSet;
+	
+	// pointers to functions that need to be retrieved dynamically
+	// they will be fetched when the first instance of this class is created
+	static PFNEGLBINDWAYLANDDISPLAYWL eglBindWaylandDisplayWL;
+	static PFNEGLQUERYWAYLANDBUFFERWL eglQueryWaylandBufferWL;
+	
+	Impl(VerboseToggle verboseIn)
+	{
+		verbose = verboseIn;
+		tag = "WaylandSurface";
+		setupIfFirstInstance(this);
+	}
+	
+	void firstInstanceSetup()
+	{
+		eglBindWaylandDisplayWL = (PFNEGLBINDWAYLANDDISPLAYWL)eglGetProcAddress("eglBindWaylandDisplayWL");
+		eglQueryWaylandBufferWL = (PFNEGLQUERYWAYLANDBUFFERWL)eglGetProcAddress("eglQueryWaylandBufferWL");
+	}
 };
 
-const struct wl_surface_interface WaylandSurface::surfaceInterface = {
+PFNEGLBINDWAYLANDDISPLAYWL WaylandSurface::Impl::eglBindWaylandDisplayWL = nullptr;
+PFNEGLQUERYWAYLANDBUFFERWL WaylandSurface::Impl::eglQueryWaylandBufferWL = nullptr;
+
+const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface destroy
 	+[](wl_client * client, wl_resource * resource)
 	{
@@ -96,34 +127,32 @@ const struct wl_surface_interface WaylandSurface::surfaceInterface = {
 	},
 };
 
-void WaylandSurface::deleteSurface(wl_resource * resource)
+void WaylandSurface::Impl::deleteSurface(wl_resource * resource)
 {
 	auto self = getFrom(resource);
 	self.impl->message("delete surface callback called");
-	assert(surfaceImplSet.find(self.impl) != surfaceImplSet.end());
-	surfaceImplSet.erase(self.impl);
+	auto iter = Impl::surfaceImplSet.find(self.impl);
+	if (iter == Impl::surfaceImplSet.end())
+	{
+		self.impl->important("WARNING: deleteSurface called but linked WaylandSurface::Impl is not in surfaceImplSet");
+	}
+	else
+	{
+		surfaceImplSet.erase(iter);
+	}
 };
-
-void WaylandSurface::firstInstanceSetup()
-{
-	eglBindWaylandDisplayWL = (PFNEGLBINDWAYLANDDISPLAYWL)eglGetProcAddress("eglBindWaylandDisplayWL");
-	eglQueryWaylandBufferWL = (PFNEGLQUERYWAYLANDBUFFERWL)eglGetProcAddress("eglQueryWaylandBufferWL");
-}
 
 WaylandSurface::WaylandSurface(VerboseToggle verboseToggle)
 {
-	setupIfFirstInstance(this);
-	impl = shared_ptr<Impl>(new Impl);
-	impl->verbose = verboseToggle;
-	impl->tag = "WaylandSurface";
+	impl = shared_ptr<Impl>(new Impl(verboseToggle));
 }
 
 shared_ptr<WaylandSurface> WaylandSurface::make(wl_client * client, uint32_t id, VerboseToggle verboseToggle);
 {
 	obj = WaylandSurface(verboseToggle);
 	obj.impl->surfaceResource = wl_resource_create(client, &wl_surface_interface, 3, id);
-	wl_resource_set_implementation(obj.impl->surfaceResource, &surfaceInterface, &*obj.impl, deleteSurface);
-	surfaceImplSet.insert(obj.impl);
+	wl_resource_set_implementation(obj.impl->surfaceResource, &Impl::surfaceInterface, &*obj.impl, Impl::deleteSurface);
+	Impl::surfaceImplSet.insert(obj.impl);
 	return obj;
 }
 

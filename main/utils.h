@@ -14,6 +14,7 @@ using std::endl;
 #include <memory>
 using std::shared_ptr;
 using std::unique_ptr;
+using std::enable_shared_from_this;
 
 #include <GL/glew.h>
 #include <GL/gl.h>
