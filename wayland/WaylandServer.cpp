@@ -41,7 +41,7 @@ struct WaylandServerImpl: WaylandServerBase
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
 					message("compositor interface create surface callback called");
-					WaylandSurface(client, id, verbose);
+					WaylandSurface(client, id);
 				},
 				
 				// create region

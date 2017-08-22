@@ -8,7 +8,7 @@
 class WaylandSurface
 {
 public:
-	WaylandSurface(wl_client * client, uint32_t id, VerboseToggle verboseToggle);
+	WaylandSurface(wl_client * client, uint32_t id);
 	static WaylandSurface getFrom(wl_resource * resource);
 	
 private:

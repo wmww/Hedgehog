@@ -1,3 +1,6 @@
+// disables debug statements, must be before includes
+//#define NO_DEBUG
+
 #include "WaylandSurface.h"
 #include "WaylandServer.h"
 #include "../backends/GLX/GLXContextManager.h"
@@ -8,7 +11,7 @@
 
 #include <set>
 
-struct WaylandSurface::Impl: MessageLogger, public enable_shared_from_this<Impl>
+struct WaylandSurface::Impl: public enable_shared_from_this<Impl>
 {
 	// instance data
 	Surface2D surface2D;
@@ -27,10 +30,8 @@ struct WaylandSurface::Impl: MessageLogger, public enable_shared_from_this<Impl>
 	static PFNEGLBINDWAYLANDDISPLAYWL eglBindWaylandDisplayWL;
 	static PFNEGLQUERYWAYLANDBUFFERWL eglQueryWaylandBufferWL;
 	
-	Impl(VerboseToggle verboseIn)
+	Impl()
 	{
-		verbose = verboseIn;
-		tag = "WaylandSurface";
 		setupIfFirstInstance(this);
 	}
 	
@@ -49,43 +50,43 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface destroy
 	+[](wl_client * client, wl_resource * resource)
 	{
-		getFrom(resource).impl->status("surface interface surface destroy callback called (not yet implemented)");
+		warning("surface interface surface destroy callback called (not yet implemented)");
 	},
 	// surface attach
 	+[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y)
 	{
+		debug("surface interface surface attach callback called");
 		auto self = getFrom(resource);
-		self.impl->status("surface interface surface attach callback called");
 		self.impl->bufferResource = buffer;
 	},
 	// surface damage
 	+[](wl_client * client, wl_resource * resource, int32_t x, int32_t y, int32_t width, int32_t height)
 	{
-		getFrom(resource).impl->status("surface interface surface damage callback called (not yet implemented)");
+		warning("surface interface surface damage callback called (not yet implemented)");
 	},
 	// surface frame
 	+[](wl_client * client, wl_resource * resource, uint32_t callback)
 	{
-		getFrom(resource).impl->status("surface interface surface frame callback called (not yet implemented)");
+		warning("surface interface surface frame callback called (not yet implemented)");
 		//struct surface *surface = wl_resource_get_user_data (resource);
 		//surface->frame_callback = wl_resource_create (client, &wl_callback_interface, 1, callback);
 	},
 	// surface set opaque region
 	+[](wl_client * client, wl_resource * resource, wl_resource * region)
 	{
-		getFrom(resource).impl->status("surface interface surface set opaque region callback called (not yet implemented)");
+		warning("surface interface surface set opaque region callback called (not yet implemented)");
 	},
 	// surface set input region
 	+[](wl_client * client, wl_resource * resource, wl_resource * region)
 	{
-		getFrom(resource).impl->status("surface interface surface set input region callback called (not yet implemented)");
+		warning("surface interface surface set input region callback called (not yet implemented)");
 	},
 	// surface commit
 	+[](wl_client * client, wl_resource * resource)
 	{
-		auto self = getFrom(resource);
+		debug("surface interface surface commit callback called");
 		
-		self.impl->status("surface interface surface commit callback called");
+		auto self = getFrom(resource);
 		
 		// get the data we'll need
 		EGLint texture_format;
@@ -122,23 +123,23 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface set buffer transform
 	+[](wl_client * client, wl_resource * resource, int32_t transform)
 	{
-		getFrom(resource).impl->status("surface interface surface set buffer transform callback called (not yet implemented)");
+		warning("surface interface surface set buffer transform callback called (not yet implemented)");
 	},
 	// surface set buffer scale
 	+[](wl_client * client, wl_resource * resource, int32_t scale)
 	{
-		getFrom(resource).impl->status("surface interface surface set buffer scale callback called (not yet implemented)");
+		warning("surface interface surface set buffer scale callback called (not yet implemented)");
 	},
 };
 
 void WaylandSurface::Impl::deleteSurface(wl_resource * resource)
 {
+	debug("delete surface callback called");
 	auto self = getFrom(resource);
-	self.impl->status("delete surface callback called");
 	auto iter = Impl::surfaceImplSet.find(self.impl);
 	if (iter == Impl::surfaceImplSet.end())
 	{
-		self.impl->important("WARNING: deleteSurface called but linked WaylandSurface::Impl is not in surfaceImplSet");
+		warning("deleteSurface called but linked WaylandSurface::Impl is not in surfaceImplSet");
 	}
 	else
 	{
@@ -146,9 +147,9 @@ void WaylandSurface::Impl::deleteSurface(wl_resource * resource)
 	}
 };
 
-WaylandSurface::WaylandSurface(wl_client * client, uint32_t id, VerboseToggle verboseToggle)
+WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 {
-	impl = shared_ptr<Impl>(new Impl(verboseToggle));
+	impl = shared_ptr<Impl>(new Impl);
 	impl->surfaceResource = wl_resource_create(client, &wl_surface_interface, 3, id);
 	wl_resource_set_implementation(impl->surfaceResource, &Impl::surfaceInterface, &*impl, Impl::deleteSurface);
 	Impl::surfaceImplSet.insert(impl);
@@ -156,8 +157,7 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id, VerboseToggle ve
 
 WaylandSurface WaylandSurface::getFrom(wl_resource * resource)
 {
-	MessageLogger::show(wl_resource_get_class(resource));
-	assert(string(wl_resource_get_class(resource)) == "wl_surface");
+	assert(string(wl_resource_get_class(resource)) == string("wl_surface"));
 	Impl * impl = (Impl *)wl_resource_get_user_data(resource);
 	return WaylandSurface(impl->shared_from_this());
 }
