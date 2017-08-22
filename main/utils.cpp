@@ -8,16 +8,22 @@ using std::stringstream;
 #include <chrono>
 #include <thread>
 
-const int messageMaxWidth = 60; // max width in characters for a printed message
+#include <unistd.h> // for terminal size detection
+#include <sys/ioctl.h> // for terminal size detection
 
-void logError(string msg)
+int getTermWidth()
 {
-	std::cerr << "error: " << msg << std::endl;
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	return w.ws_col;
 }
 
 void logMessage(string source, MessageType type, string message)
 {
-	const string indent = "  ";
+	const string indent =		" |  ";
+	const string lastIndent =	" |_ ";
+	
+	int messageMaxWidth = getTermWidth();
 	
 	std::ostream * stream = &std::cerr;
 	if (type == MESSAGE_DEBUG)
@@ -64,7 +70,7 @@ void logMessage(string source, MessageType type, string message)
 		}
 		string line;
 		if (start != 0)
-			line += indent;
+			line += (lineEnd == end ? lastIndent : indent);
 		line += msg.substr(start, splitPoint - start);
 		lines.push_back(line);
 		start = splitPoint;

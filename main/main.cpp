@@ -23,8 +23,6 @@ int main (int argc, char ** argv)
 	
 	auto texture = Texture();
 	
-	debug("yo, whats up, blah, blah, blah, dsalg asgdgfs fdsg dfg dfg dffddsfdg dsfdfggfdsgf fdsg dgdsgd dsfg dgfsdd");
-	
 	texture.loadFromImage("assets/hedgehog.jpg");
 	
 	auto waylandServer = WaylandServerBase::make(VERBOSE_ON);

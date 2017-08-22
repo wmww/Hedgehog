@@ -230,11 +230,7 @@ struct WaylandServerImpl: WaylandServerBase
 	
 	inline static void assertInstance()
 	{
-		if (!instance)
-		{
-			cout << "error: wayland server: oh shit, WaylandServerImpl::instance is null!" << endl;
-			exit(1);
-		}
+		assert(instance != nullptr);
 	}
 	
 	static WaylandServerImpl * instance;
@@ -262,7 +258,7 @@ WaylandServer WaylandServerBase::make(VerboseToggle verbose)
 {
 	if (WaylandServerImpl::instance != nullptr)
 	{
-		logError("tried to create multiple WaylandServerImpl instances");
+		warning("tried to create multiple WaylandServerImpl instances");
 		return WaylandServerImpl::instance->shared_from_this();
 	}
 	else

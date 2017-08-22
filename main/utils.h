@@ -61,12 +61,14 @@ enum MessageType
 void logMessage(string source, MessageType type, string messaage); // this function does NOT support unicode
 
 #define FILE_INFO __FILE__ ":" + std::to_string(__LINE__)
-#define debug(message) logMessage(FILE_INFO, MESSAGE_DEBUG, message)
+#ifdef NO_DEBUG
+	#define debug(message)
+#else
+	#define debug(message) logMessage(FILE_INFO, MESSAGE_DEBUG, message)
+#endif
 #define warning(message) logMessage(FILE_INFO, MESSAGE_WARNING, message)
 #define fatal(message) logMessage(FILE_INFO, MESSAGE_FATAL_ERROR, message)
 #define assert(condition) if (!(condition)) { logMessage(FILE_INFO, MESSAGE_ASSERTION_FAILED, #condition); }
-
-void logError(string msg);
 
 // loads an entire file into the contents string, returns if it succeeded
 bool loadFile(string filename, string& contents, bool debug);

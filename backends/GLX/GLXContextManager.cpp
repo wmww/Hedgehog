@@ -1,3 +1,6 @@
+// disables debug statements, must be before includes
+#define NO_DEBUG
+
 #include "GLXContextManager.h"
 
 #include <GL/glx.h>
@@ -12,8 +15,7 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 	{
 		verbose = verboseIn;
 		
-		if (verbose)
-			cout << "opening X display..." << endl;
+		debug("opening X display...");
 		
 		display = XOpenDisplay(0);
 		
@@ -33,26 +35,20 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 			None
 		};
 		
-		if (verbose)
-			cout << "getting framebuffer config..." << endl;
+		debug("getting framebuffer config...");
 		
 		int fbcount;
 		GLXFBConfig *fbc = glXChooseFBConfig(display, DefaultScreen(display), visual_attribs, &fbcount);
-		if (!fbc)
-		{
-			logError("Failed to retrieve a framebuffer config");
-			exit(1);
-		}
 		
-		if (verbose)
-			cout << "getting XVisualInfo..." << endl;
+		assert(fbc != nullptr);
+		
+		debug("getting XVisualInfo...");
 		
 		XVisualInfo *vi = glXGetVisualFromFBConfig(display, fbc[0]);
 	 
 		XSetWindowAttributes swa;
 		
-		if (verbose)
-			cout << "creating colormap..." << endl;
+		debug("creating colormap...");
 		
 		swa.colormap = XCreateColormap(display, RootWindow(display, vi->screen), vi->visual, AllocNone);
 		swa.border_pixel = 0;
@@ -61,8 +57,7 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 		int x = 0;
 		int y = 0;
 		
-		if (verbose)
-			cout << "creating window..." << endl;
+		debug("creating window...");
 		
 		win = XCreateWindow(display, RootWindow(display, vi->screen), x, y, dim.x, dim.y, 0, vi->depth, InputOutput, vi->visual, CWBorderPixel|CWColormap|CWEventMask, &swa);
 		
@@ -81,14 +76,9 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 		
 		XSetWMName(display, win, &windowName);
 		
-		if (!win)
-		{
-			logError("failed to create window");
-			exit(1);
-		}
+		assert(win != 0);
 		
-		if (verbose)
-			cout << "mapping window..." << endl;
+		debug("mapping window...");
 		
 		XMapWindow(display, win);
 	 
@@ -98,11 +88,7 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 		glXMakeCurrent(display, 0, 0);
 		glXDestroyContext(display, ctx_old);
 	 
-		if (glXCreateContextAttribsARB == NULL)
-		{
-			logError("glXCreateContextAttribsARB entry point not found");
-			exit(1);
-		}
+		assert(glXCreateContextAttribsARB != nullptr);
 	 
 		static int context_attribs[] =
 		{
@@ -111,24 +97,18 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 			None
 		};
 		
-		if (verbose)
-			cout << "creating context..." << endl;
+		debug("creating context...");
 		
 		ctx = glXCreateContextAttribsARB(display, fbc[0], NULL, true, context_attribs);
-		if (!ctx)
-		{
-			logError("failed to create GL3 context");
-			exit(1);
-		}
+		assert(ctx != nullptr);
 	 
-		std::cout << "Making context current" << std::endl;
+		debug("Making context current");
 		glXMakeCurrent(display, win, ctx);
 	}
 	
 	~GLXContextManagerImpl()
 	{
-		if (verbose)
-			cout << "cleaning up context..." << endl;
+		debug("cleaning up context...");
 		
 		//ctx = glXGetCurrentContext();
 		//glXMakeCurrent(display, 0, 0);

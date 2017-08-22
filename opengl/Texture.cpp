@@ -1,3 +1,6 @@
+// disables debug statements, must be before includes
+#define NO_DEBUG
+
 #include "Texture.h"
 #include "ShaderProgram.h"
 #include <wayland-server-protocol.h>
