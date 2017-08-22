@@ -1,3 +1,6 @@
+// disables debug statements, must be before includes
+#define NO_DEBUG
+
 #include "utils.h"
 
 #include <fstream>
@@ -87,33 +90,29 @@ void logMessage(string source, MessageType type, string message)
 		exit(1);
 }
 
-bool loadFile(string filename, string& contents, bool debug)
+bool loadFile(string filename, string& contents)
 {
 	std::fstream inFile;
 	
-	if (debug)
-		cout << "attempting to open '" << filename << "'..." << endl;
+	debug("attempting to open '" + filename + "'...");
 	
 	inFile.open(filename);
 	
 	if (!inFile.is_open())
 	{
-		if (debug)
-			cout << "'" << filename << "' failed to open :(" << endl;
+		debug("'" + filename + "' failed to open :(");
 		return false;
 	}
 	else
 	{
-		if (debug)
-			cout << "file opended, reading file..." << endl;
+		debug("file opended, reading file...");
 		
 		stringstream strStream;
 		strStream << inFile.rdbuf();	// read the file
 		contents = strStream.str();	// str holds the content of the file
 		inFile.close();
 		
-		if (debug)
-			cout << "file reading done, '" << filename << "' closed" << endl;
+		debug("file reading done, '" + filename + "' closed");
 		
 		return true;
 	}
@@ -124,6 +123,7 @@ void sleepForSeconds(double seconds)
 	std::this_thread::sleep_for(std::chrono::milliseconds((int)(seconds * 1000)));
 }
 
+/*
 void MessageLogger::status(string msg)
 {
 	if (verbose)
@@ -141,3 +141,5 @@ void MessageLogger::show(string msg)
 {
 	cout << msg << endl;
 }
+*/
+

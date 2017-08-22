@@ -5,8 +5,8 @@
 class SingleShader
 {
 public:
-	static SingleShader fromFile(string file, GLenum type, VerboseToggle verbose);
-	static SingleShader fromCode(string code, GLenum type, VerboseToggle verbose);
+	static SingleShader fromFile(string file, GLenum type);
+	static SingleShader fromCode(string code, GLenum type);
 	
 	GLuint getShaderId();
 	
@@ -27,9 +27,9 @@ public:
 	
 	ShaderProgram(shared_ptr<Impl> implIn);
 	
-	static ShaderProgram fromFiles(string vertFile, string fragFile, VerboseToggle verbose);
-	static ShaderProgram fromCode(string vertCode, string fragCode, VerboseToggle verbose);
-	static ShaderProgram fromShaders(SingleShader vertShader, SingleShader fragShader, VerboseToggle verbose);
+	static ShaderProgram fromFiles(string vertFile, string fragFile);
+	static ShaderProgram fromCode(string vertCode, string fragCode);
+	static ShaderProgram fromShaders(SingleShader vertShader, SingleShader fragShader);
 	
 	void activete();
 	void deactivate();

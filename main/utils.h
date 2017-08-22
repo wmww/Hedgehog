@@ -8,17 +8,19 @@ using std::to_string;
 using std::vector;
 
 #include <iostream>
-using std::cout;
-using std::endl;
+//using std::cout;
+//using std::endl;
 
 #include <memory>
 using std::shared_ptr;
 using std::unique_ptr;
+using std::weak_ptr;
 using std::enable_shared_from_this;
 
 #include <GL/glew.h>
 #include <GL/gl.h>
 
+// a simple 2D vector class (vector in the x, y sense, not the array sense)
 template<typename T>
 struct V2
 {
@@ -33,33 +35,15 @@ string to_string(V2<T> in) { return "(" + to_string(in.x) + ", " + to_string(in.
 typedef V2<int> V2i;
 typedef V2<double> V2d;
 
-enum VerboseToggle
-{
-	VERBOSE_ON = 1,
-	VERBOSE_OFF = 0,
-};
-
-class MessageLogger
-{
-public:
-	void status(string msg);
-	void important(string msg);
-	
-	static void show(string msg);
-	
-	VerboseToggle verbose = VERBOSE_ON;
-	string tag = "[unknown]";
-};
-
-enum MessageType
-{
-	MESSAGE_DEBUG,
-	MESSAGE_WARNING,
-	MESSAGE_ASSERTION_FAILED,
-	MESSAGE_FATAL_ERROR,
-};
+// instead of using logMessage directly, it is generally a good idea to use the debug, warning, fatal and assert macros
+enum MessageType { MESSAGE_DEBUG, MESSAGE_WARNING, MESSAGE_ASSERTION_FAILED, MESSAGE_FATAL_ERROR };
 void logMessage(string source, MessageType type, string messaage); // this function does NOT support unicode
 
+// the function-like macros debug, warning and fatal each take a string and print it along with the file and line number
+// this is made possible by the __FILE__ and __LINE__ macros
+// all debugs in a file can be disabled at 0 run time cost by putting #define NO_DEBUG at the top of the file (before includes)
+// fatal automatically kills the program as soon as its done logging
+// assert is used to easily check a boolean expression, and fatally error if its false
 #define FILE_INFO __FILE__ ":" + std::to_string(__LINE__)
 #ifdef NO_DEBUG
 	#define debug(message)
@@ -71,7 +55,7 @@ void logMessage(string source, MessageType type, string messaage); // this funct
 #define assert(condition) if (!(condition)) { logMessage(FILE_INFO, MESSAGE_ASSERTION_FAILED, #condition); }
 
 // loads an entire file into the contents string, returns if it succeeded
-bool loadFile(string filename, string& contents, bool debug);
+bool loadFile(string filename, string& contents);
 
 // sleep for the given number of seconds (millisecond precision)
 void sleepForSeconds(double seconds);
@@ -80,6 +64,8 @@ void sleepForSeconds(double seconds);
 // this is abstracted into a function because in the future it may need to be determined dynamically
 inline string getShaderPath() {return "shaders/";}
 
+// for lazy evaluation of static class members
+// to use, put a static function in your class called firstInstanceSetup, and call setupIfFirstInstance with this in the constructor
 template<typename T>
 void setupIfFirstInstance(T * type)
 {

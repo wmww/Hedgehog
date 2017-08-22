@@ -228,8 +228,6 @@ struct WaylandServerImpl: WaylandServerBase
 	
 	static WaylandServerImpl * instance;
 	
-	static VerboseToggle verbose;
-	
 	// function pointers that need to be retrieved at run time. This is Cs sad, pathetic attempt at duck typing.
 	PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES = nullptr;
 	
@@ -245,7 +243,6 @@ struct WaylandServerImpl: WaylandServerBase
 };
 
 WaylandServerImpl * WaylandServerImpl::instance = nullptr;
-VerboseToggle WaylandServerImpl::verbose = VERBOSE_OFF;
 
 WaylandServer WaylandServerBase::make()
 {

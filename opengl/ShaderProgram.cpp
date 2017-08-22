@@ -1,6 +1,9 @@
+// disables debug statements, must be before includes
+#define NO_DEBUG
+
 #include "ShaderProgram.h"
 
-struct SingleShader::Impl: MessageLogger
+struct SingleShader::Impl
 {
 	GLuint shaderId = 0;
 };
@@ -8,26 +11,24 @@ struct SingleShader::Impl: MessageLogger
 SingleShader::SingleShader()
 {
 	impl = shared_ptr<Impl>(new Impl);
-	impl->tag = "SingleShader";
 }
 
-SingleShader SingleShader::fromFile(string file, GLenum type, VerboseToggle verbose)
+SingleShader SingleShader::fromFile(string file, GLenum type)
 {
 	string code;
 	
-	if (!loadFile(file, code, verbose))
+	if (!loadFile(file, code))
 	{
-		MessageLogger::show("error: shader file '" + file + "' failed to load");
+		warning("shader file '" + file + "' failed to load");
 	}
 	
-	return fromCode(code, type, verbose);
+	return fromCode(code, type);
 }
 
-SingleShader SingleShader::fromCode(string code, GLenum type, VerboseToggle verbose)
+SingleShader SingleShader::fromCode(string code, GLenum type)
 {
 	SingleShader shader;
-	shader.impl->verbose = verbose;
-	shader.impl->status("compiling " + typeToString(type) + "...");
+	debug("compiling " + typeToString(type) + "...");
 
 	const char* codeCharPtr=code.c_str();
 	shader.impl->shaderId = glCreateShader(type);
@@ -38,7 +39,7 @@ SingleShader SingleShader::fromCode(string code, GLenum type, VerboseToggle verb
 	glGetShaderiv(shader.impl->shaderId, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
-		shader.impl->important("shader failed to compile:\n\n" + shader.getInfoLog() + "\n");
+		warning("shader failed to compile:\n" + shader.getInfoLog());
 	}
 	
 	return shader;
@@ -66,11 +67,12 @@ string SingleShader::typeToString(GLenum type)
 		case GL_FRAGMENT_SHADER:
 			return "fragment shader";
 		default:
+			warning("unknown shader type");
 			return "unknown shader type";
 	}
 }
 
-struct ShaderProgram::Impl: MessageLogger
+struct ShaderProgram::Impl
 {
 	GLuint programId = 0;
 	
@@ -83,7 +85,6 @@ struct ShaderProgram::Impl: MessageLogger
 ShaderProgram::ShaderProgram()
 {
 	impl = shared_ptr<Impl>(new Impl);
-	impl->tag = "ShaderProgram";
 }
 
 ShaderProgram::ShaderProgram(shared_ptr<Impl> implIn)
@@ -91,30 +92,27 @@ ShaderProgram::ShaderProgram(shared_ptr<Impl> implIn)
 	impl = implIn;
 }
 
-ShaderProgram ShaderProgram::fromFiles(string vertFile, string fragFile, VerboseToggle verbose)
+ShaderProgram ShaderProgram::fromFiles(string vertFile, string fragFile)
 {
 	return ShaderProgram::fromShaders(
-		SingleShader::fromFile(vertFile, GL_VERTEX_SHADER, verbose),
-		SingleShader::fromFile(fragFile, GL_FRAGMENT_SHADER, verbose),
-		verbose
+		SingleShader::fromFile(vertFile, GL_VERTEX_SHADER),
+		SingleShader::fromFile(fragFile, GL_FRAGMENT_SHADER)
 	);
 }
 
-ShaderProgram ShaderProgram::fromCode(string vertCode, string fragCode, VerboseToggle verbose)
+ShaderProgram ShaderProgram::fromCode(string vertCode, string fragCode)
 {
 	return ShaderProgram::fromShaders(
-		SingleShader::fromCode(vertCode, GL_VERTEX_SHADER, verbose),
-		SingleShader::fromCode(fragCode, GL_FRAGMENT_SHADER, verbose),
-		verbose
+		SingleShader::fromCode(vertCode, GL_VERTEX_SHADER),
+		SingleShader::fromCode(fragCode, GL_FRAGMENT_SHADER)
 	);
 }
 
-ShaderProgram ShaderProgram::fromShaders(SingleShader vertShader, SingleShader fragShader, VerboseToggle verbose)
+ShaderProgram ShaderProgram::fromShaders(SingleShader vertShader, SingleShader fragShader)
 {
 	ShaderProgram program;
-	program.impl->verbose = verbose;
 	
-	program.impl->status("creating shader program...");
+	debug("creating shader program...");
 	
 	program.impl->programId = glCreateProgram();
 	
@@ -125,11 +123,9 @@ ShaderProgram ShaderProgram::fromShaders(SingleShader vertShader, SingleShader f
 	GLint success;
 	glGetProgramiv(program.impl->programId, GL_LINK_STATUS, &success);
 	if (!success) {
-		program.impl->important("shader linking failed:\n\n" + program.getInfoLog() + "\n");
+		warning("shader linking failed:\n" + program.getInfoLog());
 	}
 	
-	program.impl->status("info log: " + program.getInfoLog());
-
 	return program;
 }
 

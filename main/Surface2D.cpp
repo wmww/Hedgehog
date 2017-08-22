@@ -1,3 +1,6 @@
+// disables debug statements, must be before includes
+#define NO_DEBUG
+
 #include "Surface2D.h"
 
 struct Surface2D::Impl
@@ -27,6 +30,8 @@ void Surface2D::draw()
 
 void Surface2D::drawAll()
 {
+	debug("drawing all surfaces");
+	
 	for (Surface2D i: Impl::allSurfaces)
 	{
 		i.draw();

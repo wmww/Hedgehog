@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "../opengl/TexRenderer.h"
 #include "../opengl/Texture.h"
 #include "../backends/GLX/GLXContextManager.h"
 #include "../wayland/WaylandServer.h"
@@ -13,7 +12,7 @@
 
 int main (int argc, char ** argv)
 {
-	auto manager = GLXContextManagerBase::make(V2i(800, 800), VERBOSE_OFF);
+	auto manager = GLXContextManagerBase::make(V2i(800, 800));
 	
 	glewInit();
 	

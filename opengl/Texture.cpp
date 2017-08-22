@@ -128,7 +128,7 @@ struct Texture::Impl
 	
 	static void firstInstanceSetup()
 	{
-		shaderProgram = ShaderProgram::fromCode(vertShaderCode, fragShaderCode, VERBOSE_OFF);
+		shaderProgram = ShaderProgram::fromCode(vertShaderCode, fragShaderCode);
 		glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
 	}
 };

@@ -1,5 +1,5 @@
 // disables debug statements, must be before includes
-//#define NO_DEBUG
+#define NO_DEBUG
 
 #include "WaylandSurface.h"
 #include "WaylandServer.h"
