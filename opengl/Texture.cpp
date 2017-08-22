@@ -31,17 +31,14 @@ const string fragShaderCode = "#version 330 core\n"
 typedef void (*PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) (GLenum target, EGLImage image);
 PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES = nullptr;
 
-struct Texture::Impl: MessageLogger
+struct Texture::Impl
 {
 	GLuint squareVAOId;
 	GLuint textureId;
 	bool isLoaded = false;
 	
-	Impl(VerboseToggle verboseToggle)
+	Impl()
 	{
-		verbose = verboseToggle;
-		tag = "Texture";
-		
 		setupIfFirstInstance(this);
 		
 		setupVAO();
@@ -51,12 +48,12 @@ struct Texture::Impl: MessageLogger
 	
 	~Impl()
 	{
-		important("Texture::~Impl() not yet implemented");
+		warning("Texture::~Impl() not yet implemented");
 	}
 	
 	void setupVAO()
 	{
-		status("setting up a VAO");
+		debug("setting up a VAO");
 		
 		GLuint VBO, EBO;
 		
@@ -111,7 +108,7 @@ struct Texture::Impl: MessageLogger
 	
 	void setupGlTexture()
 	{
-		status("setting up OpenGL texture");
+		debug("setting up OpenGL texture");
 		
 		glGenTextures(1, &textureId);
 		
@@ -133,23 +130,23 @@ struct Texture::Impl: MessageLogger
 	}
 };
 
-Texture::Texture(VerboseToggle verboseToggle)
+Texture::Texture()
 {
-	impl = shared_ptr<Impl>(new Impl(verboseToggle));
+	impl = shared_ptr<Impl>(new Impl);
 }
 
 void Texture::loadFromImage(string imagePath)
 {
-	impl->status("loading '" + imagePath + "' into texture...");
+	debug("loading '" + imagePath + "' into texture...");
 	// Load and generate the texture
 	int width, height;
 	unsigned char* image = SOIL_load_image(imagePath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
 	if (!image)
 	{
-		impl->important(string() + "image loading error: " + SOIL_last_result());
+		warning(string() + "image loading error: " + SOIL_last_result());
 	}
 	
-	impl->status("creating texture from image...");
+	debug("creating texture from image...");
 	
 	glBindTexture(GL_TEXTURE_2D, impl->textureId);
 	{

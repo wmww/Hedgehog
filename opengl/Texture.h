@@ -7,7 +7,7 @@
 class Texture
 {
 public:
-	Texture(VerboseToggle verboseToggle);
+	Texture();
 	void loadFromImage(string filepath);
 	void loadFromData(void * data, V2i dim);
 	void loadFromEGLImage(EGLImage image, V2i dim);

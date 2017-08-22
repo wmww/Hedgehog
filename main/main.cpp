@@ -21,7 +21,9 @@ int main (int argc, char ** argv)
 	//renderer.setup(VERBOSE_ON);
 	//auto renderer = TexRenderer(VERBOSE_ON);
 	
-	auto texture = Texture(VERBOSE_OFF);
+	auto texture = Texture();
+	
+	debug("yo, whats up, blah, blah, blah, dsalg asgdgfs fdsg dfg dfg dffddsfdg dsfdfggfdsgf fdsg dgdsgd dsfg dgfsdd");
 	
 	texture.loadFromImage("assets/hedgehog.jpg");
 	

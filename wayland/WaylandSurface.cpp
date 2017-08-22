@@ -27,7 +27,7 @@ struct WaylandSurface::Impl: MessageLogger, public enable_shared_from_this<Impl>
 	static PFNEGLBINDWAYLANDDISPLAYWL eglBindWaylandDisplayWL;
 	static PFNEGLQUERYWAYLANDBUFFERWL eglQueryWaylandBufferWL;
 	
-	Impl(VerboseToggle verboseIn): surface2D(verboseIn)
+	Impl(VerboseToggle verboseIn)
 	{
 		verbose = verboseIn;
 		tag = "WaylandSurface";

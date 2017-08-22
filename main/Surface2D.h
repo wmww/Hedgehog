@@ -6,7 +6,7 @@
 class Surface2D
 {
 public:
-	Surface2D(VerboseToggle verboseToggle);
+	Surface2D();
 	Texture getTexture();
 	void draw();
 	

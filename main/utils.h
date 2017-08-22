@@ -44,7 +44,6 @@ class MessageLogger
 public:
 	void status(string msg);
 	void important(string msg);
-	void fatal(string msg);
 	
 	static void show(string msg);
 	
@@ -52,7 +51,20 @@ public:
 	string tag = "[unknown]";
 };
 
-#define assert(condition) if (!(condition)) { MessageLogger::show(__FILE__ ":" + to_string(__LINE__) + ": assertion failed: " #condition); exit(1); }
+enum MessageType
+{
+	MESSAGE_DEBUG,
+	MESSAGE_WARNING,
+	MESSAGE_ASSERTION_FAILED,
+	MESSAGE_FATAL_ERROR,
+};
+void logMessage(string source, MessageType type, string messaage); // this function does NOT support unicode
+
+#define FILE_INFO __FILE__ ":" + std::to_string(__LINE__)
+#define debug(message) logMessage(FILE_INFO, MESSAGE_DEBUG, message)
+#define warning(message) logMessage(FILE_INFO, MESSAGE_WARNING, message)
+#define fatal(message) logMessage(FILE_INFO, MESSAGE_FATAL_ERROR, message)
+#define assert(condition) if (!(condition)) { logMessage(FILE_INFO, MESSAGE_ASSERTION_FAILED, #condition); }
 
 void logError(string msg);
 

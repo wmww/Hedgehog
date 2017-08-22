@@ -1,23 +1,17 @@
 #include "Surface2D.h"
 
-struct Surface2D::Impl: MessageLogger
+struct Surface2D::Impl
 {
 	Texture texture;
 	
 	static vector<Surface2D> allSurfaces;
-	
-	Impl(VerboseToggle verboseToggle): texture(VERBOSE_OFF)
-	{
-		verbose = verboseToggle;
-		tag = "Surface2D";
-	}
 };
 
 vector<Surface2D> Surface2D::Impl::allSurfaces;
 
-Surface2D::Surface2D(VerboseToggle verboseToggle)
+Surface2D::Surface2D()
 {
-	impl = shared_ptr<Impl>(new Impl(verboseToggle));
+	impl = shared_ptr<Impl>(new Impl);
 	Impl::allSurfaces.push_back(*this);
 }
 

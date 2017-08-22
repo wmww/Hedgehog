@@ -8,9 +8,77 @@ using std::stringstream;
 #include <chrono>
 #include <thread>
 
+const int messageMaxWidth = 60; // max width in characters for a printed message
+
 void logError(string msg)
 {
 	std::cerr << "error: " << msg << std::endl;
+}
+
+void logMessage(string source, MessageType type, string message)
+{
+	const string indent = "  ";
+	
+	std::ostream * stream = &std::cerr;
+	if (type == MESSAGE_DEBUG)
+		stream = &std::cout;
+	
+	string typeStr;
+	switch (type)
+	{
+	case MESSAGE_DEBUG:
+		typeStr = "DEBUG";
+		break;
+	case MESSAGE_WARNING:
+		typeStr = "WARNING";
+		break;
+	case MESSAGE_ASSERTION_FAILED:
+		typeStr = "ASSERTION FAILED";
+		break;
+	case MESSAGE_FATAL_ERROR:
+		typeStr = "FATAL ERROR";
+		break;
+	default:
+		typeStr = "UNKNOWN MESSAGE TYPE";
+	}
+	string msg = typeStr + " [" + source + "]: " + message;
+	vector<string> lines;
+	
+	int start = 0;
+	int end = (int)msg.size();
+	
+	while (start < end)
+	{
+		int lineEnd = start + messageMaxWidth - (start == 0 ? 0 : (int)indent.size());
+		int splitPoint;
+		if (lineEnd < end)
+		{
+			splitPoint = lineEnd - 1;
+			while (splitPoint > start && msg[splitPoint] != ' ' && msg[splitPoint] != '\n') { splitPoint--; }
+			if (splitPoint == start)
+				splitPoint = lineEnd;
+		}
+		else
+		{
+			splitPoint = lineEnd = end;
+		}
+		string line;
+		if (start != 0)
+			line += indent;
+		line += msg.substr(start, splitPoint - start);
+		lines.push_back(line);
+		start = splitPoint;
+		if (start < end && (msg[start] == ' '))
+			start++;
+	}
+	
+	for (auto i: lines)
+	{
+		*stream << i << std::endl;
+	}
+	
+	if (type == MESSAGE_FATAL_ERROR || type == MESSAGE_ASSERTION_FAILED)
+		exit(1);
 }
 
 bool loadFile(string filename, string& contents, bool debug)
@@ -61,13 +129,6 @@ void MessageLogger::status(string msg)
 void MessageLogger::important(string msg)
 {
 	show(tag + ": " + msg);
-}
-
-void MessageLogger::fatal(string msg)
-{
-	cout << "fatal error: ";
-	important(msg);
-	exit(1);
 }
 
 void MessageLogger::show(string msg)
