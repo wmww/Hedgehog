@@ -8,7 +8,7 @@ typedef shared_ptr<WaylandServerBase> WaylandServer;
 
 struct WaylandServerBase: std::enable_shared_from_this<WaylandServerBase>
 {
-	static WaylandServer make(VerboseToggle verbose);
+	static WaylandServer make();
 	
 	virtual void iteration() = 0;
 };

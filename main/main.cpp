@@ -25,7 +25,7 @@ int main (int argc, char ** argv)
 	
 	texture.loadFromImage("assets/hedgehog.jpg");
 	
-	auto waylandServer = WaylandServerBase::make(VERBOSE_ON);
+	auto waylandServer = WaylandServerBase::make();
 	
 	
 	while (true)

@@ -1,3 +1,6 @@
+// disables debug statements, must be before includes
+#define NO_DEBUG
+
 #include "../main/utils.h"
 #include "../opengl/Texture.h"
 #include "WaylandServer.h"
@@ -15,11 +18,9 @@ typedef void (*PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) (GLenum target, EGLImage ima
 
 struct WaylandServerImpl: WaylandServerBase
 {
-	WaylandServerImpl(VerboseToggle verboseIn)
+	WaylandServerImpl()
 	{
-		verbose = verboseIn;
-		
-		message("starting Wayland server");
+		debug("starting Wayland server");
 		
 		// get function pointers
 		glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
@@ -33,21 +34,21 @@ struct WaylandServerImpl: WaylandServerBase
 		{
 			assertInstance();
 			
-			message("compositorBindCallback called");
+			debug("compositorBindCallback called");
 			
 			instance->compositorInterface = {
 				
 				// create surface
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
-					message("compositor interface create surface callback called");
+					debug("compositor interface create surface callback called");
 					WaylandSurface(client, id);
 				},
 				
 				// create region
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
-					message("compositor interface create region called (not yet implemented)");
+					debug("compositor interface create region called (not yet implemented)");
 				}
 			};
 			
@@ -57,67 +58,67 @@ struct WaylandServerImpl: WaylandServerBase
 		
 		auto shellBindCallback = +[](wl_client * client, void * data, uint32_t version, uint32_t id)
 		{
-			assertInstance();
+			debug("shellBindCallback called");
 			
-			message("shellBindCallback called");
+			assertInstance();
 			
 			instance->shellInterface = {
 				// get shell surface
 				+[](wl_client * client, wl_resource * resource, uint32_t id, wl_resource * surface) {
 					
-					message("shell interface get shell surface called");
+					debug("shell interface get shell surface called");
 					
 					struct wl_shell_surface_interface shellSurfaceInterface = {
 						
 						// shell surface pong
 						+[](struct wl_client *client, wl_resource * resource, uint32_t serial)
 						{
-							message("shell surface interface pong callback called (not yet implemented)");
+							debug("shell surface interface pong callback called (not yet implemented)");
 						},
 						// shell surface move
 						+[](wl_client * client, wl_resource * resource, wl_resource * seat, uint32_t serial)
 						{
-							message("shell surface interface move callback called (not yet implemented)");
+							debug("shell surface interface move callback called (not yet implemented)");
 						},
 						// shell surface resize
 						+[](wl_client * client, wl_resource * resource, wl_resource * seat, uint32_t serial, uint32_t edges)
 						{
-							message("shell surface interface resize callback called (not yet implemented)");
+							debug("shell surface interface resize callback called (not yet implemented)");
 						},
 						// shell surface set toplevel
 						+[](wl_client * client, wl_resource * resource)
 						{
-							message("shell surface interface set toplevel callback called");
+							debug("shell surface interface set toplevel callback called");
 						},
 						// shell surface set transient
 						+[](wl_client * client, wl_resource * resource, wl_resource * parent, int32_t x, int32_t y, uint32_t flags)
 						{
-							message("shell surface interface set transient callback called (not yet implemented)");
+							debug("shell surface interface set transient callback called (not yet implemented)");
 						},
 						// shell surface set fullscreen
 						+[](wl_client * client, wl_resource * resource, uint32_t method, uint32_t framerate, wl_resource * output)
 						{
-							message("shell surface interface set fullscreen callback called (not yet implemented)");
+							debug("shell surface interface set fullscreen callback called (not yet implemented)");
 						},
 						// shell surface set popup
 						+[](wl_client * client, wl_resource * resource, wl_resource * seat, uint32_t serial, wl_resource * parent, int32_t x, int32_t y, uint32_t flags)
 						{
-							message("shell surface interface set popup callback called (not yet implemented)");
+							debug("shell surface interface set popup callback called (not yet implemented)");
 						},
 						// shell surface set maximized
 						+[](wl_client * client, wl_resource * resource, wl_resource * output)
 						{
-							message("shell surface interface set maximized callback called (not yet implemented)");
+							debug("shell surface interface set maximized callback called (not yet implemented)");
 						},
 						// shell surface set title
 						+[](wl_client * client, wl_resource * resource, const char * title)
 						{
-							message("shell surface interface set title callback called (not yet implemented)");
+							debug("shell surface interface set title callback called (not yet implemented)");
 						},
 						// shell surface set class
 						+[](wl_client * client, wl_resource * resource, const char * class_)
 						{
-							message("shell surface interface set class callback called (not yet implemented)");
+							debug("shell surface interface set class callback called (not yet implemented)");
 						},
 					};
 					
@@ -132,7 +133,7 @@ struct WaylandServerImpl: WaylandServerBase
 		
 		auto seatBindCallback = +[](wl_client * client, void * data, uint32_t version, uint32_t id)
 		{
-			message("seatBindCallback called");
+			debug("seatBindCallback called");
 			
 			assertInstance();
 			
@@ -140,7 +141,7 @@ struct WaylandServerImpl: WaylandServerBase
 				// get pointer
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
-					message("seat interface get pointer called");
+					debug("seat interface get pointer called");
 					
 					assertInstance();
 					
@@ -149,7 +150,7 @@ struct WaylandServerImpl: WaylandServerBase
 						+[](wl_client * client, wl_resource * resource, uint32_t serial, wl_resource * _surface, int32_t hotspot_x,
 						int32_t hotspot_y)
 						{
-							message("pointer interface set cursor called (not yet implemented)");
+							debug("pointer interface set cursor called (not yet implemented)");
 							//surface * surface = wl_resource_get_user_data(_surface);
 							//cursor = surface;
 						},
@@ -157,7 +158,7 @@ struct WaylandServerImpl: WaylandServerBase
 						// pointer release
 						+[](wl_client * client, wl_resource *resource)
 						{
-							message("pointer interface pointer release called (not yet implemented)");
+							debug("pointer interface pointer release called (not yet implemented)");
 						}
 					};
 					
@@ -168,7 +169,7 @@ struct WaylandServerImpl: WaylandServerBase
 				// get keyboard
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
-					message("seat interface get keyboard called (not yet implemented)");
+					debug("seat interface get keyboard called (not yet implemented)");
 					//struct wl_resource *keyboard = wl_resource_create (client, &wl_keyboard_interface, 1, id);
 					//wl_resource_set_implementation (keyboard, &keyboard_interface, NULL, NULL);
 					//get_client(client)->keyboard = keyboard;
@@ -180,7 +181,7 @@ struct WaylandServerImpl: WaylandServerBase
 				// get touch
 				+[](wl_client * client, wl_resource * resource, uint32_t id)
 				{
-					message("seat interface get touch called (not yet implemented)");
+					debug("seat interface get touch called (not yet implemented)");
 				}
 			};
 			
@@ -202,12 +203,12 @@ struct WaylandServerImpl: WaylandServerBase
 		eventLoop = wl_display_get_event_loop(display);
 		eventLoopFileDescriptor = wl_event_loop_get_fd(eventLoop);
 		
-		message("Wayland server setup done");
+		debug("Wayland server setup done");
 	}
 	
 	~WaylandServerImpl()
 	{
-		message("shutting down Wayland server");
+		debug("shutting down Wayland server");
 		wl_display_destroy(display);
 		instance = nullptr;
 	}
@@ -218,14 +219,6 @@ struct WaylandServerImpl: WaylandServerBase
 	{
 		wl_event_loop_dispatch(eventLoop, 0);
 		wl_display_flush_clients(display);
-	}
-	
-	inline static void message(string msg)
-	{
-		if (verbose)
-		{
-			cout << "wayland server: " << msg << endl;
-		}
 	}
 	
 	inline static void assertInstance()
@@ -254,7 +247,7 @@ struct WaylandServerImpl: WaylandServerBase
 WaylandServerImpl * WaylandServerImpl::instance = nullptr;
 VerboseToggle WaylandServerImpl::verbose = VERBOSE_OFF;
 
-WaylandServer WaylandServerBase::make(VerboseToggle verbose)
+WaylandServer WaylandServerBase::make()
 {
 	if (WaylandServerImpl::instance != nullptr)
 	{
@@ -263,7 +256,7 @@ WaylandServer WaylandServerBase::make(VerboseToggle verbose)
 	}
 	else
 	{
-		WaylandServerImpl::instance = new WaylandServerImpl(verbose);
+		WaylandServerImpl::instance = new WaylandServerImpl();
 		return WaylandServer(WaylandServerImpl::instance);
 	}
 }
