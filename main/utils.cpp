@@ -1,6 +1,3 @@
-// disables debug statements, must be before includes
-#define NO_DEBUG
-
 #include "utils.h"
 
 #include <fstream>
@@ -13,6 +10,9 @@ using std::stringstream;
 
 #include <unistd.h> // for terminal size detection
 #include <sys/ioctl.h> // for terminal size detection
+
+// change to toggle debug statements on and off
+#define debug debug_off
 
 int getTermWidth()
 {

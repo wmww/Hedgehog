@@ -47,11 +47,8 @@ void logMessage(string source, MessageType type, string messaage); // this funct
 // fatal automatically kills the program as soon as its done logging
 // assert is used to easily check a boolean expression, and fatally error if its false
 #define FILE_INFO __FILE__ ":" + std::to_string(__LINE__)
-#ifdef NO_DEBUG
-	#define debug(message)
-#else
-	#define debug(message) logMessage(FILE_INFO, MESSAGE_DEBUG, message)
-#endif
+#define debug_off(message)
+#define debug_on(message) logMessage(FILE_INFO, MESSAGE_DEBUG, message)
 #define warning(message) logMessage(FILE_INFO, MESSAGE_WARNING, message)
 #define fatal(message) logMessage(FILE_INFO, MESSAGE_FATAL_ERROR, message)
 #define assert(condition) if (!(condition)) { logMessage(FILE_INFO, MESSAGE_ASSERTION_FAILED, #condition); }

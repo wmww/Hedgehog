@@ -1,6 +1,3 @@
-// disables debug statements, must be before includes
-#define NO_DEBUG
-
 #include "../main/utils.h"
 #include "../opengl/Texture.h"
 #include "WaylandServer.h"
@@ -12,6 +9,9 @@
 #include <EGL/eglext.h>
 
 #include "../backends/GLX/GLXContextManager.h"
+
+// change to toggle debug statements on and off
+#define debug debug_off
 
 namespace WaylandServer
 {

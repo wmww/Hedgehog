@@ -10,9 +10,12 @@
 #include "../wayland/WaylandServer.h"
 #include "Surface2D.h"
 
+// change to toggle debug statements on and off
+#define debug debug_off
+
 int main (int argc, char ** argv)
 {
-	auto manager = GLXContextManagerBase::make(V2i(800, 800));
+	auto glx = GLXContextManagerBase::make(V2i(800, 800));
 	
 	glewInit();
 	
@@ -31,7 +34,7 @@ int main (int argc, char ** argv)
 		texture.draw();
 		WaylandServer::iteration();
 		Surface2D::drawAll();
-		manager->swapBuffer();
+		glx->swapBuffer();
 		sleepForSeconds(0.2);
 	}
 	

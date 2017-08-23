@@ -1,7 +1,7 @@
-// disables debug statements, must be before includes
-#define NO_DEBUG
-
 #include "ShaderProgram.h"
+
+// change to toggle debug statements on and off
+#define debug debug_off
 
 struct SingleShader::Impl
 {

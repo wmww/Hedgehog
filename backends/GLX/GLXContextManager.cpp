@@ -1,11 +1,11 @@
-// disables debug statements, must be before includes
-#define NO_DEBUG
-
 #include "GLXContextManager.h"
 
 #include <GL/glx.h>
 #include <GL/gl.h>
 #include <cstring>
+
+// change to toggle debug statements on and off
+#define debug debug_off
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 

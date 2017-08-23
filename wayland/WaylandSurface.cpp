@@ -1,6 +1,3 @@
-// disables debug statements, must be before includes
-#define NO_DEBUG
-
 #include "WaylandSurface.h"
 #include "WaylandServer.h"
 #include "../backends/GLX/GLXContextManager.h"
@@ -10,6 +7,9 @@
 #include <EGL/eglext.h>
 
 #include <set>
+
+// change to toggle debug statements on and off
+#define debug debug_off
 
 struct WaylandSurface::Impl: public enable_shared_from_this<Impl>
 {
