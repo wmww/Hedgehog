@@ -26,7 +26,7 @@ void logMessage(string source, MessageType type, string message)
 	//const string indent =		" |  ";
 	//const string lastIndent =	" |_ ";
 	
-	int messageMaxWidth = getTermWidth() - 1;
+	int termWidth = getTermWidth() - 1;
 	
 	std::ostream * stream = &std::cerr;
 	if (type == MESSAGE_DEBUG)
@@ -50,15 +50,20 @@ void logMessage(string source, MessageType type, string message)
 	default:
 		typeStr = "UNKNOWN MESSAGE TYPE";
 	}
-	string msg = typeStr + " [" + source + "]: " + message;
+	string msg = "[" + source + "]: " + message;
 	vector<string> lines;
+	int messageWidth = std::max(termWidth - (int)typeStr.size(), 12);
+	string indent = [&]() -> string { string out = ""; for (int i = 0; i < (int)typeStr.size() - 1; i++) { out += " "; } return out; } ();
+	string lastIndent = indent + "|_";
+	indent += "| ";
 	
 	int start = 0;
 	int end = (int)msg.size();
 	
 	while (start < end)
 	{
-		int lineEnd = start + messageMaxWidth - (start == 0 ? 0 : (int)typeStr.size());
+		//int lineEnd = start + messageMaxWidth - (start == 0 ? 0 : (int)typeStr.size());
+		int lineEnd = start + messageWidth;
 		int splitPoint;
 		if (lineEnd < end)
 		{
@@ -72,9 +77,12 @@ void logMessage(string source, MessageType type, string message)
 			splitPoint = lineEnd = end;
 		}
 		string line;
-		if (start != 0)
-			line += [&]() -> string { string out = ""; for (int i = 0; i < (int)typeStr.size() - 1; i++) { out += " "; } return out; } () + (lineEnd == end ? "|_" : "| ");;
-			//line += (lineEnd == end ? lastIndent : indent);
+		if (start == 0)
+			line += typeStr + " ";
+		else if (lineEnd == end)
+			line += lastIndent;
+		else
+			line += indent;
 		line += msg.substr(start, splitPoint - start);
 		lines.push_back(line);
 		start = splitPoint;
