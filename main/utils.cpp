@@ -23,10 +23,10 @@ int getTermWidth()
 
 void logMessage(string source, MessageType type, string message)
 {
-	const string indent =		" |  ";
-	const string lastIndent =	" |_ ";
+	//const string indent =		" |  ";
+	//const string lastIndent =	" |_ ";
 	
-	int messageMaxWidth = getTermWidth();
+	int messageMaxWidth = getTermWidth() - 1;
 	
 	std::ostream * stream = &std::cerr;
 	if (type == MESSAGE_DEBUG)
@@ -58,7 +58,7 @@ void logMessage(string source, MessageType type, string message)
 	
 	while (start < end)
 	{
-		int lineEnd = start + messageMaxWidth - (start == 0 ? 0 : (int)indent.size());
+		int lineEnd = start + messageMaxWidth - (start == 0 ? 0 : (int)typeStr.size());
 		int splitPoint;
 		if (lineEnd < end)
 		{
@@ -73,7 +73,8 @@ void logMessage(string source, MessageType type, string message)
 		}
 		string line;
 		if (start != 0)
-			line += (lineEnd == end ? lastIndent : indent);
+			line += [&]() -> string { string out = ""; for (int i = 0; i < (int)typeStr.size() - 1; i++) { out += " "; } return out; } () + (lineEnd == end ? "|_" : "| ");;
+			//line += (lineEnd == end ? lastIndent : indent);
 		line += msg.substr(start, splitPoint - start);
 		lines.push_back(line);
 		start = splitPoint;
