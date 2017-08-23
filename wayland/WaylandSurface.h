@@ -13,9 +13,7 @@ public:
 	
 private:
 	struct Impl;
-	
-	WaylandSurface(shared_ptr<Impl> implIn) {impl = implIn;}
-	
-	shared_ptr<Impl> impl = nullptr;
+	WaylandSurface(weak_ptr<Impl> implIn) {impl = implIn;}
+	weak_ptr<Impl> impl;
 };
 

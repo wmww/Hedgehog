@@ -39,7 +39,7 @@ struct wl_compositor_interface compositorInterface = {
 	// create region
 	+[](wl_client * client, wl_resource * resource, uint32_t id)
 	{
-		debug("compositor interface create region called (not yet implemented)");
+		warning("compositor interface create region called (not yet implemented)");
 	}
 };
 
@@ -62,17 +62,17 @@ struct wl_shell_interface shellInterface = {
 			// shell surface pong
 			+[](struct wl_client *client, wl_resource * resource, uint32_t serial)
 			{
-				debug("shell surface interface pong callback called (not yet implemented)");
+				warning("shell surface interface pong callback called (not yet implemented)");
 			},
 			// shell surface move
 			+[](wl_client * client, wl_resource * resource, wl_resource * seat, uint32_t serial)
 			{
-				debug("shell surface interface move callback called (not yet implemented)");
+				warning("shell surface interface move callback called (not yet implemented)");
 			},
 			// shell surface resize
 			+[](wl_client * client, wl_resource * resource, wl_resource * seat, uint32_t serial, uint32_t edges)
 			{
-				debug("shell surface interface resize callback called (not yet implemented)");
+				warning("shell surface interface resize callback called (not yet implemented)");
 			},
 			// shell surface set toplevel
 			+[](wl_client * client, wl_resource * resource)
@@ -82,32 +82,32 @@ struct wl_shell_interface shellInterface = {
 			// shell surface set transient
 			+[](wl_client * client, wl_resource * resource, wl_resource * parent, int32_t x, int32_t y, uint32_t flags)
 			{
-				debug("shell surface interface set transient callback called (not yet implemented)");
+				warning("shell surface interface set transient callback called (not yet implemented)");
 			},
 			// shell surface set fullscreen
 			+[](wl_client * client, wl_resource * resource, uint32_t method, uint32_t framerate, wl_resource * output)
 			{
-				debug("shell surface interface set fullscreen callback called (not yet implemented)");
+				warning("shell surface interface set fullscreen callback called (not yet implemented)");
 			},
 			// shell surface set popup
 			+[](wl_client * client, wl_resource * resource, wl_resource * seat, uint32_t serial, wl_resource * parent, int32_t x, int32_t y, uint32_t flags)
 			{
-				debug("shell surface interface set popup callback called (not yet implemented)");
+				warning("shell surface interface set popup callback called (not yet implemented)");
 			},
 			// shell surface set maximized
 			+[](wl_client * client, wl_resource * resource, wl_resource * output)
 			{
-				debug("shell surface interface set maximized callback called (not yet implemented)");
+				warning("shell surface interface set maximized callback called (not yet implemented)");
 			},
 			// shell surface set title
 			+[](wl_client * client, wl_resource * resource, const char * title)
 			{
-				debug("shell surface interface set title callback called (not yet implemented)");
+				warning("shell surface interface set title callback called (not yet implemented)");
 			},
 			// shell surface set class
 			+[](wl_client * client, wl_resource * resource, const char * class_)
 			{
-				debug("shell surface interface set class callback called (not yet implemented)");
+				warning("shell surface interface set class callback called (not yet implemented)");
 			},
 		};
 		
@@ -129,7 +129,7 @@ struct wl_pointer_interface pointerInterface = {
 	// set cursor
 	+[](wl_client * client, wl_resource * resource, uint32_t serial, wl_resource * _surface, int32_t hotspot_x, int32_t hotspot_y)
 	{
-		debug("pointer interface set cursor called (not yet implemented)");
+		warning("pointer interface set cursor called (not yet implemented)");
 		//surface * surface = wl_resource_get_user_data(_surface);
 		//cursor = surface;
 	},
@@ -167,7 +167,7 @@ struct wl_seat_interface seatInterface = {
 	// get touch
 	+[](wl_client * client, wl_resource * resource, uint32_t id)
 	{
-		debug("seat interface get touch called (not yet implemented)");
+		warning("seat interface get touch called (not yet implemented)");
 	}
 };
 

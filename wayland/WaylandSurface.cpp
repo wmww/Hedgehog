@@ -6,12 +6,12 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
-#include <set>
+#include <unordered_map>
 
 // change to toggle debug statements on and off
-#define debug debug_off
+#define debug debug_on
 
-struct WaylandSurface::Impl: public enable_shared_from_this<Impl>
+struct WaylandSurface::Impl
 {
 	// instance data
 	Surface2D surface2D;
@@ -23,7 +23,7 @@ struct WaylandSurface::Impl: public enable_shared_from_this<Impl>
 	static const struct wl_surface_interface surfaceInterface;
 	
 	// the sole responsibility of this set is to keep the objects alive as long as libwayland has raw pointers to them
-	static std::set<shared_ptr<Impl>> surfaceImplSet;
+	static std::unordered_map<Impl *, shared_ptr<Impl>> surfaces;
 	
 	// pointers to functions that need to be retrieved dynamically
 	// they will be fetched when the first instance of this class is created
@@ -35,17 +35,42 @@ struct WaylandSurface::Impl: public enable_shared_from_this<Impl>
 		setupIfFirstInstance(this);
 	}
 	
+	~Impl()
+	{
+		debug("~Impl called");
+	}
+	
 	static void firstInstanceSetup()
 	{
 		// function pointers that need to be retrieved at run time. This is Cs sad, pathetic attempt at duck typing.
 		eglBindWaylandDisplayWL = (PFNEGLBINDWAYLANDDISPLAYWL)eglGetProcAddress("eglBindWaylandDisplayWL");
 		eglQueryWaylandBufferWL = (PFNEGLQUERYWAYLANDBUFFERWL)eglGetProcAddress("eglQueryWaylandBufferWL");
 	}
+	
+	// given a wayland resource, returns the associated Impl raw pointer
+	// this should only be needed in a few places, WaylandSurface::getFrom() is usually safer
+	static Impl * getRawPtrFrom(wl_resource * resource)
+	{
+		assert(string(wl_resource_get_class(resource)) == "wl_surface");
+		Impl * implRawPtr = (Impl *)wl_resource_get_user_data(resource);
+		return implRawPtr;
+	}
+	
+	// returns the iterator for this objects position in surfaces
+	auto getIterInSurfaces()
+	{
+		auto iter = surfaces.find(this);
+		if (iter == surfaces.end())
+		{
+			warning("getIterInSurfaces called for Impl not in map");
+		}
+		return iter;
+	}
 };
 
 PFNEGLBINDWAYLANDDISPLAYWL WaylandSurface::Impl::eglBindWaylandDisplayWL = nullptr;
 PFNEGLQUERYWAYLANDBUFFERWL WaylandSurface::Impl::eglQueryWaylandBufferWL = nullptr;
-std::set<shared_ptr<WaylandSurface::Impl>> WaylandSurface::Impl::surfaceImplSet;
+std::unordered_map<WaylandSurface::Impl *, shared_ptr<WaylandSurface::Impl>> WaylandSurface::Impl::surfaces;
 
 const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface destroy
@@ -58,7 +83,9 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	{
 		debug("surface interface surface attach callback called");
 		auto self = getFrom(resource);
-		self.impl->bufferResource = buffer;
+		auto impl = self.impl.lock();
+		assert(impl);
+		impl->bufferResource = buffer;
 	},
 	// surface damage
 	+[](wl_client * client, wl_resource * resource, int32_t x, int32_t y, int32_t width, int32_t height)
@@ -88,11 +115,14 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 		debug("surface interface surface commit callback called");
 		
 		auto self = getFrom(resource);
+		auto impl = self.impl.lock();
+		
+		assert(impl);
 		
 		// get the data we'll need
 		EGLint texture_format;
 		Display * display = GLXContextManagerBase::instance->getDisplay();
-		struct wl_resource * buffer = self.impl->bufferResource;
+		struct wl_resource * buffer = impl->bufferResource;
 		
 		// make sure this function pointer has been initialized
 		assert(Impl::eglQueryWaylandBufferWL);
@@ -108,7 +138,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 			Impl::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &height);
 			EGLAttrib attribs = EGL_NONE;
 			EGLImage image = eglCreateImage(display, EGL_NO_CONTEXT, EGL_WAYLAND_BUFFER_WL, buffer, &attribs);
-			self.impl->surface2D.getTexture().loadFromEGLImage(image, V2i(width, height));
+			impl->surface2D.getTexture().loadFromEGLImage(image, V2i(width, height));
 			eglDestroyImage(display, image);
 		}
 		else {
@@ -117,7 +147,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 			uint32_t width = wl_shm_buffer_get_width(shmBuffer);
 			uint32_t height = wl_shm_buffer_get_height(shmBuffer);
 			void * data = wl_shm_buffer_get_data(shmBuffer);
-			self.impl->surface2D.getTexture().loadFromData(data, V2i(width, height));
+			impl->surface2D.getTexture().loadFromData(data, V2i(width, height));
 		}
 		wl_buffer_send_release(buffer);
 	},
@@ -136,29 +166,34 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 void WaylandSurface::Impl::deleteSurface(wl_resource * resource)
 {
 	debug("delete surface callback called");
-	auto self = getFrom(resource);
-	auto iter = Impl::surfaceImplSet.find(self.impl);
-	if (iter == Impl::surfaceImplSet.end())
+	auto implPtr = Impl::getRawPtrFrom(resource);
+	assert(implPtr != nullptr);
+	auto iter = implPtr->getIterInSurfaces();
+	if (iter != surfaces.end())
 	{
-		warning("deleteSurface called but linked WaylandSurface::Impl is not in surfaceImplSet");
+		surfaces.erase(iter);
 	}
 	else
 	{
-		surfaceImplSet.erase(iter);
+		warning("not deleting wayland surface because it wasn't in the map");
 	}
 };
 
 WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 {
-	impl = shared_ptr<Impl>(new Impl);
-	impl->surfaceResource = wl_resource_create(client, &wl_surface_interface, 3, id);
-	wl_resource_set_implementation(impl->surfaceResource, &Impl::surfaceInterface, &*impl, Impl::deleteSurface);
-	Impl::surfaceImplSet.insert(impl);
+	debug("creating WaylandSurface");
+	auto implShared = make_shared<Impl>();
+	impl = implShared;
+	implShared->surfaceResource = wl_resource_create(client, &wl_surface_interface, 3, id);
+	wl_resource_set_implementation(implShared->surfaceResource, &Impl::surfaceInterface, &*implShared, Impl::deleteSurface);
+	Impl::surfaces[&*implShared] = implShared;
 }
 
 WaylandSurface WaylandSurface::getFrom(wl_resource * resource)
 {
-	assert(string(wl_resource_get_class(resource)) == string("wl_surface"));
-	Impl * impl = (Impl *)wl_resource_get_user_data(resource);
-	return WaylandSurface(impl->shared_from_this());
+	auto ptr = Impl::getRawPtrFrom(resource);
+	assert(ptr != nullptr);
+	auto iter = ptr->getIterInSurfaces();
+	assert(iter != Impl::surfaces.end());
+	return WaylandSurface(iter->second);
 }
