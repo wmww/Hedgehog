@@ -24,17 +24,18 @@ int main (int argc, char ** argv)
 	
 	texture.loadFromImage("assets/hedgehog.jpg");
 	
-	auto waylandServer = WaylandServerBase::make();
-	
+	WaylandServer::setup();
 	
 	while (true)
 	{
 		texture.draw();
-		waylandServer->iteration();
+		WaylandServer::iteration();
 		Surface2D::drawAll();
 		manager->swapBuffer();
 		sleepForSeconds(0.2);
 	}
+	
+	WaylandServer::shutdown();
 	
 	/*
 	glClearColor (0, 0.5, 1, 1);

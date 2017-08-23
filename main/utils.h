@@ -13,9 +13,11 @@ using std::vector;
 
 #include <memory>
 using std::shared_ptr;
-using std::unique_ptr;
-using std::weak_ptr;
 using std::enable_shared_from_this;
+using std::make_shared;
+using std::unique_ptr;
+using std::make_unique;
+using std::weak_ptr;
 
 #include <GL/glew.h>
 #include <GL/gl.h>

@@ -37,6 +37,7 @@ struct WaylandSurface::Impl: public enable_shared_from_this<Impl>
 	
 	static void firstInstanceSetup()
 	{
+		// function pointers that need to be retrieved at run time. This is Cs sad, pathetic attempt at duck typing.
 		eglBindWaylandDisplayWL = (PFNEGLBINDWAYLANDDISPLAYWL)eglGetProcAddress("eglBindWaylandDisplayWL");
 		eglQueryWaylandBufferWL = (PFNEGLQUERYWAYLANDBUFFERWL)eglGetProcAddress("eglQueryWaylandBufferWL");
 	}

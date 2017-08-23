@@ -84,7 +84,7 @@ struct ShaderProgram::Impl
 
 ShaderProgram::ShaderProgram()
 {
-	impl = shared_ptr<Impl>(new Impl);
+	impl = make_shared<Impl>();
 }
 
 ShaderProgram::ShaderProgram(shared_ptr<Impl> implIn)
