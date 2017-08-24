@@ -3,7 +3,7 @@
 #include "../main/Surface2D.h"
 #include "../main/utils.h"
 
-#include <wayland-server.h>
+#include <wayland-server-core.h>
 
 class WaylandSurface
 {
