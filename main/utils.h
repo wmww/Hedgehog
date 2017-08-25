@@ -46,7 +46,7 @@ void logMessage(string source, MessageType type, string messaage); // this funct
 // all debugs in a file can be disabled at 0 run time cost by putting #define NO_DEBUG at the top of the file (before includes)
 // fatal automatically kills the program as soon as its done logging
 // assert is used to easily check a boolean expression, and fatally error if its false
-#define FILE_INFO __FILE__ ":" + std::to_string(__LINE__)
+#define FILE_INFO string(__FILE__) + ":" + (__LINE__ < 100 ? (__LINE__ < 10 ? "   " : "  ") : (__LINE__ < 1000 ? " " : "")) + std::to_string(__LINE__)
 #define debug_off(message)
 #define debug_on(message) logMessage(FILE_INFO, MESSAGE_DEBUG, message)
 #define warning(message) logMessage(FILE_INFO, MESSAGE_WARNING, message)
