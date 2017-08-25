@@ -21,6 +21,7 @@ struct WaylandSurface::Impl
 	// callbacks to be sent to libwayland
 	static void deleteSurface(wl_resource * resource);
 	static const struct wl_surface_interface surfaceInterface;
+	static const struct wl_shell_surface_interface shellSurfaceInterface;
 	
 	// the sole responsibility of this set is to keep the objects alive as long as libwayland has raw pointers to them
 	static std::unordered_map<Impl *, shared_ptr<Impl>> surfaces;
@@ -163,6 +164,59 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	},
 };
 
+const struct wl_shell_surface_interface WaylandSurface::Impl::shellSurfaceInterface = {
+	// shell surface pong
+	+[](struct wl_client *client, wl_resource * resource, uint32_t serial)
+	{
+		warning("shell surface interface pong callback called (not yet implemented)");
+	},
+	// shell surface move
+	+[](wl_client * client, wl_resource * resource, wl_resource * seat, uint32_t serial)
+	{
+		warning("shell surface interface move callback called (not yet implemented)");
+	},
+	// shell surface resize
+	+[](wl_client * client, wl_resource * resource, wl_resource * seat, uint32_t serial, uint32_t edges)
+	{
+		warning("shell surface interface resize callback called (not yet implemented)");
+	},
+	// shell surface set toplevel
+	+[](wl_client * client, wl_resource * resource)
+	{
+		debug("shell surface interface set toplevel callback called");
+	},
+	// shell surface set transient
+	+[](wl_client * client, wl_resource * resource, wl_resource * parent, int32_t x, int32_t y, uint32_t flags)
+	{
+		warning("shell surface interface set transient callback called (not yet implemented)");
+	},
+	// shell surface set fullscreen
+	+[](wl_client * client, wl_resource * resource, uint32_t method, uint32_t framerate, wl_resource * output)
+	{
+		warning("shell surface interface set fullscreen callback called (not yet implemented)");
+	},
+	// shell surface set popup
+	+[](wl_client * client, wl_resource * resource, wl_resource * seat, uint32_t serial, wl_resource * parent, int32_t x, int32_t y, uint32_t flags)
+	{
+		warning("shell surface interface set popup callback called (not yet implemented)");
+	},
+	// shell surface set maximized
+	+[](wl_client * client, wl_resource * resource, wl_resource * output)
+	{
+		warning("shell surface interface set maximized callback called (not yet implemented)");
+	},
+	// shell surface set title
+	+[](wl_client * client, wl_resource * resource, const char * title)
+	{
+		warning("shell surface interface set title callback called (not yet implemented)");
+	},
+	// shell surface set class
+	+[](wl_client * client, wl_resource * resource, const char * class_)
+	{
+		warning("shell surface interface set class callback called (not yet implemented)");
+	},
+};
+
 void WaylandSurface::Impl::deleteSurface(wl_resource * resource)
 {
 	debug("delete surface callback called");
@@ -187,6 +241,13 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 	implShared->surfaceResource = wl_resource_create(client, &wl_surface_interface, 3, id);
 	wl_resource_set_implementation(implShared->surfaceResource, &Impl::surfaceInterface, &*implShared, Impl::deleteSurface);
 	Impl::surfaces[&*implShared] = implShared;
+}
+
+void WaylandSurface::makeWlShellSurface(wl_client * client, uint32_t id, wl_resource * surface)
+{
+	Impl * implRaw = Impl::getRawPtrFrom(surface);
+	wl_resource * shellSurface = wl_resource_create(client, &wl_shell_surface_interface, 1, id);
+	wl_resource_set_implementation(shellSurface, &Impl::shellSurfaceInterface, implRaw, nullptr);
 }
 
 WaylandSurface WaylandSurface::getFrom(wl_resource * resource)
