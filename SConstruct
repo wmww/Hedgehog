@@ -22,8 +22,10 @@ def get_subdirs(base):
 
 def get_all_subdirs(base):
 	return [base] + [i for j in get_subdirs(base) for i in get_all_subdirs(j)]
-	
+
 def has_extension(base, extensions):
+	if type(extensions) != type([]):
+		raise TypeError('has_extension must be sent a path and an array of extensions')
 	for extension in extensions:
 		if base.endswith(extension):
 			return True
@@ -36,7 +38,7 @@ def get_all_files_with_extension(base, extensions):
 	return [ path for path in get_all_files(base) if has_extension(path, extensions) ]
 
 def get_all_cpp_files():
-	return get_all_files_with_extension('.', 'cpp')
+	return get_all_files_with_extension('.', ['.cpp', '.c'])
 
 sources = get_all_cpp_files()
 
