@@ -11,3 +11,4 @@ base_path = argv[1]
 xml_files = [ path.join(base_path, xml) for xml in listdir(base_path) if xml.endswith('.xml') ]
 for xml in xml_files:
 	run(['wayland-scanner', '--include-core-only', 'server-header', xml, xml.rsplit('.', 1)[0] + '.h'])
+	run(['wayland-scanner', '--include-core-only', 'code', xml, xml.rsplit('.', 1)[0] + '.c'])
