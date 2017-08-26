@@ -3,8 +3,9 @@
 #include "WaylandServer.h"
 #include "WaylandSurface.h"
 
-#include <wayland-server-protocol.h>
 #include <wayland-server.h>
+#include <wayland-server-protocol.h>
+#include "../protocols/xdg-shell-unstable-v5.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
@@ -69,6 +70,50 @@ void shellBindCallback(wl_client * client, void * data, uint32_t version, uint32
 	wl_resource_set_implementation(resource, &shellInterface, nullptr, nullptr);
 };
 
+
+struct xdg_shell_interface xdgShellInterface = {
+	// destroy (must not be done while there are surfaces still alive)
+	+[](struct wl_client *client, struct wl_resource *resource)
+	{
+		warning("xdg shell interface destroy called (not yet implemented)");
+	},
+	// use_unstable_version
+	+[](struct wl_client *client, struct wl_resource *resource, int32_t version)
+	{
+		/*
+		Negotiate the unstable version of the interface. This
+		mechanism is in place to ensure client and server agree on the
+		unstable versions of the protocol that they speak or exit
+		cleanly if they don't agree. This request will go away once the
+		xdg-shell protocol is stable. 
+		*/
+		warning("xdg_shell_interface use_unstable_version called (not yet implemented)");
+	},
+	//get_xdg_surface
+	+[](struct wl_client *client, struct wl_resource *resource, uint32_t id, struct wl_resource *surface)
+	{
+		warning("xdg_shell_interface get_xdg_surface called (not yet implemented)");
+	},
+	//get_xdg_popup
+	+[](struct wl_client *client, struct wl_resource *resource, uint32_t id, struct wl_resource *surface, struct wl_resource *parent, struct wl_resource *seat, uint32_t serial, int32_t x, int32_t y)
+	{
+		warning("xdg_shell_interface get_xdg_popup called (not yet implemented)");
+	},
+	//pong
+	+[](struct wl_client *client, struct wl_resource *resource, uint32_t serial)
+	{
+		warning("xdg_shell_interface pong called (not yet implemented)");
+	}
+};
+
+void xdgShellBindCallback(wl_client * client, void * data, uint32_t version, uint32_t id)
+{
+	debug("xdgShellBindCallback called");
+	
+	wl_resource * resource = wl_resource_create(client, &xdg_shell_interface, 1, id);
+	wl_resource_set_implementation(resource, &xdgShellInterface, nullptr, nullptr);
+};
+
 struct wl_pointer_interface pointerInterface = {
 	
 	// set cursor
@@ -119,11 +164,7 @@ struct wl_seat_interface seatInterface = {
 void seatBindCallback(wl_client * client, void * data, uint32_t version, uint32_t id)
 {
 	debug("seatBindCallback called");
-	
-	
-	//cout << "1" << endl;
 	wl_resource * seat = wl_resource_create(client, &wl_seat_interface, 1, id);
-	//cout << "2" << endl;
 	wl_resource_set_implementation(seat, &seatInterface, nullptr, nullptr);
 	//wl_seat_send_capabilities(seat, WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
 	wl_seat_send_capabilities(seat, 0);
@@ -144,6 +185,7 @@ void setup()
 	// create global objects
 	wl_global_create(display, &wl_compositor_interface, 3, nullptr, compositorBindCallback);
 	wl_global_create(display, &wl_shell_interface, 1, nullptr, shellBindCallback);
+	wl_global_create(display, &xdg_shell_interface, 1, nullptr, xdgShellBindCallback);
 	wl_global_create(display, &wl_seat_interface, 1, nullptr, seatBindCallback);
 	
 	wl_display_init_shm(display);
