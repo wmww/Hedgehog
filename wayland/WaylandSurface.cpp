@@ -9,7 +9,7 @@
 #include <unordered_map>
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 struct WaylandSurface::Impl
 {
