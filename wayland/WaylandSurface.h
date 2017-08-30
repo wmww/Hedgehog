@@ -2,6 +2,7 @@
 
 #include "../main/Surface2D.h"
 #include "../main/utils.h"
+#include "WaylandServer.h"
 
 #include <wayland-server-core.h>
 

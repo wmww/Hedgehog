@@ -13,7 +13,7 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
-struct WaylandSurface::Impl
+struct WaylandSurface::Impl: public WaylandObject
 {
 	// instance data
 	Surface2D surface2D;
@@ -27,7 +27,7 @@ struct WaylandSurface::Impl
 	static const struct zxdg_surface_v6_interface xdgSurfaceV6Interface;
 	
 	// the sole responsibility of this set is to keep the objects alive as long as libwayland has raw pointers to them
-	static std::unordered_map<Impl *, shared_ptr<Impl>> surfaces;
+	//static std::unordered_map<Impl *, shared_ptr<Impl>> surfaces;
 	
 	// pointers to functions that need to be retrieved dynamically
 	// they will be fetched when the first instance of this class is created
@@ -51,6 +51,7 @@ struct WaylandSurface::Impl
 		eglQueryWaylandBufferWL = (PFNEGLQUERYWAYLANDBUFFERWL)eglGetProcAddress("eglQueryWaylandBufferWL");
 	}
 	
+	/*
 	// given a wayland resource, returns the associated Impl raw pointer
 	// this should only be needed in a few places, WaylandSurface::getFrom() is usually safer
 	static Impl * getRawPtrFrom(wl_resource * resource)
@@ -70,11 +71,12 @@ struct WaylandSurface::Impl
 		}
 		return iter;
 	}
+	*/
 };
 
 PFNEGLBINDWAYLANDDISPLAYWL WaylandSurface::Impl::eglBindWaylandDisplayWL = nullptr;
 PFNEGLQUERYWAYLANDBUFFERWL WaylandSurface::Impl::eglQueryWaylandBufferWL = nullptr;
-std::unordered_map<WaylandSurface::Impl *, shared_ptr<WaylandSurface::Impl>> WaylandSurface::Impl::surfaces;
+//std::unordered_map<WaylandSurface::Impl *, shared_ptr<WaylandSurface::Impl>> WaylandSurface::Impl::surfaces;
 
 const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface destroy
@@ -305,7 +307,8 @@ const struct zxdg_surface_v6_interface WaylandSurface::Impl::xdgSurfaceV6Interfa
 
 void WaylandSurface::Impl::deleteSurface(wl_resource * resource)
 {
-	debug("delete surface callback called");
+	warning("delete surface callback called (deprecated)");
+	/*
 	auto implPtr = Impl::getRawPtrFrom(resource);
 	assert(implPtr != nullptr);
 	auto iter = implPtr->getIterInSurfaces();
@@ -317,6 +320,7 @@ void WaylandSurface::Impl::deleteSurface(wl_resource * resource)
 	{
 		warning("not deleting wayland surface because it wasn't in the map");
 	}
+	*/
 };
 
 WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
@@ -324,30 +328,38 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 	debug("creating WaylandSurface");
 	auto implShared = make_shared<Impl>();
 	impl = implShared;
-	implShared->surfaceResource = wl_resource_create(client, &wl_surface_interface, 3, id);
-	wl_resource_set_implementation(implShared->surfaceResource, &Impl::surfaceInterface, &*implShared, Impl::deleteSurface);
-	Impl::surfaces[&*implShared] = implShared;
+	implShared->WaylandObjectSetup(client, id, &wl_surface_interface, 3, &Impl::surfaceInterface);
+	//implShared->surfaceResource = wl_resource_create(client, &wl_surface_interface, 3, id);
+	//wl_resource_set_implementation(implShared->surfaceResource, &Impl::surfaceInterface, &*implShared, Impl::deleteSurface);
+	//Impl::surfaces[&*implShared] = implShared;
 }
 
 void WaylandSurface::makeWlShellSurface(wl_client * client, uint32_t id, wl_resource * surface)
 {
+	warning("dead func");
+	/*
 	Impl * surfaceImplRaw = Impl::getRawPtrFrom(surface);
 	wl_resource * shellSurface = wl_resource_create(client, &wl_shell_surface_interface, 1, id);
 	wl_resource_set_implementation(shellSurface, &Impl::wlShellSurfaceInterface, surfaceImplRaw, nullptr);
+	*/
 }
 
 void WaylandSurface::makeXdgShellV6Surface(wl_client * client, uint32_t id, wl_resource * surface)
 {
+	warning("dead func");
+	/*
 	Impl * surfaceImplRaw = Impl::getRawPtrFrom(surface);
 	wl_resource * xdgSurface = wl_resource_create(client, &zxdg_surface_v6_interface, 1, id);
 	wl_resource_set_implementation(xdgSurface, &Impl::xdgSurfaceV6Interface, surfaceImplRaw, nullptr);
+	*/
 }
 
 WaylandSurface WaylandSurface::getFrom(wl_resource * resource)
 {
-	auto ptr = Impl::getRawPtrFrom(resource);
-	assert(ptr != nullptr);
-	auto iter = ptr->getIterInSurfaces();
-	assert(iter != Impl::surfaces.end());
-	return WaylandSurface(iter->second);
+	return WaylandSurface(WaylandObject::get<Impl>(resource));
+	//auto ptr = Impl::getRawPtrFrom(resource);
+	//assert(ptr != nullptr);
+	//auto iter = ptr->getIterInSurfaces();
+	//assert(iter != Impl::surfaces.end());
+	//return WaylandSurface(iter->second);
 }

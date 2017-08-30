@@ -12,4 +12,3 @@ void shutdown();
 void iteration();
 
 };
-
