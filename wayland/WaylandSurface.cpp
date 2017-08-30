@@ -3,6 +3,7 @@
 #include "../backends/GLX/GLXContextManager.h"
 
 #include <wayland-server-protocol.h>
+#include "../protocols/xdg-shell-unstable-v6.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
@@ -18,10 +19,11 @@ struct WaylandSurface::Impl
 	struct wl_resource * bufferResource = nullptr;
 	struct wl_resource * surfaceResource = nullptr;
 	
-	// callbacks to be sent to libwayland
+	// callbacks and interfaces to be sent to libwayland
 	static void deleteSurface(wl_resource * resource);
 	static const struct wl_surface_interface surfaceInterface;
-	static const struct wl_shell_surface_interface shellSurfaceInterface;
+	static const struct wl_shell_surface_interface wlShellSurfaceInterface;
+	static const struct zxdg_surface_v6_interface xdgSurfaceV6Interface;
 	
 	// the sole responsibility of this set is to keep the objects alive as long as libwayland has raw pointers to them
 	static std::unordered_map<Impl *, shared_ptr<Impl>> surfaces;
@@ -164,7 +166,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	},
 };
 
-const struct wl_shell_surface_interface WaylandSurface::Impl::shellSurfaceInterface = {
+const struct wl_shell_surface_interface WaylandSurface::Impl::wlShellSurfaceInterface = {
 	// shell surface pong
 	+[](struct wl_client *client, wl_resource * resource, uint32_t serial)
 	{
@@ -217,6 +219,89 @@ const struct wl_shell_surface_interface WaylandSurface::Impl::shellSurfaceInterf
 	},
 };
 
+const struct zxdg_surface_v6_interface WaylandSurface::Impl::xdgSurfaceV6Interface = {
+	// destroy
+	+[](struct wl_client *client, struct wl_resource *resource)
+	{
+		warning("zxdg_surface_v6_interface::destroy called (not yet implemented)");
+	},
+	// get_toplevel
+	+[](struct wl_client *client, struct wl_resource *resource, uint32_t id)
+	{
+		warning("zxdg_surface_v6_interface::get_toplevel called (not yet implemented)");
+	},
+	//get_popup
+	+[](struct wl_client *client, struct wl_resource *resource, uint32_t id, struct wl_resource *parent, struct wl_resource *positioner)
+	{
+		warning("zxdg_surface_v6_interface::get_popup called (not yet implemented)");
+	},
+	/**
+	 * set the new window geometry
+	 *
+	 * The window geometry of a surface is its "visible bounds" from
+	 * the user's perspective. Client-side decorations often have
+	 * invisible portions like drop-shadows which should be ignored for
+	 * the purposes of aligning, placing and constraining windows.
+	 *
+	 * The window geometry is double buffered, and will be applied at
+	 * the time wl_surface.commit of the corresponding wl_surface is
+	 * called.
+	 *
+	 * Once the window geometry of the surface is set, it is not
+	 * possible to unset it, and it will remain the same until
+	 * set_window_geometry is called again, even if a new subsurface or
+	 * buffer is attached.
+	 *
+	 * If never set, the value is the full bounds of the surface,
+	 * including any subsurfaces. This updates dynamically on every
+	 * commit. This unset is meant for extremely simple clients.
+	 *
+	 * The arguments are given in the surface-local coordinate space of
+	 * the wl_surface associated with this xdg_surface.
+	 *
+	 * The width and height must be greater than zero. Setting an
+	 * invalid size will raise an error. When applied, the effective
+	 * window geometry will be the set window geometry clamped to the
+	 * bounding rectangle of the combined geometry of the surface of
+	 * the xdg_surface and the associated subsurfaces.
+	 */
+	// set_window_geometry
+	+[](struct wl_client *client, struct wl_resource *resource, int32_t x, int32_t y, int32_t width, int32_t height)
+	{
+		warning("zxdg_surface_v6_interface::set_window_geometry called (not yet implemented)");
+	},
+	/**
+	 * ack a configure event
+	 *
+	 * When a configure event is received, if a client commits the
+	 * surface in response to the configure event, then the client must
+	 * make an ack_configure request sometime before the commit
+	 * request, passing along the serial of the configure event.
+	 *
+	 * For instance, for toplevel surfaces the compositor might use
+	 * this information to move a surface to the top left only when the
+	 * client has drawn itself for the maximized or fullscreen state.
+	 *
+	 * If the client receives multiple configure events before it can
+	 * respond to one, it only has to ack the last configure event.
+	 *
+	 * A client is not required to commit immediately after sending an
+	 * ack_configure request - it may even ack_configure several times
+	 * before its next surface commit.
+	 *
+	 * A client may send multiple ack_configure requests before
+	 * committing, but only the last request sent before a commit
+	 * indicates which configure event the client really is responding
+	 * to.
+	 * @param serial the serial from the configure event
+	 */
+	// ack_configure
+	+[](struct wl_client *client, struct wl_resource *resource, uint32_t serial)
+	{
+		warning("zxdg_surface_v6_interface::ack_configure called (not yet implemented)");
+	}
+};
+
 void WaylandSurface::Impl::deleteSurface(wl_resource * resource)
 {
 	debug("delete surface callback called");
@@ -245,9 +330,16 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 
 void WaylandSurface::makeWlShellSurface(wl_client * client, uint32_t id, wl_resource * surface)
 {
-	Impl * implRaw = Impl::getRawPtrFrom(surface);
+	Impl * surfaceImplRaw = Impl::getRawPtrFrom(surface);
 	wl_resource * shellSurface = wl_resource_create(client, &wl_shell_surface_interface, 1, id);
-	wl_resource_set_implementation(shellSurface, &Impl::shellSurfaceInterface, implRaw, nullptr);
+	wl_resource_set_implementation(shellSurface, &Impl::wlShellSurfaceInterface, surfaceImplRaw, nullptr);
+}
+
+void WaylandSurface::makeXdgShellV6Surface(wl_client * client, uint32_t id, wl_resource * surface)
+{
+	Impl * surfaceImplRaw = Impl::getRawPtrFrom(surface);
+	wl_resource * xdgSurface = wl_resource_create(client, &zxdg_surface_v6_interface, 1, id);
+	wl_resource_set_implementation(xdgSurface, &Impl::xdgSurfaceV6Interface, surfaceImplRaw, nullptr);
 }
 
 WaylandSurface WaylandSurface::getFrom(wl_resource * resource)

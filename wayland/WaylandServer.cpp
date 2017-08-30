@@ -81,11 +81,14 @@ struct zxdg_shell_v6_interface xdgShellV6Interface {
 	+[](struct wl_client *client, struct wl_resource *resource, uint32_t id)
 	{
 		warning("zxdg_shell_v6_interface create_positioner called (not yet implemented)");
+		
 	},
 	// get_xdg_surface
 	+[](struct wl_client *client,struct wl_resource *resource,uint32_t id, struct wl_resource *surface)
 	{
-		warning("zxdg_shell_v6_interface create_positioner called (not yet implemented)");
+		debug("zxdg_shell_v6_interface get_xdg_surface called");
+		
+		WaylandSurface::makeXdgShellV6Surface(client, id, surface);
 	},
 	// pong
 	+[](struct wl_client *client, struct wl_resource *resource, uint32_t serial)
@@ -94,9 +97,9 @@ struct zxdg_shell_v6_interface xdgShellV6Interface {
 	}
 };
 
-void xdgShellBindCallback(wl_client * client, void * data, uint32_t version, uint32_t id)
+void xdgShellV6BindCallback(wl_client * client, void * data, uint32_t version, uint32_t id)
 {
-	debug("xdgShellBindCallback called");
+	debug("xdgShellV6BindCallback called");
 	
 	wl_resource * resource = wl_resource_create(client, &zxdg_shell_v6_interface, 1, id);
 	wl_resource_set_implementation(resource, &xdgShellV6Interface, nullptr, nullptr);
@@ -202,7 +205,7 @@ void setup()
 	// create global objects
 	wl_global_create(display, &wl_compositor_interface, 3, nullptr, compositorBindCallback);
 	wl_global_create(display, &wl_shell_interface, 1, nullptr, shellBindCallback);
-	wl_global_create(display, &zxdg_shell_v6_interface, 1, nullptr, xdgShellBindCallback);
+	wl_global_create(display, &zxdg_shell_v6_interface, 1, nullptr, xdgShellV6BindCallback);
 	wl_global_create(display, &wl_seat_interface, 1, nullptr, seatBindCallback);
 	
 	wl_display_init_shm(display);
