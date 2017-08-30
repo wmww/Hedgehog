@@ -2,6 +2,8 @@
 #include <wayland-server-core.h>
 #include <unordered_map>
 
+#pragma once
+
 class WaylandObject: public std::enable_shared_from_this<WaylandObject>
 {
 public:

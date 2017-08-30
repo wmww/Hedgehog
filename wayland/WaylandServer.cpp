@@ -2,6 +2,7 @@
 #include "../opengl/Texture.h"
 #include "WaylandServer.h"
 #include "WaylandSurface.h"
+#include "WlShellSurface.h"
 
 #include <wayland-server.h>
 #include <wayland-server-protocol.h>
@@ -12,7 +13,7 @@
 #include "../backends/GLX/GLXContextManager.h"
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 namespace WaylandServer
 {
@@ -58,7 +59,7 @@ struct wl_shell_interface shellInterface = {
 		
 		debug("shell interface get shell surface called");
 		
-		WaylandSurface::makeWlShellSurface(client, id, surface);
+		WlShellSurface(client, id, surface);
 	}
 };
 
