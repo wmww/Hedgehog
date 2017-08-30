@@ -1,6 +1,7 @@
 #include "WaylandSurface.h"
 #include "WaylandServer.h"
 #include "../backends/GLX/GLXContextManager.h"
+#include "WaylandObject.h"
 
 #include <wayland-server-protocol.h>
 #include "../protocols/xdg-shell-unstable-v6.h"
