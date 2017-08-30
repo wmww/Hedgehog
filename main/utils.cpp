@@ -36,7 +36,7 @@ void logMessage(string source, MessageType type, string message)
 	switch (type)
 	{
 	case MESSAGE_DEBUG:
-		typeStr = "DEBUG";
+		typeStr = "debug";
 		break;
 	case MESSAGE_WARNING:
 		typeStr = "WARNING";
@@ -53,9 +53,12 @@ void logMessage(string source, MessageType type, string message)
 	string msg = "[" + source + "]: " + message;
 	vector<string> lines;
 	int messageWidth = std::max(termWidth - (int)typeStr.size(), 12);
-	string indent = [&]() -> string { string out = ""; for (int i = 0; i < (int)typeStr.size() - 1; i++) { out += " "; } return out; } ();
-	string lastIndent = indent + "|_";
-	indent += "| ";
+	//string indent = [&]() -> string { string out = ""; for (int i = 0; i < (int)typeStr.size() - 1; i++) { out += " "; } return out; } ();
+	string indent = [&]() -> string { string out = ""; for (int i = 0; i < 2; i++) { out += " "; } return out; } ();
+	//string lastIndent = indent + "|_";
+	string lastIndent = indent + "  ";
+	//indent += "| ";
+	indent += "  ";
 	
 	int start = 0;
 	int end = (int)msg.size();
