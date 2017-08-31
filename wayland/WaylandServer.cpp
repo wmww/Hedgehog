@@ -59,7 +59,7 @@ struct wl_shell_interface shellInterface = {
 		
 		debug("shell interface get shell surface called");
 		
-		WlShellSurface(client, id, surface);
+		WlShellSurface(client, id, WaylandSurface::getFrom(surface));
 	}
 };
 

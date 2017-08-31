@@ -8,6 +8,11 @@
 
 struct WlShellSurface::Impl: public WaylandObject
 {
+	// instance data
+	WaylandSurface waylandSurface;
+	Surface2D surface2D;
+	
+	// interface
 	static const struct wl_shell_surface_interface wlShellSurfaceInterface;
 };
 
@@ -64,10 +69,12 @@ const struct wl_shell_surface_interface WlShellSurface::Impl::wlShellSurfaceInte
 	},
 };
 
-WlShellSurface::WlShellSurface(wl_client * client, uint32_t id, wl_resource * surface)
+WlShellSurface::WlShellSurface(wl_client * client, uint32_t id, WaylandSurface surface)
 {
 	debug("creating WlShellSurface");
 	auto implShared = make_shared<Impl>();
+	implShared->waylandSurface = surface;
+	implShared->surface2D = surface.getSurface2D();
 	impl = implShared;
 	implShared->wlSetup(client, id, &wl_shell_surface_interface, 1, &Impl::wlShellSurfaceInterface);
 }

@@ -20,7 +20,7 @@ void destroyWaylandObject(wl_resource * resource)
 
 void WaylandObject::wlSetup(wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct)
 {
-	wl_resource * resource = wl_resource_create(client, interface, version, id);
+	resource = wl_resource_create(client, interface, version, id);
 	wl_resource_set_implementation(resource, implStruct, this, destroyWaylandObject);
 	assert(waylandObjectMap.find(this) == waylandObjectMap.end());
 	waylandObjectMap[this] = shared_from_this();

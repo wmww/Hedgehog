@@ -116,7 +116,6 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 		debug("surface interface surface commit callback called");
 		
 		auto impl = get<Impl>(resource);
-		
 		assert(impl);
 		
 		// get the data we'll need
@@ -256,9 +255,23 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 	impl = implShared;
 }
 
-WaylandSurface::WaylandSurface(wl_resource * resource)
+WaylandSurface WaylandSurface::getFrom(wl_resource * resource)
 {
-	impl = WaylandObject::get<Impl>(resource);
+	WaylandSurface out;
+	out.impl = WaylandObject::get<Impl>(resource);
+	return out;
+}
+
+wl_resource * WaylandSurface::getSurfaceResource()
+{
+	GET_IMPL;
+	return impl->getResource();
+}
+
+Surface2D WaylandSurface::getSurface2D()
+{
+	GET_IMPL;
+	return impl->surface2D;
 }
 
 void WaylandSurface::makeXdgShellV6Surface(wl_client * client, uint32_t id, wl_resource * surface)
