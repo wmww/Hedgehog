@@ -21,6 +21,5 @@ public:
 	}
 	
 private:
-	uint32_t id = 0;
 };
 
