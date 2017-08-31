@@ -69,5 +69,5 @@ WlShellSurface::WlShellSurface(wl_client * client, uint32_t id, wl_resource * su
 	debug("creating WlShellSurface");
 	auto implShared = make_shared<Impl>();
 	impl = implShared;
-	implShared->WaylandObjectSetup(client, id, &wl_shell_surface_interface, 1, &Impl::wlShellSurfaceInterface);
+	implShared->wlSetup(client, id, &wl_shell_surface_interface, 1, &Impl::wlShellSurfaceInterface);
 }

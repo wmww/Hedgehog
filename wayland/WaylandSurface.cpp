@@ -272,7 +272,7 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 	debug("creating WaylandSurface");
 	auto implShared = make_shared<Impl>();
 	impl = implShared;
-	implShared->WaylandObjectSetup(client, id, &wl_surface_interface, 3, &Impl::surfaceInterface);
+	implShared->wlSetup(client, id, &wl_surface_interface, 3, &Impl::surfaceInterface);
 	//implShared->surfaceResource = wl_resource_create(client, &wl_surface_interface, 3, id);
 	//wl_resource_set_implementation(implShared->surfaceResource, &Impl::surfaceInterface, &*implShared, Impl::deleteSurface);
 	//Impl::surfaces[&*implShared] = implShared;
