@@ -85,8 +85,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	+[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y)
 	{
 		debug("surface interface surface attach callback called");
-		auto self = getFrom(resource);
-		auto impl = self.impl.lock();
+		auto impl = get<Impl>(resource);
 		assert(impl);
 		impl->bufferResource = buffer;
 	},
@@ -117,8 +116,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	{
 		debug("surface interface surface commit callback called");
 		
-		auto self = getFrom(resource);
-		auto impl = self.impl.lock();
+		auto impl = get<Impl>(resource);
 		
 		assert(impl);
 		
@@ -278,6 +276,11 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 	//Impl::surfaces[&*implShared] = implShared;
 }
 
+WaylandSurface::WaylandSurface(wl_resource * resource)
+{
+	impl = WaylandObject::get<Impl>(resource);
+}
+
 /*
 void WaylandSurface::makeWlShellSurface(wl_client * client, uint32_t id, wl_resource * surface)
 {
@@ -295,14 +298,4 @@ void WaylandSurface::makeXdgShellV6Surface(wl_client * client, uint32_t id, wl_r
 	wl_resource * xdgSurface = wl_resource_create(client, &zxdg_surface_v6_interface, 1, id);
 	wl_resource_set_implementation(xdgSurface, &Impl::xdgSurfaceV6Interface, surfaceImplRaw, nullptr);
 	*/
-}
-
-WaylandSurface WaylandSurface::getFrom(wl_resource * resource)
-{
-	return WaylandSurface(WaylandObject::get<Impl>(resource));
-	//auto ptr = Impl::getRawPtrFrom(resource);
-	//assert(ptr != nullptr);
-	//auto iter = ptr->getIterInSurfaces();
-	//assert(iter != Impl::surfaces.end());
-	//return WaylandSurface(iter->second);
 }

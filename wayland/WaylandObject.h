@@ -15,7 +15,7 @@ public:
 	static shared_ptr<WaylandObject> getWaylandObject(wl_resource * resource);
 	
 	template<typename T>
-	inline static weak_ptr<T> get(wl_resource * resource)
+	inline static shared_ptr<T> get(wl_resource * resource)
 	{
 		return std::static_pointer_cast<T>(getWaylandObject(resource));
 	}
