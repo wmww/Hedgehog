@@ -17,11 +17,8 @@ struct WaylandSurface::Impl: public WaylandObject
 	struct wl_resource * bufferResource = nullptr;
 	struct wl_resource * surfaceResource = nullptr;
 	
-	// callbacks and interfaces to be sent to libwayland
+	// interface
 	static const struct wl_surface_interface surfaceInterface;
-	
-	// the sole responsibility of this set is to keep the objects alive as long as libwayland has raw pointers to them
-	//static std::unordered_map<Impl *, shared_ptr<Impl>> surfaces;
 	
 	// pointers to functions that need to be retrieved dynamically
 	// they will be fetched when the first instance of this class is created
@@ -44,33 +41,10 @@ struct WaylandSurface::Impl: public WaylandObject
 		eglBindWaylandDisplayWL = (PFNEGLBINDWAYLANDDISPLAYWL)eglGetProcAddress("eglBindWaylandDisplayWL");
 		eglQueryWaylandBufferWL = (PFNEGLQUERYWAYLANDBUFFERWL)eglGetProcAddress("eglQueryWaylandBufferWL");
 	}
-	
-	/*
-	// given a wayland resource, returns the associated Impl raw pointer
-	// this should only be needed in a few places, WaylandSurface::getFrom() is usually safer
-	static Impl * getRawPtrFrom(wl_resource * resource)
-	{
-		assert(string(wl_resource_get_class(resource)) == "wl_surface");
-		Impl * implRawPtr = (Impl *)wl_resource_get_user_data(resource);
-		return implRawPtr;
-	}
-	
-	// returns the iterator for this objects position in surfaces
-	auto getIterInSurfaces()
-	{
-		auto iter = surfaces.find(this);
-		if (iter == surfaces.end())
-		{
-			warning("getIterInSurfaces called for Impl not in map");
-		}
-		return iter;
-	}
-	*/
 };
 
 PFNEGLBINDWAYLANDDISPLAYWL WaylandSurface::Impl::eglBindWaylandDisplayWL = nullptr;
 PFNEGLQUERYWAYLANDBUFFERWL WaylandSurface::Impl::eglQueryWaylandBufferWL = nullptr;
-//std::unordered_map<WaylandSurface::Impl *, shared_ptr<WaylandSurface::Impl>> WaylandSurface::Impl::surfaces;
 
 const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface destroy
@@ -188,13 +162,3 @@ Surface2D WaylandSurface::getSurface2D()
 	GET_IMPL;
 	return impl->surface2D;
 }
-
-/*
-void WaylandSurface::makeXdgShellV6Surface(wl_client * client, uint32_t id, wl_resource * surface)
-{
-	warning("dead func");
-	Impl * surfaceImplRaw = Impl::getRawPtrFrom(surface);
-	wl_resource * xdgSurface = wl_resource_create(client, &zxdg_surface_v6_interface, 1, id);
-	wl_resource_set_implementation(xdgSurface, &Impl::xdgSurfaceV6Interface, surfaceImplRaw, nullptr);
-}
-*/
