@@ -19,7 +19,8 @@ void WaylandObject::wlSetup(wl_client * client, uint32_t id, const wl_interface 
 {
 	wl_resource * resource = wl_resource_create(client, interface, version, id);
 	wl_resource_set_implementation(resource, implStruct, nullptr, destroyWaylandObject);
-	id = id;
+	this->id = id;
+	assert(waylandObjectMap.find(id) == waylandObjectMap.end());
 	waylandObjectMap[id] = shared_from_this();
 }
 

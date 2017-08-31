@@ -19,7 +19,6 @@ struct WaylandSurface::Impl: public WaylandObject
 	struct wl_resource * surfaceResource = nullptr;
 	
 	// callbacks and interfaces to be sent to libwayland
-	static void deleteSurface(wl_resource * resource);
 	static const struct wl_surface_interface surfaceInterface;
 	static const struct zxdg_surface_v6_interface xdgSurfaceV6Interface;
 	
@@ -247,48 +246,20 @@ const struct zxdg_surface_v6_interface WaylandSurface::Impl::xdgSurfaceV6Interfa
 	}
 };
 
-void WaylandSurface::Impl::deleteSurface(wl_resource * resource)
-{
-	warning("delete surface callback called (deprecated)");
-	/*
-	auto implPtr = Impl::getRawPtrFrom(resource);
-	assert(implPtr != nullptr);
-	auto iter = implPtr->getIterInSurfaces();
-	if (iter != surfaces.end())
-	{
-		surfaces.erase(iter);
-	}
-	else
-	{
-		warning("not deleting wayland surface because it wasn't in the map");
-	}
-	*/
-};
-
 WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 {
 	debug("creating WaylandSurface");
+	// important to use a temp var because impl is weak, so it would be immediately deleted
+	// in wlSetup, a shared_ptr to the object is saved by WaylandObject, so it is safe to store in a weak_ptr after
 	auto implShared = make_shared<Impl>();
-	impl = implShared;
 	implShared->wlSetup(client, id, &wl_surface_interface, 3, &Impl::surfaceInterface);
-	//implShared->surfaceResource = wl_resource_create(client, &wl_surface_interface, 3, id);
-	//wl_resource_set_implementation(implShared->surfaceResource, &Impl::surfaceInterface, &*implShared, Impl::deleteSurface);
-	//Impl::surfaces[&*implShared] = implShared;
+	impl = implShared;
 }
 
 WaylandSurface::WaylandSurface(wl_resource * resource)
 {
 	impl = WaylandObject::get<Impl>(resource);
 }
-
-/*
-void WaylandSurface::makeWlShellSurface(wl_client * client, uint32_t id, wl_resource * surface)
-{
-	Impl * surfaceImplRaw = Impl::getRawPtrFrom(surface);
-	wl_resource * shellSurface = wl_resource_create(client, &wl_shell_surface_interface, 1, id);
-	wl_resource_set_implementation(shellSurface, &Impl::wlShellSurfaceInterface, surfaceImplRaw, nullptr);
-}
-*/
 
 void WaylandSurface::makeXdgShellV6Surface(wl_client * client, uint32_t id, wl_resource * surface)
 {
