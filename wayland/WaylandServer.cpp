@@ -3,6 +3,7 @@
 #include "WaylandServer.h"
 #include "WaylandSurface.h"
 #include "WlShellSurface.h"
+#include "XdgShellV6Surface.h"
 
 #include <wayland-server.h>
 #include <wayland-server-protocol.h>
@@ -89,7 +90,7 @@ struct zxdg_shell_v6_interface xdgShellV6Interface {
 	{
 		debug("zxdg_shell_v6_interface get_xdg_surface called");
 		
-		WaylandSurface::makeXdgShellV6Surface(client, id, surface);
+		XdgShellV6Surface(client, id, WaylandSurface::getFrom(surface));
 	},
 	// pong
 	+[](struct wl_client *client, struct wl_resource *resource, uint32_t serial)

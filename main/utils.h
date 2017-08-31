@@ -37,6 +37,8 @@ string to_string(V2<T> in) { return "(" + to_string(in.x) + ", " + to_string(in.
 typedef V2<int> V2i;
 typedef V2<double> V2d;
 
+#define FUNC string(__FUNCTION__)
+
 // instead of using logMessage directly, it is generally a good idea to use the debug, warning, fatal and assert macros
 enum MessageType { MESSAGE_DEBUG, MESSAGE_WARNING, MESSAGE_ASSERTION_FAILED, MESSAGE_FATAL_ERROR };
 void logMessage(string source, MessageType type, string messaage); // this function does NOT support unicode

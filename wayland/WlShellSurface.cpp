@@ -4,7 +4,7 @@
 #include <wayland-server-protocol.h>
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 struct WlShellSurface::Impl: public WaylandObject
 {
