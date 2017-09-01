@@ -46,7 +46,12 @@ struct Texture::Impl
 	
 	~Impl()
 	{
-		warning(FUNC + " not yet implemented");
+		debug("deleting texture");
+		if (isSetUp)
+		{
+			glDeleteVertexArrays(1, &squareVAOId);
+			glDeleteTextures(1, &textureId);
+		}
 	}
 	
 	// automatically insures that this is only called once in the object's lifetime
@@ -101,7 +106,8 @@ struct Texture::Impl
 				glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*) (2 * sizeof(GLfloat)));
 				glEnableVertexAttribArray(1);
 			}
-			glBindBuffer(GL_ARRAY_BUFFER, false); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
+			glBindBuffer(GL_ARRAY_BUFFER, false);
+			// Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
 			
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 			{
@@ -111,9 +117,12 @@ struct Texture::Impl
 		}
 		glBindVertexArray(false); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs)
 		
-		//deleting these objects appears to work, not sure if its supposed to though
-		//glDeleteBuffers(1, &VBO);
-		//glDeleteBuffers(1, &EBO);
+		// this is legal as per https://stackoverflow.com/a/13342549/4327513
+		// the buffers will not really be deleted until the vertex array object is deleted
+		// its apparently like reference counting, and here we are lowering the reference count
+		// I know, OpenGL is fucking stupid
+		glDeleteBuffers(1, &VBO);
+		glDeleteBuffers(1, &EBO);
 	}
 	
 	void setupGlTexture()
