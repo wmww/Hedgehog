@@ -42,7 +42,7 @@ void logMessage(string source, MessageType type, string message)
 		typeStr = "WARNING";
 		break;
 	case MESSAGE_ASSERTION_FAILED:
-		typeStr = "ASSERTION FAILED";
+		typeStr = "FATAL ASSERTION";
 		break;
 	case MESSAGE_FATAL_ERROR:
 		typeStr = "FATAL ERROR";

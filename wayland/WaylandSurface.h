@@ -16,10 +16,10 @@ public:
 	
 	// getters
 	wl_resource * getSurfaceResource();
-	Surface2D getSurface2D();
+	Texture getTexture();
 	
 private:
 	struct Impl;
-	weak_ptr<Impl> impl;
+	weak_ptr<Impl> impl; // can be null
 };
 

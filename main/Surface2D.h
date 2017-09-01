@@ -6,14 +6,22 @@
 class Surface2D
 {
 public:
+	// constructors
 	Surface2D();
-	Texture getTexture();
-	void draw();
 	
+	// use
+	void draw();
 	static void drawAll();
+	
+	// setters
+	void setTexture(Texture texture);
+	
+	// getters
+	Texture getTexture();
 	
 private:
 	struct Impl;
-	shared_ptr<Impl> impl = nullptr;
+	shared_ptr<Impl> impl;
+	Surface2D(shared_ptr<Impl> impl) { this->impl = impl; }
 };
 

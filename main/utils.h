@@ -54,7 +54,7 @@ void logMessage(string source, MessageType type, string messaage); // this funct
 #define debug_on(message) logMessage(FILE_INFO, MESSAGE_DEBUG, message)
 #define warning(message) logMessage(FILE_INFO, MESSAGE_WARNING, message)
 #define fatal(message) logMessage(FILE_INFO, MESSAGE_FATAL_ERROR, message)
-#define assert(condition) if (!(condition)) { logMessage(FILE_INFO, MESSAGE_ASSERTION_FAILED, #condition); }
+#define assert(condition) if (!(condition)) { logMessage(FILE_INFO, MESSAGE_ASSERTION_FAILED, "assertion '" #condition "' failed"); }
 
 // loads an entire file into the contents string, returns if it succeeded
 bool loadFile(string filename, string& contents);

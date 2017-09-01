@@ -74,7 +74,7 @@ WlShellSurface::WlShellSurface(wl_client * client, uint32_t id, WaylandSurface s
 	debug("creating WlShellSurface");
 	auto implShared = make_shared<Impl>();
 	implShared->waylandSurface = surface;
-	implShared->surface2D = surface.getSurface2D();
+	implShared->surface2D.setTexture(surface.getTexture());
 	impl = implShared;
 	implShared->wlSetup(client, id, &wl_shell_surface_interface, 1, &Impl::wlShellSurfaceInterface);
 }

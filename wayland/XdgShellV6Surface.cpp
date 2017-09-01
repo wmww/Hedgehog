@@ -108,7 +108,7 @@ XdgShellV6Surface::XdgShellV6Surface(wl_client * client, uint32_t id, WaylandSur
 	// in wlSetup, a shared_ptr to the object is saved by WaylandObject, so it is safe to store in a weak_ptr after
 	auto implShared = make_shared<Impl>();
 	implShared->waylandSurface = surface;
-	implShared->surface2D = surface.getSurface2D();
+	implShared->surface2D.setTexture(surface.getTexture());
 	impl = implShared;
 	// sending 1 as the version number isn't a mistake. Idk why its called v6 but you send in 1, maybe always 1 until stable?
 	implShared->wlSetup(client, id, &zxdg_surface_v6_interface, 1, &Impl::xdgSurfaceV6Interface);

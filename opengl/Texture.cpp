@@ -46,7 +46,7 @@ struct Texture::Impl
 	
 	~Impl()
 	{
-		warning("Texture::~Impl() not yet implemented");
+		warning(FUNC + " not yet implemented");
 	}
 	
 	// automatically insures that this is only called once in the object's lifetime

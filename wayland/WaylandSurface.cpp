@@ -13,7 +13,7 @@
 struct WaylandSurface::Impl: public WaylandObject
 {
 	// instance data
-	Surface2D surface2D;
+	Texture texture;
 	struct wl_resource * bufferResource = nullptr;
 	struct wl_resource * surfaceResource = nullptr;
 	
@@ -109,7 +109,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 			Impl::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &height);
 			EGLAttrib attribs = EGL_NONE;
 			EGLImage image = eglCreateImage(display, EGL_NO_CONTEXT, EGL_WAYLAND_BUFFER_WL, buffer, &attribs);
-			impl->surface2D.getTexture().loadFromEGLImage(image, V2i(width, height));
+			impl->texture.loadFromEGLImage(image, V2i(width, height));
 			eglDestroyImage(display, image);
 		}
 		else {
@@ -118,7 +118,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 			uint32_t width = wl_shm_buffer_get_width(shmBuffer);
 			uint32_t height = wl_shm_buffer_get_height(shmBuffer);
 			void * data = wl_shm_buffer_get_data(shmBuffer);
-			impl->surface2D.getTexture().loadFromData(data, V2i(width, height));
+			impl->texture.loadFromData(data, V2i(width, height));
 		}
 		wl_buffer_send_release(buffer);
 	},
@@ -157,8 +157,8 @@ wl_resource * WaylandSurface::getSurfaceResource()
 	return impl->getResource();
 }
 
-Surface2D WaylandSurface::getSurface2D()
+Texture WaylandSurface::getTexture()
 {
 	GET_IMPL;
-	return impl->surface2D;
+	return impl->texture;
 }

@@ -5,26 +5,29 @@
 
 struct Surface2D::Impl
 {
+	// instance data
 	Texture texture;
 	
+	// class data
 	static vector<Surface2D> allSurfaces;
+	
+	// functions
+	Impl()
+	{}
 };
 
 vector<Surface2D> Surface2D::Impl::allSurfaces;
 
 Surface2D::Surface2D()
 {
-	impl = shared_ptr<Impl>(new Impl);
-	Impl::allSurfaces.push_back(*this);
-}
-
-Texture Surface2D::getTexture()
-{
-	return impl->texture;
+	impl = make_shared<Impl>();
+	
+	Impl::allSurfaces.push_back(Surface2D(impl));
 }
 
 void Surface2D::draw()
 {
+	assert(impl);
 	impl->texture.draw();
 }
 
@@ -36,5 +39,17 @@ void Surface2D::drawAll()
 	{
 		i.draw();
 	}
+}
+
+void Surface2D::setTexture(Texture texture)
+{
+	assert(impl);
+	impl->texture = texture;
+}
+
+Texture Surface2D::getTexture()
+{
+	assert(impl);
+	return impl->texture;
 }
 
