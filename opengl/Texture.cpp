@@ -36,22 +36,29 @@ PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES = nullptr;
 
 struct Texture::Impl
 {
-	GLuint squareVAOId;
-	GLuint textureId;
-	bool isLoaded = false;
+	GLuint squareVAOId = 0;
+	GLuint textureId = 0;
+	V2i dim;
+	bool isSetUp = false;
 	
 	Impl()
-	{
-		setupIfFirstInstance(this);
-		
-		setupVAO();
-		
-		setupGlTexture();
-	}
+	{}
 	
 	~Impl()
 	{
 		warning("Texture::~Impl() not yet implemented");
+	}
+	
+	// automatically insures that this is only called once in the object's lifetime
+	void setup()
+	{
+		if (!isSetUp)
+		{
+			setupIfFirstInstance(this);
+			setupVAO();
+			setupGlTexture();
+			isSetUp = true;
+		}
 	}
 	
 	void setupVAO()
@@ -135,12 +142,13 @@ struct Texture::Impl
 
 Texture::Texture()
 {
-	impl = shared_ptr<Impl>(new Impl);
+	impl = make_shared<Impl>();
 }
 
 void Texture::loadFromImage(string imagePath)
 {
 	debug("loading '" + imagePath + "' into texture...");
+	impl->setup();
 	// Load and generate the texture
 	int width, height;
 	unsigned char* image = SOIL_load_image(imagePath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
@@ -148,23 +156,20 @@ void Texture::loadFromImage(string imagePath)
 	{
 		warning(string() + "image loading error: " + SOIL_last_result());
 	}
-	
 	debug("creating texture from image...");
-	
 	glBindTexture(GL_TEXTURE_2D, impl->textureId);
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-		glGenerateMipmap(GL_TEXTURE_2D);
+		//glGenerateMipmap(GL_TEXTURE_2D);
 	}
-	glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentally mess up our texture.
-	
+	glBindTexture(GL_TEXTURE_2D, false); // Unbind texture when done, so we won't accidentally mess up our texture.
+	impl->dim = V2i(width, height);
 	SOIL_free_image_data(image);
-	
-	impl->isLoaded = true;
 }
 
 void Texture::loadFromData(void * data, V2i dim)
 {
+	impl->setup();
 	//impl->important("(" + to_string(dim.x) + ", " + to_string(dim.y) + ")");
 	/*
 	impl->important("loading from data, dim: " + to_string(dim));
@@ -183,8 +188,8 @@ void Texture::loadFromData(void * data, V2i dim)
 	
 	glBindTexture(GL_TEXTURE_2D, impl->textureId);
 	{
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dim.x, dim.y, 0, GL_BGRA, GL_UNSIGNED_BYTE, data);
 		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dim.x, dim.y, 0, GL_BGRA, GL_UNSIGNED_BYTE, data);
 		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dim.x, dim.y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -192,32 +197,29 @@ void Texture::loadFromData(void * data, V2i dim)
 	}
 	glBindTexture(GL_TEXTURE_2D, false);
 	
-	impl->isLoaded = true;
+	impl->dim = dim;
 }
 
 void Texture::loadFromEGLImage(EGLImage image, V2i dim)
 {
+	impl->setup();
+	
 	glBindTexture(GL_TEXTURE_2D, impl->textureId);
 	{
 		glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);
 	}
 	glBindTexture(GL_TEXTURE_2D, false);
 	
-	impl->isLoaded = true;
-}
-
-void Texture::clear()
-{
-	
+	impl->dim = dim;
 }
 
 void Texture::draw()
 {
-	assert(impl);
-	//assert(impl->isLoaded);
-	if (!impl->isLoaded)
-		return;
-	//impl->status("drawing...");
+	if (!impl->isSetUp)
+	{
+		warning(FUNC + " called before texture was set up");
+	}
+	//debug("drawing texture");
 	shaderProgram.activete();
 	{
 		glBindTexture(GL_TEXTURE_2D, impl->textureId);
@@ -235,6 +237,11 @@ void Texture::draw()
 
 GLuint Texture::getTextureId()
 {
-	assert(impl);
+	assert(impl->isSetUp);
 	return impl->textureId;
+}
+
+bool Texture::isSetUp()
+{
+	return impl->isSetUp;
 }
