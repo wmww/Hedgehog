@@ -28,6 +28,7 @@ struct V2
 {
 	T x, y;
 	
+	V2() { x = y = T(); }
 	V2(T xIn, T yIn) { x = xIn; y = yIn; }
 };
 
