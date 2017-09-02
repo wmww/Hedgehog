@@ -7,7 +7,8 @@ class Surface2D
 {
 public:
 	// constructors
-	Surface2D();
+	Surface2D() {}
+	void setup();
 	
 	// use
 	void draw();

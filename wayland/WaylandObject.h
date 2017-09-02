@@ -13,7 +13,7 @@ class WaylandObject: public std::enable_shared_from_this<WaylandObject>
 {
 public:
 	
-	void wlSetup(wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct);
+	void wlObjMake(wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct);
 	
 	static shared_ptr<WaylandObject> getWaylandObject(wl_resource * resource);
 	
@@ -23,12 +23,10 @@ public:
 		return std::static_pointer_cast<T>(getWaylandObject(resource));
 	}
 	
-	wl_resource * getResource() {return resource;}
+	//wl_resource * getResource() {return resource;}
 	
-	void destroy();
+	static void wlObjDestroy(wl_resource * resource);
 	
 private:
-	
-	wl_resource * resource = nullptr;
 };
 

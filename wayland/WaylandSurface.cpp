@@ -15,7 +15,7 @@ struct WaylandSurface::Impl: public WaylandObject
 	// instance data
 	Texture texture;
 	struct wl_resource * bufferResource = nullptr;
-	struct wl_resource * surfaceResource = nullptr;
+	//struct wl_resource * surfaceResource = nullptr;
 	
 	// interface
 	static const struct wl_surface_interface surfaceInterface;
@@ -140,7 +140,7 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 	// important to use a temp var because impl is weak, so it would be immediately deleted
 	// in wlSetup, a shared_ptr to the object is saved by WaylandObject, so it is safe to store in a weak_ptr after
 	auto implShared = make_shared<Impl>();
-	implShared->wlSetup(client, id, &wl_surface_interface, 3, &Impl::surfaceInterface);
+	implShared->wlObjMake(client, id, &wl_surface_interface, 3, &Impl::surfaceInterface);
 	impl = implShared;
 }
 
@@ -151,11 +151,13 @@ WaylandSurface WaylandSurface::getFrom(wl_resource * resource)
 	return out;
 }
 
+/*
 wl_resource * WaylandSurface::getSurfaceResource()
 {
 	GET_IMPL;
 	return impl->getResource();
 }
+*/
 
 Texture WaylandSurface::getTexture()
 {

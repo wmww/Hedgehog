@@ -18,7 +18,7 @@ struct Surface2D::Impl
 
 vector<Surface2D> Surface2D::Impl::allSurfaces;
 
-Surface2D::Surface2D()
+void Surface2D::setup()
 {
 	impl = make_shared<Impl>();
 	

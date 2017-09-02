@@ -15,7 +15,7 @@ public:
 	static WaylandSurface getFrom(wl_resource * resource); // to use this the resource must have been created by this class
 	
 	// getters
-	wl_resource * getSurfaceResource();
+	//wl_resource * getSurfaceResource();
 	Texture getTexture();
 	
 private:
