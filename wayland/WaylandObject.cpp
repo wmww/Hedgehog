@@ -18,12 +18,13 @@ void destroyWaylandObject(wl_resource * resource)
 	waylandObjectMap.erase(iter);
 }
 
-void WaylandObject::wlObjMake(wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct)
+wl_resource * WaylandObject::wlObjMake(wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct)
 {
 	wl_resource * resource = wl_resource_create(client, interface, version, id);
 	wl_resource_set_implementation(resource, implStruct, nullptr, destroyWaylandObject);
 	assert(waylandObjectMap.find(resource) == waylandObjectMap.end());
 	waylandObjectMap[resource] = shared_from_this();
+	return resource;
 }
 
 shared_ptr<WaylandObject> WaylandObject::getWaylandObject(wl_resource * resource)

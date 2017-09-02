@@ -231,5 +231,13 @@ void iteration()
 	wl_display_flush_clients(display);
 }
 
+uint32_t lastSerialNum = 1;
+
+uint32_t nextSerialNum()
+{
+	lastSerialNum++;
+	return lastSerialNum;
+}
+
 }
 

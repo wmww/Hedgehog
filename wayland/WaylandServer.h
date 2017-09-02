@@ -11,4 +11,6 @@ void shutdown();
 
 void iteration();
 
+uint32_t nextSerialNum();
+
 };

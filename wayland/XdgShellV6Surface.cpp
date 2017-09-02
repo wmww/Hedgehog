@@ -206,5 +206,6 @@ XdgShellV6Surface::XdgShellV6Surface(wl_client * client, uint32_t id, WaylandSur
 	implShared->surface2D.setTexture(surface.getTexture());
 	impl = implShared;
 	// sending 1 as the version number isn't a mistake. Idk why its called v6 but you send in 1, maybe always 1 until stable?
-	implShared->wlObjMake(client, id, &zxdg_surface_v6_interface, 1, &Impl::xdgSurfaceV6Interface);
+	wl_resource * resource = implShared->wlObjMake(client, id, &zxdg_surface_v6_interface, 1, &Impl::xdgSurfaceV6Interface);
+	zxdg_surface_v6_send_configure(resource, WaylandServer::nextSerialNum());
 }
