@@ -56,6 +56,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	+[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y)
 	{
 		debug("surface interface surface attach callback called");
+		assert(buffer != nullptr); // I think a null buffer should be legal (surface is then not mapped)
 		auto impl = get<Impl>(resource);
 		assert(impl);
 		impl->bufferResource = buffer;
@@ -91,9 +92,16 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 		assert(impl);
 		
 		// get the data we'll need
+		struct wl_resource * buffer = impl->bufferResource;
+		if (buffer == nullptr)
+		{
+			warning("buffer is null");
+			return;
+		}
 		EGLint texture_format;
 		Display * display = GLXContextManagerBase::instance->getDisplay();
-		struct wl_resource * buffer = impl->bufferResource;
+		
+		assert(buffer != nullptr);
 		
 		// make sure this function pointer has been initialized
 		assert(Impl::eglQueryWaylandBufferWL);
@@ -111,17 +119,19 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 			EGLAttrib attribs = EGL_NONE;
 			EGLImage image = eglCreateImage(display, EGL_NO_CONTEXT, EGL_WAYLAND_BUFFER_WL, buffer, &attribs);
 			impl->texture.loadFromEGLImage(image, V2i(width, height));
-			eglDestroyImage(display, image);
+			//eglDestroyImage(display, image);
 		}
 		else {
 			// this is for sharing a memory buffer on the CPU
 			debug("using SHM for CPU buffer sharing");
 			struct wl_shm_buffer * shmBuffer = wl_shm_buffer_get(buffer);
+			assert(shmBuffer != nullptr);
 			uint32_t width = wl_shm_buffer_get_width(shmBuffer);
 			uint32_t height = wl_shm_buffer_get_height(shmBuffer);
 			void * data = wl_shm_buffer_get_data(shmBuffer);
 			impl->texture.loadFromData(data, V2i(width, height));
 		}
+		debug("destroying buffer...");
 		wl_buffer_send_release(buffer);
 		
 		debug("done committing surface");
