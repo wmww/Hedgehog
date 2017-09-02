@@ -25,6 +25,8 @@ public:
 	
 	wl_resource * getResource() {return resource;}
 	
+	void destroy();
+	
 private:
 	
 	wl_resource * resource = nullptr;

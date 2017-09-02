@@ -37,3 +37,9 @@ shared_ptr<WaylandObject> WaylandObject::getWaylandObject(wl_resource * resource
 	}
 	return iter->second;
 }
+
+void WaylandObject::destroy()
+{
+	wl_resource_destroy(resource);
+}
+
