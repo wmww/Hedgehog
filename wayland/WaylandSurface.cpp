@@ -8,7 +8,7 @@
 #include <EGL/eglext.h>
 
 // change to toggle debug statements on and off
-#define debug debug_off
+#define debug debug_on
 
 struct WaylandSurface::Impl: public WaylandObject
 {
@@ -104,6 +104,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 		if (idkWhatThisVarMeans) {
 			// I think this is for using EGL to share a buffer directly on the GPU
 			// this code path is currently untested
+			debug("using EGL for GPU buffer sharing");
 			EGLint width, height;
 			Impl::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &width);
 			Impl::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &height);
@@ -114,6 +115,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 		}
 		else {
 			// this is for sharing a memory buffer on the CPU
+			debug("using SHM for CPU buffer sharing");
 			struct wl_shm_buffer * shmBuffer = wl_shm_buffer_get(buffer);
 			uint32_t width = wl_shm_buffer_get_width(shmBuffer);
 			uint32_t height = wl_shm_buffer_get_height(shmBuffer);
@@ -121,6 +123,8 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 			impl->texture.loadFromData(data, V2i(width, height));
 		}
 		wl_buffer_send_release(buffer);
+		
+		debug("done committing surface");
 	},
 	// surface set buffer transform
 	+[](wl_client * client, wl_resource * resource, int32_t transform)

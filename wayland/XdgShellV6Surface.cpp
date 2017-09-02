@@ -23,13 +23,15 @@ const struct zxdg_surface_v6_interface XdgShellV6Surface::Impl::xdgSurfaceV6Inte
 	+[](struct wl_client *client, struct wl_resource *resource)
 	{
 		debug("zxdg_surface_v6_interface::destroy called");
-		//GET_IMPL_FROM(resource);
 		wlObjDestroy(resource);
 	},
 	// get_toplevel
 	+[](struct wl_client *client, struct wl_resource *resource, uint32_t id)
 	{
-		warning("zxdg_surface_v6_interface::get_toplevel called (not yet implemented)");
+		debug("zxdg_surface_v6_interface::get_toplevel called");
+		GET_IMPL_FROM(resource);
+		impl->wlObjMake(client, id, &zxdg_toplevel_v6_interface, 1, &xdgToplevelV6Interface);
+		debug("zxdg_surface_v6_interface::get_toplevel done");
 	},
 	//get_popup
 	+[](struct wl_client *client, struct wl_resource *resource, uint32_t id, struct wl_resource *parent, struct wl_resource *positioner)
@@ -103,7 +105,7 @@ const struct zxdg_surface_v6_interface XdgShellV6Surface::Impl::xdgSurfaceV6Inte
 	}
 };
 
-const struct zxdg_toplevel_v6_interface XdgToplevelV6::xdgToplevelV6Interface = {
+const struct zxdg_toplevel_v6_interface XdgShellV6Surface::Impl::xdgToplevelV6Interface = {
 	// destroy
 	+[](struct wl_client *client, struct wl_resource *resource)
 	{
@@ -138,7 +140,7 @@ const struct zxdg_toplevel_v6_interface XdgToplevelV6::xdgToplevelV6Interface = 
 		// fuck client side decorations, am I right?
 	},
 	// move
-	void (*move)(struct wl_client *client, struct wl_resource *resource, struct wl_resource *seat, uint32_t serial)
+	+[](struct wl_client *client, struct wl_resource *resource, struct wl_resource *seat, uint32_t serial)
 	{
 		warning("zxdg_toplevel_v6_interface::move called (not yet implemented)");
 		// this is that weird interactive move thing
@@ -174,29 +176,29 @@ const struct zxdg_toplevel_v6_interface XdgToplevelV6::xdgToplevelV6Interface = 
 	{
 		warning("zxdg_toplevel_v6_interface::unset_maximized called (not yet implemented)");
 		// also needs a configure event
-	}
+	},
 	// set_fullscreen
 	+[](struct wl_client *client, struct wl_resource *resource, struct wl_resource *output)
 	{
 		warning("zxdg_toplevel_v6_interface::set_fullscreen called (not yet implemented)");
 		// client wants to be fullscreen. what more do you want to know?
-	}
+	},
 	// unset_fullscreen
 	+[](struct wl_client *client, struct wl_resource *resource)
 	{
 		warning("zxdg_toplevel_v6_interface::unset_fullscreen called (not yet implemented)");
-	}
+	},
 	// set_minimized
 	+[](struct wl_client *client, struct wl_resource *resource)
 	{
 		debug("zxdg_toplevel_v6_interface::set_minimized called, ignoring");
 		// pretty sure this is safe to ignore
-	}
+	},
 };
 
 XdgShellV6Surface::XdgShellV6Surface(wl_client * client, uint32_t id, WaylandSurface surface)
 {
-	debug("creating " + FUNC);
+	debug("creating XdgShellV6Surface");
 	// important to use a temp var because impl is weak, so it would be immediately deleted
 	// in wlSetup, a shared_ptr to the object is saved by WaylandObject, so it is safe to store in a weak_ptr after
 	auto implShared = make_shared<Impl>();
