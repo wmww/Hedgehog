@@ -2,6 +2,7 @@
 #include "../opengl/Texture.h"
 #include "WaylandServer.h"
 #include "WaylandSurface.h"
+#include "WlRegion.h"
 #include "WlShellSurface.h"
 #include "XdgShellV6Surface.h"
 
@@ -42,7 +43,8 @@ struct wl_compositor_interface compositorInterface = {
 	// create region
 	+[](wl_client * client, wl_resource * resource, uint32_t id)
 	{
-		warning("compositor interface create region called (not yet implemented)");
+		warning("compositor interface create region called");
+		WlRegion(client, id);
 	}
 };
 
