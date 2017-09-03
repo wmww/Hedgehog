@@ -1,5 +1,5 @@
 #include "WaylandObject.h"
-#include <wayland-server.h>
+#include "std_headers/wayland-server.h"
 #include <unordered_map>
 
 // this is simply a way of storing a single shared_ptr to each WaylandObject so they are not deleted until they are removed from this map

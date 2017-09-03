@@ -3,7 +3,7 @@
 #include "../backends/GLX/GLXContextManager.h"
 #include "WaylandObject.h"
 
-#include <wayland-server-protocol.h>
+#include "std_headers/wayland-server-protocol.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 

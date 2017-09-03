@@ -1,8 +1,8 @@
 #include "XdgShellV6Surface.h"
 #include "WaylandObject.h"
 
-#include <wayland-server-protocol.h>
-#include "../protocols/xdg-shell-unstable-v6.h"
+#include "std_headers/wayland-server-protocol.h"
+#include "protocols/xdg-shell-unstable-v6.h"
 
 // change to toggle debug statements on and off
 #define debug debug_on
