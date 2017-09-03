@@ -12,6 +12,8 @@ struct XdgShellV6Surface::Impl: public WaylandObject
 	// instance data
 	WaylandSurface waylandSurface;
 	Surface2D surface2D;
+	wl_resource * xdgSurfaceResource = nullptr;
+	wl_resource * xdgToplevelResource = nullptr;
 	
 	// interfaces
 	static const struct zxdg_surface_v6_interface xdgSurfaceV6Interface;
@@ -30,7 +32,16 @@ const struct zxdg_surface_v6_interface XdgShellV6Surface::Impl::xdgSurfaceV6Inte
 	{
 		debug("zxdg_surface_v6_interface::get_toplevel called");
 		GET_IMPL_FROM(resource);
-		impl->wlObjMake(client, id, &zxdg_toplevel_v6_interface, 1, &xdgToplevelV6Interface);
+		impl->xdgToplevelResource = impl->wlObjMake(client, id, &zxdg_toplevel_v6_interface, 1, &xdgToplevelV6Interface);
+		
+		wl_array states;
+		wl_array_init(&states);
+		*((zxdg_toplevel_v6_state*)wl_array_add(&states, sizeof(zxdg_toplevel_v6_state))) = ZXDG_TOPLEVEL_V6_STATE_ACTIVATED;
+		*((zxdg_toplevel_v6_state*)wl_array_add(&states, sizeof(zxdg_toplevel_v6_state))) = ZXDG_TOPLEVEL_V6_STATE_ACTIVATED;
+		zxdg_toplevel_v6_send_configure(impl->xdgToplevelResource, 0, 0, &states);
+		wl_array_release(&states);
+		zxdg_surface_v6_send_configure(impl->xdgSurfaceResource, WaylandServer::nextSerialNum());
+		
 		debug("zxdg_surface_v6_interface::get_toplevel done");
 	},
 	//get_popup
@@ -204,8 +215,7 @@ XdgShellV6Surface::XdgShellV6Surface(wl_client * client, uint32_t id, WaylandSur
 	auto implShared = make_shared<Impl>();
 	implShared->surface2D.setup();
 	implShared->surface2D.setTexture(surface.getTexture());
-	impl = implShared;
 	// sending 1 as the version number isn't a mistake. Idk why its called v6 but you send in 1, maybe always 1 until stable?
-	wl_resource * resource = implShared->wlObjMake(client, id, &zxdg_surface_v6_interface, 1, &Impl::xdgSurfaceV6Interface);
-	zxdg_surface_v6_send_configure(resource, WaylandServer::nextSerialNum());
+	implShared->xdgSurfaceResource = implShared->wlObjMake(client, id, &zxdg_surface_v6_interface, 1, &Impl::xdgSurfaceV6Interface);
+	impl = implShared;
 }
