@@ -109,7 +109,7 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 	~GLXContextManagerImpl()
 	{
 		debug("cleaning up context...");
-		
+		XDestroyWindow(display, win);
 		//ctx = glXGetCurrentContext();
 		//glXMakeCurrent(display, 0, 0);
 		glXDestroyContext(display, ctx);

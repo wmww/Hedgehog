@@ -56,9 +56,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	+[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y)
 	{
 		debug("surface interface surface attach callback called");
-		assert(buffer != nullptr); // I think a null buffer should be legal (surface is then not mapped)
-		auto impl = get<Impl>(resource);
-		assert(impl);
+		GET_IMPL_FROM(resource);
 		impl->bufferResource = buffer;
 	},
 	// surface damage
@@ -88,51 +86,48 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	{
 		debug("surface interface surface commit callback called");
 		
-		auto impl = get<Impl>(resource);
-		assert(impl);
+		GET_IMPL_FROM(resource);
 		
 		// get the data we'll need
 		struct wl_resource * buffer = impl->bufferResource;
-		if (buffer == nullptr)
+		if (buffer != nullptr)
 		{
-			warning("buffer is null");
-			return;
+			EGLint texture_format;
+			Display * display = GLXContextManagerBase::instance->getDisplay();
+			
+			assert(buffer != nullptr);
+			
+			// make sure this function pointer has been initialized
+			assert(Impl::eglQueryWaylandBufferWL);
+			
+			// query the texture format of the buffer
+			bool idkWhatThisVarMeans = Impl::eglQueryWaylandBufferWL(display, buffer, EGL_TEXTURE_FORMAT, &texture_format);
+			
+			if (idkWhatThisVarMeans) {
+				// I think this is for using EGL to share a buffer directly on the GPU
+				// this code path is currently untested
+				debug("using EGL for GPU buffer sharing");
+				EGLint width, height;
+				Impl::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &width);
+				Impl::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &height);
+				EGLAttrib attribs = EGL_NONE;
+				EGLImage image = eglCreateImage(display, EGL_NO_CONTEXT, EGL_WAYLAND_BUFFER_WL, buffer, &attribs);
+				impl->texture.loadFromEGLImage(image, V2i(width, height));
+				//eglDestroyImage(display, image);
+			}
+			else {
+				// this is for sharing a memory buffer on the CPU
+				debug("using SHM for CPU buffer sharing");
+				struct wl_shm_buffer * shmBuffer = wl_shm_buffer_get(buffer);
+				assert(shmBuffer != nullptr);
+				uint32_t width = wl_shm_buffer_get_width(shmBuffer);
+				uint32_t height = wl_shm_buffer_get_height(shmBuffer);
+				void * data = wl_shm_buffer_get_data(shmBuffer);
+				impl->texture.loadFromData(data, V2i(width, height));
+			}
+			debug("destroying buffer...");
+			wl_buffer_send_release(buffer);
 		}
-		EGLint texture_format;
-		Display * display = GLXContextManagerBase::instance->getDisplay();
-		
-		assert(buffer != nullptr);
-		
-		// make sure this function pointer has been initialized
-		assert(Impl::eglQueryWaylandBufferWL);
-		
-		// query the texture format of the buffer
-		bool idkWhatThisVarMeans = Impl::eglQueryWaylandBufferWL(display, buffer, EGL_TEXTURE_FORMAT, &texture_format);
-		
-		if (idkWhatThisVarMeans) {
-			// I think this is for using EGL to share a buffer directly on the GPU
-			// this code path is currently untested
-			debug("using EGL for GPU buffer sharing");
-			EGLint width, height;
-			Impl::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &width);
-			Impl::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &height);
-			EGLAttrib attribs = EGL_NONE;
-			EGLImage image = eglCreateImage(display, EGL_NO_CONTEXT, EGL_WAYLAND_BUFFER_WL, buffer, &attribs);
-			impl->texture.loadFromEGLImage(image, V2i(width, height));
-			//eglDestroyImage(display, image);
-		}
-		else {
-			// this is for sharing a memory buffer on the CPU
-			debug("using SHM for CPU buffer sharing");
-			struct wl_shm_buffer * shmBuffer = wl_shm_buffer_get(buffer);
-			assert(shmBuffer != nullptr);
-			uint32_t width = wl_shm_buffer_get_width(shmBuffer);
-			uint32_t height = wl_shm_buffer_get_height(shmBuffer);
-			void * data = wl_shm_buffer_get_data(shmBuffer);
-			impl->texture.loadFromData(data, V2i(width, height));
-		}
-		debug("destroying buffer...");
-		wl_buffer_send_release(buffer);
 		
 		debug("done committing surface");
 	},

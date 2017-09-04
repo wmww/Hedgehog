@@ -35,7 +35,7 @@ int main (int argc, char ** argv)
 		WaylandServer::iteration();
 		Surface2D::drawAll();
 		glx->swapBuffer();
-		sleepForSeconds(0.2);
+		sleepForSeconds(0.05);
 	}
 	
 	WaylandServer::shutdown();

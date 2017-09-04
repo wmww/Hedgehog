@@ -43,7 +43,7 @@ struct wl_compositor_interface compositorInterface = {
 	// create region
 	+[](wl_client * client, wl_resource * resource, uint32_t id)
 	{
-		warning("compositor interface create region called");
+		debug("compositor interface create region called");
 		WlRegion(client, id);
 	}
 };
