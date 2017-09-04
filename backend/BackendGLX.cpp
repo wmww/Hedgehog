@@ -6,7 +6,7 @@
 #include <cstring>
 
 // change to toggle debug statements on and off
-#define debug debug_off
+#define debug debug_on
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 
@@ -48,21 +48,19 @@ struct BackendGLX: Backend::ImplBase
 		debug("getting XVisualInfo...");
 		
 		XVisualInfo *vi = glXGetVisualFromFBConfig(display, fbc[0]);
-	 
-		XSetWindowAttributes swa;
 		
-		debug("creating colormap...");
-		
-		swa.colormap = XCreateColormap(display, RootWindow(display, vi->screen), vi->visual, AllocNone);
-		swa.border_pixel = 0;
-		swa.event_mask = StructureNotifyMask;
+		XSetWindowAttributes windowAttribs;
+		windowAttribs.colormap = XCreateColormap(display, RootWindow(display, vi->screen), vi->visual, AllocNone);
+		windowAttribs.border_pixel = 0;
+		//windowAttribs.event_mask = StructureNotifyMask;
+		windowAttribs.event_mask = ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
 		
 		int x = 0;
 		int y = 0;
 		
 		debug("creating window...");
 		
-		win = XCreateWindow(display, RootWindow(display, vi->screen), x, y, dim.x, dim.y, 0, vi->depth, InputOutput, vi->visual, CWBorderPixel|CWColormap|CWEventMask, &swa);
+		win = XCreateWindow(display, RootWindow(display, vi->screen), x, y, dim.x, dim.y, 0, vi->depth, InputOutput, vi->visual, CWBorderPixel|CWColormap|CWEventMask, &windowAttribs);
 		
 		string winName = "Hedgehog";
 		
@@ -124,8 +122,68 @@ struct BackendGLX: Backend::ImplBase
 	}
 	
 	void checkEvents()
-	{
-		warning(FUNC + " called but not implemented");
+	{	
+		XEvent event;
+		while (XPending(display))
+		{
+			XNextEvent(display, &event);
+			
+			if (event.type == MotionNotify)
+			{
+				if (auto interface = inputInterface.lock())
+				{
+					auto movement = V2d(event.xbutton.x, event.xbutton.y);
+					interface->pointerMotion(movement);
+				}
+			}
+		}
+		
+		/*
+		XEvent event;
+		while (XPending(display)) {
+			XNextEvent (display, &event);
+			if (event.type == ConfigureNotify) {
+				callbacks.resize (event.xconfigure.width, event.xconfigure.height);
+			}
+			else if (event.type == Expose) {
+				callbacks.draw ();
+			}
+			else if (event.type == MotionNotify) {
+				callbacks.mouse_motion (event.xbutton.x, event.xbutton.y);
+			}
+			else if (event.type == ButtonPress) {
+				if (event.xbutton.button == Button1)
+					callbacks.mouse_button (BTN_LEFT, WL_POINTER_BUTTON_STATE_PRESSED);
+				else if (event.xbutton.button == Button2)
+					callbacks.mouse_button (BTN_MIDDLE, WL_POINTER_BUTTON_STATE_PRESSED);
+				else if (event.xbutton.button == Button3)
+					callbacks.mouse_button (BTN_RIGHT, WL_POINTER_BUTTON_STATE_PRESSED);
+			}
+			else if (event.type == ButtonRelease) {
+				if (event.xbutton.button == Button1)
+					callbacks.mouse_button (BTN_LEFT, WL_POINTER_BUTTON_STATE_RELEASED);
+				else if (event.xbutton.button == Button2)
+					callbacks.mouse_button (BTN_MIDDLE, WL_POINTER_BUTTON_STATE_RELEASED);
+				else if (event.xbutton.button == Button3)
+					callbacks.mouse_button (BTN_RIGHT, WL_POINTER_BUTTON_STATE_RELEASED);
+			}
+			else if (event.type == KeyPress) {
+				callbacks.key (event.xkey.keycode - 8, WL_KEYBOARD_KEY_STATE_PRESSED);
+				xkb_state_update_key (state, event.xkey.keycode, XKB_KEY_DOWN);
+				update_modifiers ();
+			}
+			else if (event.type == KeyRelease) {
+				callbacks.key (event.xkey.keycode - 8, WL_KEYBOARD_KEY_STATE_RELEASED);
+				xkb_state_update_key (state, event.xkey.keycode, XKB_KEY_UP);
+				update_modifiers ();
+			}
+			else if (event.type == FocusIn) {
+				xkb_state_unref (state);
+				state = xkb_x11_state_new_from_device (keymap, xcb_connection, keyboard_device_id);
+				update_modifiers ();
+			}
+		}
+		*/
 	}
 	
 	void * getXDisplay()

@@ -32,7 +32,7 @@ int main (int argc, char ** argv)
 	
 	while (true)
 	{
-		//backend.checkEvents();
+		backend.checkEvents();
 		texture.draw();
 		WaylandServer::iteration();
 		scene.draw();

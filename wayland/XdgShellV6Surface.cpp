@@ -16,7 +16,7 @@ struct XdgShellV6Surface::Impl: WaylandObject, WindowInterface
 	wl_resource * xdgSurfaceResource = nullptr;
 	wl_resource * xdgToplevelResource = nullptr;
 	
-	void pointerMotion(V2i newPos)
+	void pointerMotion(V2d newPos)
 	{
 		warning(FUNC + " not yet implemented");
 	}

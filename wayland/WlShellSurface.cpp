@@ -13,7 +13,7 @@ struct WlShellSurface::Impl: WaylandObject, WindowInterface
 	WaylandSurface waylandSurface;
 	//Surface2D surface2D;
 	
-	void pointerMotion(V2i newPos)
+	void pointerMotion(V2d newPos)
 	{
 		warning(FUNC + " not yet implemented");
 	}
@@ -88,6 +88,7 @@ WlShellSurface::WlShellSurface(wl_client * client, uint32_t id, WaylandSurface s
 	//implShared->surface2D.setup();
 	//implShared->surface2D.setTexture(surface.getTexture());
 	implShared->texture = surface.getTexture();
+	Scene::instance.addWindow(implShared);
 	impl = implShared;
 	implShared->wlObjMake(client, id, &wl_shell_surface_interface, 1, &Impl::wlShellSurfaceInterface);
 }

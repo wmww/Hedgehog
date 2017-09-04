@@ -9,7 +9,7 @@ struct Scene::Impl: InputInterface
 {
 	vector<weak_ptr<WindowInterface>> windows;
 	
-	void pointerMotion(V2i newPos)
+	void pointerMotion(V2d newPos)
 	{
 		debug("pointer moved to " + to_string(newPos));
 	}

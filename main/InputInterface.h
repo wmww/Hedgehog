@@ -5,5 +5,5 @@
 class InputInterface
 {
 public:
-	virtual void pointerMotion(V2i newPos) = 0;
+	virtual void pointerMotion(V2d newPos) = 0;
 };
