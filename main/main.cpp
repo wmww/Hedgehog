@@ -9,6 +9,7 @@
 #include "../backend/Backend.h"
 #include "../wayland/WaylandServer.h"
 #include "Surface2D.h"
+#include "../scene/Scene.h"
 
 // change to toggle debug statements on and off
 #define debug debug_off
@@ -19,21 +20,22 @@ int main (int argc, char ** argv)
 	
 	glewInit();
 	
-	//auto renderer = TexRenderer();
-	//renderer.setup(VERBOSE_ON);
-	//auto renderer = TexRenderer(VERBOSE_ON);
-	
 	auto texture = Texture();
-	
 	texture.loadFromImage("assets/hedgehog.jpg");
 	
 	WaylandServer::setup();
 	
+	Scene scene;
+	scene.setup();
+	
+	backend.setInputInterface(scene.getInputInterface());
+	
 	while (true)
 	{
+		//backend.checkEvents();
 		texture.draw();
 		WaylandServer::iteration();
-		Surface2D::drawAll();
+		scene.draw();
 		backend.swapBuffer();
 		sleepForSeconds(0.05);
 	}

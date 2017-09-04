@@ -1,16 +1,27 @@
 #include "WlShellSurface.h"
 #include "WaylandObject.h"
+#include "../scene/WindowInterface.h"
 
 #include "std_headers/wayland-server-protocol.h"
 
 // change to toggle debug statements on and off
 #define debug debug_off
 
-struct WlShellSurface::Impl: public WaylandObject
+struct WlShellSurface::Impl: WaylandObject, WindowInterface
 {
 	// instance data
 	WaylandSurface waylandSurface;
-	Surface2D surface2D;
+	//Surface2D surface2D;
+	
+	void pointerMotion(V2i newPos)
+	{
+		warning(FUNC + " not yet implemented");
+	}
+	
+	void setSize(V2i size)
+	{
+		warning(FUNC + " not yet implemented");
+	}
 	
 	// interface
 	static const struct wl_shell_surface_interface wlShellSurfaceInterface;
@@ -74,8 +85,9 @@ WlShellSurface::WlShellSurface(wl_client * client, uint32_t id, WaylandSurface s
 	debug("creating WlShellSurface");
 	auto implShared = make_shared<Impl>();
 	implShared->waylandSurface = surface;
-	implShared->surface2D.setup();
-	implShared->surface2D.setTexture(surface.getTexture());
+	//implShared->surface2D.setup();
+	//implShared->surface2D.setTexture(surface.getTexture());
+	implShared->texture = surface.getTexture();
 	impl = implShared;
 	implShared->wlObjMake(client, id, &wl_shell_surface_interface, 1, &Impl::wlShellSurfaceInterface);
 }

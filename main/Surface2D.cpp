@@ -1,4 +1,4 @@
-#include "Surface2D.h"
+/*#include "Surface2D.h"
 
 // change to toggle debug statements on and off
 #define debug debug_off
@@ -52,4 +52,5 @@ Texture Surface2D::getTexture()
 	assert(impl);
 	return impl->texture;
 }
+*/
 

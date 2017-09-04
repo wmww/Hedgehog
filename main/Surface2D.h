@@ -1,3 +1,4 @@
+/*
 #pragma once
 
 #include "utils.h"
@@ -25,4 +26,4 @@ private:
 	shared_ptr<Impl> impl;
 	Surface2D(shared_ptr<Impl> impl) { this->impl = impl; }
 };
-
+*/

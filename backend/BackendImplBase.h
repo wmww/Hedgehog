@@ -5,7 +5,7 @@
 struct Backend::ImplBase
 {
 	// instance data
-	//weak_ptr<InputDelegate> inputDelegate;
+	weak_ptr<InputInterface> inputInterface;
 	
 	// virtual methods
 	virtual void swapBuffer() = 0;

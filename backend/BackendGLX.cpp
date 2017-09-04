@@ -118,13 +118,6 @@ struct BackendGLX: Backend::ImplBase
 		glXDestroyContext(display, ctx);
 	}
 	
-	/*
-	Display * getDisplay()
-	{
-		return display;
-	}
-	*/
-	
 	void swapBuffer()
 	{
 		glXSwapBuffers(display, win);

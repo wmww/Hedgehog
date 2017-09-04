@@ -28,13 +28,11 @@ void Backend::checkEvents()
 	impl->checkEvents();
 }
 
-/*
-void Backend::setInputDelegate(weak_ptr<InputDelegate> inputDelegate)
+void Backend::setInputInterface(weak_ptr<InputInterface> inputInterface)
 {
 	assert(impl);
-	impl->inputDelegate = inputDelegate;
+	impl->inputInterface = inputInterface;
 }
-*/
 
 void * Backend::getXDisplay()
 {
