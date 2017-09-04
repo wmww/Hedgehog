@@ -12,7 +12,7 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
-#include "../backends/GLX/GLXContextManager.h"
+#include "../backend/Backend.h"
 
 // change to toggle debug statements on and off
 #define debug debug_off

@@ -1,4 +1,5 @@
-#include "GLXContextManager.h"
+#include "Backend.h"
+#include "BackendImplBase.h"
 
 #include <GL/glx.h>
 #include <GL/gl.h>
@@ -9,12 +10,14 @@
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 
-struct GLXContextManagerImpl: GLXContextManagerBase
+struct BackendGLX: Backend::ImplBase
 {
-	GLXContextManagerImpl(V2i dim, bool verboseIn)
+	Display * display = nullptr;
+	GLXContext ctx;
+	Window win;
+	
+	BackendGLX(V2i dim)
 	{
-		verbose = verboseIn;
-		
 		debug("opening X display...");
 		
 		display = XOpenDisplay(0);
@@ -106,7 +109,7 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 		glXMakeCurrent(display, win, ctx);
 	}
 	
-	~GLXContextManagerImpl()
+	~BackendGLX()
 	{
 		debug("cleaning up context...");
 		XDestroyWindow(display, win);
@@ -115,29 +118,33 @@ struct GLXContextManagerImpl: GLXContextManagerBase
 		glXDestroyContext(display, ctx);
 	}
 	
+	/*
 	Display * getDisplay()
 	{
 		return display;
 	}
+	*/
 	
 	void swapBuffer()
 	{
 		glXSwapBuffers(display, win);
 	}
 	
-	Display * display = nullptr;
-	GLXContext ctx;
-	Window win;
+	void checkEvents()
+	{
+		warning(FUNC + " called but not implemented");
+	}
 	
-	bool verbose = false;
+	void * getXDisplay()
+	{
+		return display;
+	}
 };
 
-GLXContextManager GLXContextManagerBase::instance = nullptr;
-
-GLXContextManager GLXContextManagerBase::make(V2i dim, bool verbose)
+Backend Backend::makeGLX(V2i dim)
 {
-	auto instance = GLXContextManager(new GLXContextManagerImpl(dim, verbose));
-	GLXContextManagerBase::instance = instance;
-	return instance;
+	shared_ptr<BackendGLX> impl = make_shared<BackendGLX>(dim);
+	Backend backend = Backend(impl);
+	return backend;
 }
 

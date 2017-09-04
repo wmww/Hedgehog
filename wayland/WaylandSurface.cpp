@@ -1,7 +1,7 @@
 #include "WaylandSurface.h"
 #include "WaylandServer.h"
-#include "../backends/GLX/GLXContextManager.h"
 #include "WaylandObject.h"
+#include "../backend/Backend.h"
 
 #include "std_headers/wayland-server-protocol.h"
 #include <EGL/egl.h>
@@ -93,7 +93,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 		if (buffer != nullptr)
 		{
 			EGLint texture_format;
-			Display * display = GLXContextManagerBase::instance->getDisplay();
+			Display * display = (Display *)Backend::instance.getXDisplay();
 			
 			assert(buffer != nullptr);
 			

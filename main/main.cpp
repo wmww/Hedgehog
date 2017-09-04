@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #include "../opengl/Texture.h"
-#include "../backends/GLX/GLXContextManager.h"
+#include "../backend/Backend.h"
 #include "../wayland/WaylandServer.h"
 #include "Surface2D.h"
 
@@ -15,7 +15,7 @@
 
 int main (int argc, char ** argv)
 {
-	auto glx = GLXContextManagerBase::make(V2i(800, 800));
+	auto backend = Backend::makeGLX(V2i(800, 800));
 	
 	glewInit();
 	
@@ -34,7 +34,7 @@ int main (int argc, char ** argv)
 		texture.draw();
 		WaylandServer::iteration();
 		Surface2D::drawAll();
-		glx->swapBuffer();
+		backend.swapBuffer();
 		sleepForSeconds(0.05);
 	}
 	
