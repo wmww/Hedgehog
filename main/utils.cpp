@@ -14,6 +14,8 @@ using std::stringstream;
 // change to toggle debug statements on and off
 #define debug debug_off
 
+std::chrono::high_resolution_clock::time_point programStartTime = std::chrono::high_resolution_clock::now();
+
 int getTermWidth()
 {
 	struct winsize w;
@@ -133,6 +135,11 @@ bool loadFile(string filename, string& contents)
 void sleepForSeconds(double seconds)
 {
 	std::this_thread::sleep_for(std::chrono::milliseconds((int)(seconds * 1000)));
+}
+
+double getTimeSinceStart()
+{
+	return (std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - programStartTime)).count();
 }
 
 /*
