@@ -2,6 +2,7 @@
 #include "WaylandObject.h"
 
 #include "std_headers/wayland-server-protocol.h"
+#include <unordered_map/h>
 
 // change to toggle debug statements on and off
 #define debug debug_off
@@ -12,6 +13,9 @@ struct WlSeat::Impl: WaylandObject
 	wl_resource * seatResource = nullptr;
 	wl_resource * pointerResource = nullptr;
 	wl_resource * currentSurface = nullptr;
+	
+	// static
+	static std::unordered_map<wl_client *, weak_ptr<Impl>> clientToImpl;
 	
 	// interface
 	static const struct wl_seat_interface seatInterface;
@@ -72,6 +76,11 @@ const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 WlSeat::WlSeat(wl_client * client, uint32_t id)
 {
 	debug("creating WlSeat");
+	auto iter = clientToImpl.find(client);
+	if (iter != clientToImpl.end())
+	{
+		fatal("single client made multiple seats");
+	}
 	auto implShared = make_shared<Impl>();
 	implShared->seatResource = implShared->wlObjMake(client, id, &wl_seat_interface, 1, &Impl::seatInterface);
 	wl_seat_send_capabilities(implShared->seatResource, WL_SEAT_CAPABILITY_POINTER);
@@ -102,15 +111,13 @@ void WlSeat::pointerMove(V2d position, wl_resource * surface)
 			wl_fixed_from_double(position.y)
 			);
 	}
-	else
-	{
-		wl_pointer_send_motion(
-			impl->pointerResource,
-			getTimeSinceStart(),
-			wl_fixed_from_double(position.x),
-			wl_fixed_from_double(position.y)
-			);
-	}
+	
+	wl_pointer_send_motion(
+		impl->pointerResource,
+		getTimeSinceStart(),
+		wl_fixed_from_double(position.x),
+		wl_fixed_from_double(position.y)
+		);
 }
 
 void WlSeat::pointerLeave(wl_resource * surface)
@@ -136,4 +143,20 @@ void WlSeat::pointerLeave(wl_resource * surface)
 		WaylandServer::nextSerialNum(),
 		impl->currentSurface
 		);
+}
+
+WlSeat getFromClient(wl_client * client)
+{
+	auto iter = clientToImpl.find(client);
+	if (iter == clientToImpl.end())
+	{
+		warning(FUNC + " called with client not in clientToImpl");
+		return WlSeat();
+	}
+	else
+	{
+		WlSeat seat;
+		seat.impl = iter->second;
+		return seat;
+	}
 }
