@@ -8,7 +8,7 @@
 #include <EGL/eglext.h>
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 struct WaylandSurface::Impl: public WaylandObject
 {

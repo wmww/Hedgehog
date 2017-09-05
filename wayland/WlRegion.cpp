@@ -4,7 +4,7 @@
 #include "std_headers/wayland-server-protocol.h"
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 /*
 struct RegionBase

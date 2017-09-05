@@ -2,6 +2,7 @@
 #include "../opengl/Texture.h"
 #include "WaylandServer.h"
 #include "WaylandSurface.h"
+#include "WlSeat.h"
 #include "WlRegion.h"
 #include "WlShellSurface.h"
 #include "XdgShellV6Surface.h"
@@ -15,7 +16,7 @@
 #include "../backend/Backend.h"
 
 // change to toggle debug statements on and off
-#define debug debug_off
+#define debug debug_on
 
 namespace WaylandServer
 {
@@ -51,6 +52,11 @@ struct wl_compositor_interface compositorInterface = {
 void compositorBindCallback(wl_client * client, void * data, uint32_t version, uint32_t id)
 {
 	debug("compositorBindCallback called");
+	if (version != 1)
+	{
+		warning("wl_compositor_interface version " + to_string(version) + " instead of 1");
+	}
+	//assert(version == 1);
 	
 	wl_resource * resource = wl_resource_create(client, &wl_compositor_interface, 1, id);
 	wl_resource_set_implementation(resource, &compositorInterface, nullptr, nullptr);
@@ -69,6 +75,7 @@ struct wl_shell_interface shellInterface = {
 void shellBindCallback(wl_client * client, void * data, uint32_t version, uint32_t id)
 {
 	debug("shellBindCallback called");
+	assert(version == 1);
 	
 	wl_resource * resource = wl_resource_create(client, &wl_shell_interface, 1, id);
 	wl_resource_set_implementation(resource, &shellInterface, nullptr, nullptr);
@@ -104,6 +111,7 @@ struct zxdg_shell_v6_interface xdgShellV6Interface {
 void xdgShellV6BindCallback(wl_client * client, void * data, uint32_t version, uint32_t id)
 {
 	debug("xdgShellV6BindCallback called");
+	assert(version == 1);
 	
 	wl_resource * resource = wl_resource_create(client, &zxdg_shell_v6_interface, 1, id);
 	wl_resource_set_implementation(resource, &xdgShellV6Interface, nullptr, nullptr);
@@ -138,60 +146,16 @@ void xdgShellV6BindCallback(wl_client * client, void * data, uint32_t version, u
 	*/
 };
 
-struct wl_pointer_interface pointerInterface = {
-	
-	// set cursor
-	+[](wl_client * client, wl_resource * resource, uint32_t serial, wl_resource * _surface, int32_t hotspot_x, int32_t hotspot_y)
-	{
-		warning("pointer interface set cursor called (not yet implemented)");
-		//surface * surface = wl_resource_get_user_data(_surface);
-		//cursor = surface;
-	},
-	
-	// pointer release
-	+[](wl_client * client, wl_resource *resource)
-	{
-		debug("pointer interface pointer release called (not yet implemented)");
-	}
-};
-
-struct wl_seat_interface seatInterface = {
-	
-	// get pointer
-	+[](wl_client * client, wl_resource * resource, uint32_t id)
-	{
-		debug("seat interface get pointer called");
-		
-		wl_resource * pointer = wl_resource_create(client, &wl_pointer_interface, 1, id);
-		wl_resource_set_implementation(pointer, &pointerInterface, nullptr, nullptr);
-		//get_client(client)->pointer = pointer;
-	},
-	// get keyboard
-	+[](wl_client * client, wl_resource * resource, uint32_t id)
-	{
-		debug("seat interface get keyboard called (not yet implemented)");
-		//struct wl_resource *keyboard = wl_resource_create (client, &wl_keyboard_interface, 1, id);
-		//wl_resource_set_implementation (keyboard, &keyboard_interface, NULL, NULL);
-		//get_client(client)->keyboard = keyboard;
-		//int fd, size;
-		//backend_get_keymap (&fd, &size);
-		//wl_keyboard_send_keymap (keyboard, WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, fd, size);
-		////close (fd);
-	},
-	// get touch
-	+[](wl_client * client, wl_resource * resource, uint32_t id)
-	{
-		warning("seat interface get touch called (not yet implemented)");
-	}
-};
-
 void seatBindCallback(wl_client * client, void * data, uint32_t version, uint32_t id)
 {
 	debug("seatBindCallback called");
-	wl_resource * seat = wl_resource_create(client, &wl_seat_interface, 1, id);
-	wl_resource_set_implementation(seat, &seatInterface, nullptr, nullptr);
+	assert(version == 1);
+	WlSeat(client, id);
+	//wl_resource * seat = wl_resource_create(client, &wl_seat_interface, 1, id);
+	//wl_resource_set_implementation(seat, &seatInterface, nullptr, nullptr);
 	//wl_seat_send_capabilities(seat, WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
-	wl_seat_send_capabilities(seat, 0);
+	//wl_seat_send_capabilities(seat, WL_SEAT_CAPABILITY_POINTER);
+	//wl_seat_send_capabilities(seat, 0);
 };
 
 void setup()

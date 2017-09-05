@@ -1,7 +1,7 @@
 #include "Scene.h"
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 Scene Scene::instance;
 

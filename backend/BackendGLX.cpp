@@ -6,7 +6,7 @@
 #include <cstring>
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 
@@ -60,7 +60,16 @@ struct BackendGLX: Backend::ImplBase
 		
 		debug("creating window...");
 		
-		win = XCreateWindow(display, RootWindow(display, vi->screen), x, y, dim.x, dim.y, 0, vi->depth, InputOutput, vi->visual, CWBorderPixel|CWColormap|CWEventMask, &windowAttribs);
+		win = XCreateWindow(
+			display,
+			RootWindow(display, vi->screen), // parent
+			x, y, dim.x, dim.y, // geometry
+			0, // I think this is Z-depth
+			vi->depth,
+			InputOutput,
+			vi->visual,
+			CWBorderPixel|CWColormap|CWEventMask,
+			&windowAttribs);
 		
 		string winName = "Hedgehog";
 		

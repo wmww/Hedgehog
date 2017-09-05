@@ -6,7 +6,7 @@
 #include "protocols/xdg-shell-unstable-v6.h"
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 struct XdgShellV6Surface::Impl: WaylandObject, WindowInterface
 {
@@ -43,17 +43,15 @@ const struct zxdg_surface_v6_interface XdgShellV6Surface::Impl::xdgSurfaceV6Inte
 	{
 		debug("zxdg_surface_v6_interface::get_toplevel called");
 		GET_IMPL_FROM(resource);
+		assert(impl->xdgToplevelResource == nullptr);
 		impl->xdgToplevelResource = impl->wlObjMake(client, id, &zxdg_toplevel_v6_interface, 1, &xdgToplevelV6Interface);
 		
 		wl_array states;
 		wl_array_init(&states);
 		*((zxdg_toplevel_v6_state*)wl_array_add(&states, sizeof(zxdg_toplevel_v6_state))) = ZXDG_TOPLEVEL_V6_STATE_ACTIVATED;
-		*((zxdg_toplevel_v6_state*)wl_array_add(&states, sizeof(zxdg_toplevel_v6_state))) = ZXDG_TOPLEVEL_V6_STATE_ACTIVATED;
 		zxdg_toplevel_v6_send_configure(impl->xdgToplevelResource, 0, 0, &states);
 		wl_array_release(&states);
 		zxdg_surface_v6_send_configure(impl->xdgSurfaceResource, WaylandServer::nextSerialNum());
-		
-		debug("zxdg_surface_v6_interface::get_toplevel done");
 	},
 	//get_popup
 	+[](struct wl_client *client, struct wl_resource *resource, uint32_t id, struct wl_resource *parent, struct wl_resource *positioner)
