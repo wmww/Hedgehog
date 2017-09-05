@@ -11,6 +11,7 @@ struct WlSeat::Impl: WaylandObject
 	// instance data
 	wl_resource * seatResource = nullptr;
 	wl_resource * pointerResource = nullptr;
+	wl_resource * currentSurface = nullptr;
 	
 	// interface
 	static const struct wl_seat_interface seatInterface;
@@ -75,4 +76,64 @@ WlSeat::WlSeat(wl_client * client, uint32_t id)
 	implShared->seatResource = implShared->wlObjMake(client, id, &wl_seat_interface, 1, &Impl::seatInterface);
 	wl_seat_send_capabilities(implShared->seatResource, WL_SEAT_CAPABILITY_POINTER);
 	impl = implShared;
+}
+
+void WlSeat::pointerMove(V2d position, wl_resource * surface)
+{
+	GET_IMPL_ELSE
+	{
+		warning(FUNC + " called on deleted WaylandObject");
+		return;
+	}
+	if (!impl->pointerResource)
+	{
+		warning(FUNC + " called on seat with no pointer resource");
+		return;
+	}
+	
+	if (impl->currentSurface != surface)
+	{
+		impl->currentSurface = surface;
+		wl_pointer_send_enter(
+			impl->pointerResource,
+			WaylandServer::nextSerialNum(),
+			impl->currentSurface,
+			wl_fixed_from_double(position.x),
+			wl_fixed_from_double(position.y)
+			);
+	}
+	else
+	{
+		wl_pointer_send_motion(
+			impl->pointerResource,
+			getTimeSinceStart(),
+			wl_fixed_from_double(position.x),
+			wl_fixed_from_double(position.y)
+			);
+	}
+}
+
+void WlSeat::pointerLeave(wl_resource * surface)
+{
+	GET_IMPL_ELSE
+	{
+		warning(FUNC + " called on deleted WaylandObject");
+		return;
+	}
+	if (!impl->pointerResource)
+	{
+		warning(FUNC + " called on seat with no pointer resource");
+		return;
+	}
+	if (!impl->currentSurface)
+	{
+		warning(FUNC + " called on seat with no surface");
+		return;
+	}
+	
+	wl_pointer_send_leave(
+		impl->pointerResource,
+		WaylandServer::nextSerialNum(),
+		impl->currentSurface
+		);
 }

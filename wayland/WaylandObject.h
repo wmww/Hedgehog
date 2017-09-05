@@ -5,6 +5,7 @@
 
 // these macros are convenient and allow for proper file/line num if assert fails
 #define GET_IMPL shared_ptr<Impl> impl = this->impl.lock(); assert(impl);
+#define GET_IMPL_ELSE shared_ptr<Impl> impl = this->impl.lock(); if (!impl)
 #define GET_IMPL_FROM(resource) shared_ptr<Impl> impl = WaylandObject::get<Impl>(resource); assert(impl);
 
 // WaylandObjects manage their own memory. You should always hold weak pointers to them.
