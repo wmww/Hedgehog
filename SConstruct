@@ -2,7 +2,14 @@ import os
 
 env = Environment()
 
-env.Append(CCFLAGS='-g')
+obj_file_path = '.obj'
+exe_bin_path = 'bin/main'
+debug_symbols = True
+
+env.Append(CCFLAGS=[
+	'-g' if debug_symbols else None,
+	'-Wall',
+])
 
 libs = [
 	'X11',
@@ -46,8 +53,8 @@ objects = []
 
 for source in sources:
 	#obj_name = '.obj/' + source.path.split('/', 1)[1].rsplit('.', 1)[0] + '.o'
-	obj_path = os.path.join('.obj', os.path.relpath(source.rsplit('.', 1)[0] + '.o'))
+	obj_path = os.path.join(obj_file_path, os.path.relpath(source.rsplit('.', 1)[0] + '.o'))
 	obj = env.Object(target=obj_path, source=source)
 	objects.append(obj)
 
-program = env.Program(target='bin/main', source=objects, LIBS=libs)
+program = env.Program(target=exe_bin_path, source=objects, LIBS=libs)
