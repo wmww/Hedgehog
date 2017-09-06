@@ -9,10 +9,23 @@
 #include <EGL/eglext.h>
 
 // change to toggle debug statements on and off
-#define debug debug_off
+#define debug debug_on
 
 struct WaylandSurface::Impl: WaylandObject, InputInterface
 {
+	struct FrameCallback
+	{
+		wl_resource * callbackResource = nullptr;
+		
+		void done()
+		{
+			assert(callbackResource);
+			wl_callback_send_done(callbackResource, timeSinceStartMili());
+			wl_resource_destroy(callbackResource);
+			callbackResource = nullptr;
+		}
+	};
+	
 	// instance data
 	Texture texture;
 	wl_resource * bufferResource = nullptr;
@@ -26,6 +39,7 @@ struct WaylandSurface::Impl: WaylandObject, InputInterface
 	// they will be fetched when the first instance of this class is created
 	static PFNEGLBINDWAYLANDDISPLAYWL eglBindWaylandDisplayWL;
 	static PFNEGLQUERYWAYLANDBUFFERWL eglQueryWaylandBufferWL;
+	static vector<FrameCallback> frameCallbacks;
 	
 	Impl()
 	{
@@ -65,6 +79,7 @@ struct WaylandSurface::Impl: WaylandObject, InputInterface
 
 PFNEGLBINDWAYLANDDISPLAYWL WaylandSurface::Impl::eglBindWaylandDisplayWL = nullptr;
 PFNEGLQUERYWAYLANDBUFFERWL WaylandSurface::Impl::eglQueryWaylandBufferWL = nullptr;
+vector<WaylandSurface::Impl::FrameCallback> WaylandSurface::Impl::frameCallbacks;
 
 const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface destroy
@@ -82,13 +97,15 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface damage
 	+[](wl_client * client, wl_resource * resource, int32_t x, int32_t y, int32_t width, int32_t height)
 	{
-		warning("surface interface surface damage callback called (not implemented well)");
-		surfaceInterface.commit(client, resource);
+		warning("surface interface surface damage callback called (not yet implemented)");
 	},
 	// surface frame
 	+[](wl_client * client, wl_resource * resource, uint32_t callback)
 	{
 		warning("surface interface surface frame callback called (not yet implemented)");
+		wl_resource * callbackResource = wl_resource_create(client, &wl_callback_interface, 1, callback);
+		FrameCallback callbackStruct {callbackResource};
+		frameCallbacks.push_back(callbackStruct);
 		//struct surface *surface = wl_resource_get_user_data (resource);
 		//surface->frame_callback = wl_resource_create (client, &wl_callback_interface, 1, callback);
 	},
@@ -179,6 +196,15 @@ WaylandSurface WaylandSurface::getFrom(wl_resource * resource)
 	WaylandSurface out;
 	out.impl = WaylandObject::get<Impl>(resource);
 	return out;
+}
+
+void WaylandSurface::runFrameCallbacks()
+{
+	for (auto i: Impl::frameCallbacks)
+	{
+		i.done();
+	}
+	Impl::frameCallbacks.clear();
 }
 
 /*

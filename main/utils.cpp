@@ -137,9 +137,14 @@ void sleepForSeconds(double seconds)
 	std::this_thread::sleep_for(std::chrono::milliseconds((int)(seconds * 1000)));
 }
 
-double getTimeSinceStart()
+double timeSinceStart()
 {
 	return (std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - programStartTime)).count();
+}
+
+int timeSinceStartMili()
+{
+	return timeSinceStart() * 1000;
 }
 
 /*

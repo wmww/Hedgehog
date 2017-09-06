@@ -37,7 +37,7 @@ int main (int argc, char ** argv)
 		WaylandServer::iteration();
 		scene.draw();
 		backend.swapBuffer();
-		sleepForSeconds(0.05);
+		sleepForSeconds(0.01667);
 	}
 	
 	WaylandServer::shutdown();

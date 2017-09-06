@@ -16,6 +16,9 @@ public:
 	WaylandSurface(wl_client * client, uint32_t id);
 	static WaylandSurface getFrom(wl_resource * resource); // to use this the resource must have been created by this class
 	
+	// doers
+	static void runFrameCallbacks();
+	
 	// getters
 	//wl_resource * getSurfaceResource();
 	weak_ptr<InputInterface> getInputInterface();

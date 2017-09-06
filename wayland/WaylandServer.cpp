@@ -16,7 +16,7 @@
 #include "../backend/Backend.h"
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 namespace WaylandServer
 {
@@ -195,6 +195,7 @@ void iteration()
 {
 	wl_event_loop_dispatch(eventLoop, 0);
 	wl_display_flush_clients(display);
+	WaylandSurface::runFrameCallbacks();
 }
 
 uint32_t lastSerialNum = 1;

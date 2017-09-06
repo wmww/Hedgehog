@@ -120,7 +120,7 @@ void WlSeat::pointerMotion(V2d position, wl_resource * surface)
 	
 	wl_pointer_send_motion(
 		impl->pointerResource,
-		getTimeSinceStart() * 1000,
+		timeSinceStartMili(),
 		wl_fixed_from_double(position.x),
 		wl_fixed_from_double(position.y)
 		);
@@ -178,7 +178,7 @@ void WlSeat::pointerClick(bool down, wl_resource * surface)
 	wl_pointer_send_button(
 		impl->pointerResource,
 		WaylandServer::nextSerialNum(),
-		getTimeSinceStart() * 1000,
+		timeSinceStartMili(),
 		1,
 		down ? WL_POINTER_BUTTON_STATE_PRESSED : WL_POINTER_BUTTON_STATE_RELEASED
 		);

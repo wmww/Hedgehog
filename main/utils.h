@@ -63,7 +63,8 @@ bool loadFile(string filename, string& contents);
 void sleepForSeconds(double seconds);
 
 // get the time (in seconds) since the program started
-double getTimeSinceStart();
+double timeSinceStart();
+int timeSinceStartMili();
 
 // returns the path to the folder containing all shaders (ends in slash)
 // this is abstracted into a function because in the future it may need to be determined dynamically
