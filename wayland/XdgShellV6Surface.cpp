@@ -16,14 +16,14 @@ struct XdgShellV6Surface::Impl: WaylandObject, WindowInterface
 	wl_resource * xdgSurfaceResource = nullptr;
 	wl_resource * xdgToplevelResource = nullptr;
 	
-	void pointerMotion(V2d newPos)
+	void setSize(V2i size)
 	{
 		warning(FUNC + " not yet implemented");
 	}
 	
-	void setSize(V2i size)
+	weak_ptr<InputInterface> getInputInterface()
 	{
-		warning(FUNC + " not yet implemented");
+		return waylandSurface.getInputInterface();
 	}
 	
 	// interfaces
@@ -224,6 +224,7 @@ XdgShellV6Surface::XdgShellV6Surface(wl_client * client, uint32_t id, WaylandSur
 	auto implShared = make_shared<Impl>();
 	//implShared->surface2D.setup();
 	//implShared->surface2D.setTexture(surface.getTexture());
+	implShared->waylandSurface = surface;
 	implShared->texture = surface.getTexture();
 	Scene::instance.addWindow(implShared);
 	// sending 1 as the version number isn't a mistake. Idk why its called v6 but you send in 1, maybe always 1 until stable?

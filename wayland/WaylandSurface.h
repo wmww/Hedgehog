@@ -4,6 +4,7 @@
 #include "../main/utils.h"
 #include "WaylandServer.h"
 #include "../opengl/Texture.h"
+#include "../main/InputInterface.h"
 
 #include <wayland-server-core.h>
 
@@ -17,6 +18,7 @@ public:
 	
 	// getters
 	//wl_resource * getSurfaceResource();
+	weak_ptr<InputInterface> getInputInterface();
 	Texture getTexture();
 	
 private:

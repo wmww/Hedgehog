@@ -2,7 +2,7 @@
 #include "WaylandObject.h"
 
 #include "std_headers/wayland-server-protocol.h"
-#include <unordered_map/h>
+#include <unordered_map>
 
 // change to toggle debug statements on and off
 #define debug debug_off
@@ -21,6 +21,8 @@ struct WlSeat::Impl: WaylandObject
 	static const struct wl_seat_interface seatInterface;
 	static const struct wl_pointer_interface pointerInterface;
 };
+
+std::unordered_map<wl_client *, weak_ptr<WlSeat::Impl>> WlSeat::Impl::clientToImpl;
 
 const struct wl_pointer_interface WlSeat::Impl::pointerInterface = {
 	
@@ -76,22 +78,26 @@ const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 WlSeat::WlSeat(wl_client * client, uint32_t id)
 {
 	debug("creating WlSeat");
-	auto iter = clientToImpl.find(client);
-	if (iter != clientToImpl.end())
+	assert(client);
+	auto iter = Impl::clientToImpl.find(client);
+	if (iter != Impl::clientToImpl.end())
 	{
 		fatal("single client made multiple seats");
 	}
 	auto implShared = make_shared<Impl>();
+	Impl::clientToImpl[client] = implShared;
 	implShared->seatResource = implShared->wlObjMake(client, id, &wl_seat_interface, 1, &Impl::seatInterface);
 	wl_seat_send_capabilities(implShared->seatResource, WL_SEAT_CAPABILITY_POINTER);
 	impl = implShared;
 }
 
-void WlSeat::pointerMove(V2d position, wl_resource * surface)
+void WlSeat::pointerMotion(V2d position, wl_resource * surface)
 {
-	GET_IMPL_ELSE
+	auto impl = getImplFromSurface(surface);
+	
+	if (!impl)
 	{
-		warning(FUNC + " called on deleted WaylandObject");
+		warning(FUNC + " called on deleted WaylandObject or something stupid like that");
 		return;
 	}
 	if (!impl->pointerResource)
@@ -114,7 +120,7 @@ void WlSeat::pointerMove(V2d position, wl_resource * surface)
 	
 	wl_pointer_send_motion(
 		impl->pointerResource,
-		getTimeSinceStart(),
+		getTimeSinceStart() * 1000,
 		wl_fixed_from_double(position.x),
 		wl_fixed_from_double(position.y)
 		);
@@ -122,9 +128,11 @@ void WlSeat::pointerMove(V2d position, wl_resource * surface)
 
 void WlSeat::pointerLeave(wl_resource * surface)
 {
-	GET_IMPL_ELSE
+	auto impl = getImplFromSurface(surface);
+	
+	if (!impl)
 	{
-		warning(FUNC + " called on deleted WaylandObject");
+		warning(FUNC + " called on deleted WaylandObject or something stupid like that");
 		return;
 	}
 	if (!impl->pointerResource)
@@ -145,10 +153,42 @@ void WlSeat::pointerLeave(wl_resource * surface)
 		);
 }
 
-WlSeat getFromClient(wl_client * client)
+void WlSeat::pointerClick(bool down, wl_resource * surface)
 {
-	auto iter = clientToImpl.find(client);
-	if (iter == clientToImpl.end())
+	auto impl = getImplFromSurface(surface);
+	
+	if (!impl)
+	{
+		warning(FUNC + " called on deleted WaylandObject or something stupid like that");
+		return;
+	}
+	if (!impl->pointerResource)
+	{
+		warning(FUNC + " called on seat with no pointer resource");
+		return;
+	}
+	if (!impl->currentSurface)
+	{
+		warning(FUNC + " called on seat with no surface");
+		return;
+	}
+	
+	warning("sending click");
+	
+	wl_pointer_send_button(
+		impl->pointerResource,
+		WaylandServer::nextSerialNum(),
+		getTimeSinceStart() * 1000,
+		1,
+		down ? WL_POINTER_BUTTON_STATE_PRESSED : WL_POINTER_BUTTON_STATE_RELEASED
+		);
+}
+
+WlSeat WlSeat::getFromClient(wl_client * client)
+{
+	assert(client);
+	auto iter = Impl::clientToImpl.find(client);
+	if (iter == Impl::clientToImpl.end())
 	{
 		warning(FUNC + " called with client not in clientToImpl");
 		return WlSeat();
@@ -159,4 +199,13 @@ WlSeat getFromClient(wl_client * client)
 		seat.impl = iter->second;
 		return seat;
 	}
+}
+
+shared_ptr<WlSeat::Impl> WlSeat::getImplFromSurface(wl_resource * surface)
+{
+	assert(surface);
+	wl_client * client = surface->client;
+	assert(client);
+	auto impl = getFromClient(client).impl.lock();
+	return impl;
 }

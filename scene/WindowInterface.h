@@ -4,10 +4,11 @@
 #include "../main/InputInterface.h"
 #include "../opengl/Texture.h"
 
-class WindowInterface: public InputInterface
+class WindowInterface
 {
 public:
 	virtual void setSize(V2i size) = 0;
+	virtual weak_ptr<InputInterface> getInputInterface() = 0;
 	
 	Texture texture;
 	
@@ -18,7 +19,7 @@ public:
 		warning(FUNC + " not yet implemented");
 	}
 	
-	void setSize(V2i size)
+	weak_ptr<InputInterface> getInputInterface()
 	{
 		warning(FUNC + " not yet implemented");
 	}

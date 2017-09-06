@@ -1,6 +1,7 @@
 #include "WlShellSurface.h"
 #include "WaylandObject.h"
 #include "../scene/WindowInterface.h"
+#include "WlSeat.h"
 
 #include "std_headers/wayland-server-protocol.h"
 
@@ -11,16 +12,17 @@ struct WlShellSurface::Impl: WaylandObject, WindowInterface
 {
 	// instance data
 	WaylandSurface waylandSurface;
+	wl_client * client;
 	//Surface2D surface2D;
-	
-	void pointerMotion(V2d newPos)
-	{
-		warning(FUNC + " not yet implemented");
-	}
 	
 	void setSize(V2i size)
 	{
 		warning(FUNC + " not yet implemented");
+	}
+	
+	weak_ptr<InputInterface> getInputInterface()
+	{
+		return waylandSurface.getInputInterface();
 	}
 	
 	// interface
@@ -85,6 +87,7 @@ WlShellSurface::WlShellSurface(wl_client * client, uint32_t id, WaylandSurface s
 	debug("creating WlShellSurface");
 	auto implShared = make_shared<Impl>();
 	implShared->waylandSurface = surface;
+	implShared->client = client;
 	//implShared->surface2D.setup();
 	//implShared->surface2D.setTexture(surface.getTexture());
 	implShared->texture = surface.getTexture();

@@ -137,12 +137,21 @@ struct BackendGLX: Backend::ImplBase
 		{
 			XNextEvent(display, &event);
 			
-			if (event.type == MotionNotify)
+			if (auto interface = inputInterface.lock())
 			{
-				if (auto interface = inputInterface.lock())
+				if (event.type == MotionNotify)
 				{
 					auto movement = V2d(event.xbutton.x, event.xbutton.y);
 					interface->pointerMotion(movement);
+				}
+				else if (event.type == ButtonPress)
+				{
+					warning("got click");
+					interface->pointerClick(true);
+				}
+				else if (event.type == ButtonRelease)
+				{
+					interface->pointerClick(false);
 				}
 			}
 		}

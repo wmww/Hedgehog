@@ -2,6 +2,7 @@
 #include "WaylandServer.h"
 #include "WaylandObject.h"
 #include "../backend/Backend.h"
+#include "WlSeat.h"
 
 #include "std_headers/wayland-server-protocol.h"
 #include <EGL/egl.h>
@@ -10,11 +11,12 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
-struct WaylandSurface::Impl: public WaylandObject
+struct WaylandSurface::Impl: WaylandObject, InputInterface
 {
 	// instance data
 	Texture texture;
-	struct wl_resource * bufferResource = nullptr;
+	wl_resource * bufferResource = nullptr;
+	wl_resource * surfaceResource = nullptr;
 	//struct wl_resource * surfaceResource = nullptr;
 	
 	// interface
@@ -33,6 +35,24 @@ struct WaylandSurface::Impl: public WaylandObject
 	~Impl()
 	{
 		debug("~Impl called");
+	}
+	
+	void pointerMotion(V2d newPos)
+	{
+		assert(surfaceResource);
+		WlSeat::pointerMotion(newPos, surfaceResource);
+	}
+	
+	void pointerLeave()
+	{
+		assert(surfaceResource);
+		WlSeat::pointerLeave(surfaceResource);
+	}
+	
+	void pointerClick(bool down)
+	{
+		assert(surfaceResource);
+		WlSeat::pointerClick(down, surfaceResource);
 	}
 	
 	static void firstInstanceSetup()
@@ -62,7 +82,8 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface damage
 	+[](wl_client * client, wl_resource * resource, int32_t x, int32_t y, int32_t width, int32_t height)
 	{
-		warning("surface interface surface damage callback called (not yet implemented)");
+		warning("surface interface surface damage callback called (not implemented well)");
+		surfaceInterface.commit(client, resource);
 	},
 	// surface frame
 	+[](wl_client * client, wl_resource * resource, uint32_t callback)
@@ -149,7 +170,7 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 	// important to use a temp var because impl is weak, so it would be immediately deleted
 	// in wlSetup, a shared_ptr to the object is saved by WaylandObject, so it is safe to store in a weak_ptr after
 	auto implShared = make_shared<Impl>();
-	implShared->wlObjMake(client, id, &wl_surface_interface, 3, &Impl::surfaceInterface);
+	implShared->surfaceResource = implShared->wlObjMake(client, id, &wl_surface_interface, 3, &Impl::surfaceInterface);
 	impl = implShared;
 }
 
@@ -172,4 +193,9 @@ Texture WaylandSurface::getTexture()
 {
 	GET_IMPL;
 	return impl->texture;
+}
+
+weak_ptr<InputInterface> WaylandSurface::getInputInterface()
+{
+	return impl;
 }

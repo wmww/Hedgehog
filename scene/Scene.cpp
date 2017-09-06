@@ -11,7 +11,54 @@ struct Scene::Impl: InputInterface
 	
 	void pointerMotion(V2d newPos)
 	{
-		debug("pointer moved to " + to_string(newPos));
+		if (windows.size() < 1)
+		{
+			// do nothing
+		}
+		else
+		{
+			auto window = windows[windows.size() - 1].lock();
+			assert(window);
+			auto input = window->getInputInterface().lock();
+			if (!input)
+			{
+				warning("input null in " + FUNC);
+				return;
+			}
+			input->pointerMotion(newPos);
+		}
+	}
+	
+	void pointerLeave()
+	{
+		if (windows.size() < 1)
+		{
+			// do nothing
+		}
+		else
+		{
+			auto window = windows[windows.size() - 1].lock();
+			assert(window);
+			auto input = window->getInputInterface().lock();
+			assert(input);
+			input->pointerLeave();
+		}
+	}
+	
+	void pointerClick(bool down)
+	{
+		if (windows.size() < 1)
+		{
+			// do nothing
+		}
+		else
+		{
+			auto window = windows[windows.size() - 1].lock();
+			assert(window);
+			auto input = window->getInputInterface().lock();
+			assert(input);
+			input->pointerClick(down);
+		}
 	}
 };
 
