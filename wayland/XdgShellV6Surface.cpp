@@ -93,35 +93,11 @@ const struct zxdg_surface_v6_interface XdgShellV6Surface::Impl::xdgSurfaceV6Inte
 	{
 		warning("zxdg_surface_v6_interface::set_window_geometry called (not yet implemented)");
 	},
-	/**
-	 * ack a configure event
-	 *
-	 * When a configure event is received, if a client commits the
-	 * surface in response to the configure event, then the client must
-	 * make an ack_configure request sometime before the commit
-	 * request, passing along the serial of the configure event.
-	 *
-	 * For instance, for toplevel surfaces the compositor might use
-	 * this information to move a surface to the top left only when the
-	 * client has drawn itself for the maximized or fullscreen state.
-	 *
-	 * If the client receives multiple configure events before it can
-	 * respond to one, it only has to ack the last configure event.
-	 *
-	 * A client is not required to commit immediately after sending an
-	 * ack_configure request - it may even ack_configure several times
-	 * before its next surface commit.
-	 *
-	 * A client may send multiple ack_configure requests before
-	 * committing, but only the last request sent before a commit
-	 * indicates which configure event the client really is responding
-	 * to.
-	 * @param serial the serial from the configure event
-	 */
 	// ack_configure
 	+[](struct wl_client *client, struct wl_resource *resource, uint32_t serial)
 	{
-		warning("zxdg_surface_v6_interface::ack_configure called (not yet implemented)");
+		debug("zxdg_surface_v6_interface::ack_configure called");
+		// this is useful if we need to know when a client has responded to a configure event, but that is not needed now
 	}
 };
 

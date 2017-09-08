@@ -15,9 +15,12 @@ struct BackendGLX: Backend::ImplBase
 	Display * display = nullptr;
 	GLXContext ctx;
 	Window win;
+	V2i dim;
 	
-	BackendGLX(V2i dim)
+	BackendGLX(V2i dimIn)
 	{
+		dim = dimIn;
+		
 		debug("opening X display...");
 		
 		display = XOpenDisplay(0);
@@ -141,7 +144,7 @@ struct BackendGLX: Backend::ImplBase
 			{
 				if (event.type == MotionNotify)
 				{
-					auto movement = V2d(event.xbutton.x, event.xbutton.y);
+					auto movement = V2d((double)event.xbutton.x / dim.x, (double)event.xbutton.y / dim.y);
 					interface->pointerMotion(movement);
 				}
 				else if (event.type == ButtonPress)

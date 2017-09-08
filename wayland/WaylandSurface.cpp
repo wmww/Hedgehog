@@ -9,7 +9,7 @@
 #include <EGL/eglext.h>
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 struct WaylandSurface::Impl: WaylandObject, InputInterface
 {
@@ -27,6 +27,7 @@ struct WaylandSurface::Impl: WaylandObject, InputInterface
 	};
 	
 	// instance data
+	V2d dim;
 	Texture texture;
 	wl_resource * bufferResource = nullptr;
 	wl_resource * surfaceResource = nullptr;
@@ -51,9 +52,11 @@ struct WaylandSurface::Impl: WaylandObject, InputInterface
 		debug("~Impl called");
 	}
 	
-	void pointerMotion(V2d newPos)
+	void pointerMotion(V2d normalizedPos)
 	{
 		assert(surfaceResource);
+		V2d newPos = V2d(normalizedPos.x * dim.x, normalizedPos.y * dim.y);
+		//warning(to_string(dim));
 		WlSeat::pointerMotion(newPos, surfaceResource);
 	}
 	
@@ -90,7 +93,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface attach
 	+[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y)
 	{
-		debug("surface interface surface attach callback called");
+		warning("surface interface surface attach callback called");
 		GET_IMPL_FROM(resource);
 		impl->bufferResource = buffer;
 	},
@@ -102,7 +105,8 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface frame
 	+[](wl_client * client, wl_resource * resource, uint32_t callback)
 	{
-		warning("surface interface surface frame callback called (not yet implemented)");
+		debug("surface interface surface frame callback called");
+		// TODO: OPTIMIZATION: don't call the callback if the window is hidden (this may take some restructuring)
 		wl_resource * callbackResource = wl_resource_create(client, &wl_callback_interface, 1, callback);
 		FrameCallback callbackStruct {callbackResource};
 		frameCallbacks.push_back(callbackStruct);
@@ -141,6 +145,8 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 			// query the texture format of the buffer
 			bool idkWhatThisVarMeans = Impl::eglQueryWaylandBufferWL(display, buffer, EGL_TEXTURE_FORMAT, &texture_format);
 			
+			V2i bufferDim;
+			
 			if (idkWhatThisVarMeans) {
 				// I think this is for using EGL to share a buffer directly on the GPU
 				// this code path is currently untested
@@ -148,9 +154,10 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 				EGLint width, height;
 				Impl::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &width);
 				Impl::eglQueryWaylandBufferWL(display, buffer, EGL_WIDTH, &height);
+				bufferDim = V2i(width, height);
 				EGLAttrib attribs = EGL_NONE;
 				EGLImage image = eglCreateImage(display, EGL_NO_CONTEXT, EGL_WAYLAND_BUFFER_WL, buffer, &attribs);
-				impl->texture.loadFromEGLImage(image, V2i(width, height));
+				impl->texture.loadFromEGLImage(image, bufferDim);
 				//eglDestroyImage(display, image);
 			}
 			else {
@@ -160,14 +167,13 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 				assert(shmBuffer != nullptr);
 				uint32_t width = wl_shm_buffer_get_width(shmBuffer);
 				uint32_t height = wl_shm_buffer_get_height(shmBuffer);
+				bufferDim = V2i(width, height);
 				void * data = wl_shm_buffer_get_data(shmBuffer);
-				impl->texture.loadFromData(data, V2i(width, height));
+				impl->texture.loadFromData(data, bufferDim);
 			}
-			debug("destroying buffer...");
 			wl_buffer_send_release(buffer);
+			impl->dim = V2d(bufferDim.x, bufferDim.y);
 		}
-		
-		debug("done committing surface");
 	},
 	// surface set buffer transform
 	+[](wl_client * client, wl_resource * resource, int32_t transform)
