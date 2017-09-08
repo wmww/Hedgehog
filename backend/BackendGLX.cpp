@@ -4,6 +4,7 @@
 #include <GL/glx.h>
 #include <GL/gl.h>
 #include <cstring>
+#include <linux/input.h> // for BTN_LEFT and maybe other stuff
 
 // change to toggle debug statements on and off
 #define debug debug_off
@@ -133,6 +134,22 @@ struct BackendGLX: Backend::ImplBase
 		glXSwapBuffers(display, win);
 	}
 	
+	static uint x11BtnToLinuxBtn(uint x11Btn)
+	{
+		switch (x11Btn)
+		{
+		case Button1:
+			return BTN_LEFT;
+		case Button2:
+			return BTN_MIDDLE;
+		case Button3:
+			return BTN_RIGHT;
+		default:
+			warning("your mouse has a weird-ass button");
+			return BTN_EXTRA;
+		}
+	}
+	
 	void checkEvents()
 	{	
 		XEvent event;
@@ -149,12 +166,11 @@ struct BackendGLX: Backend::ImplBase
 				}
 				else if (event.type == ButtonPress)
 				{
-					warning("got click");
-					interface->pointerClick(true);
+					interface->pointerClick(x11BtnToLinuxBtn(event.xbutton.button), true);
 				}
 				else if (event.type == ButtonRelease)
 				{
-					interface->pointerClick(false);
+					interface->pointerClick(x11BtnToLinuxBtn(event.xbutton.button), false);
 				}
 			}
 		}

@@ -67,10 +67,10 @@ struct WaylandSurface::Impl: WaylandObject, InputInterface
 		WlSeat::pointerLeave(surfaceResource);
 	}
 	
-	void pointerClick(bool down)
+	void pointerClick(uint button, bool down)
 	{
 		assert(surfaceResource);
-		WlSeat::pointerClick(down, surfaceResource);
+		WlSeat::pointerClick(button, down, surfaceResource);
 	}
 	
 	static void firstInstanceSetup()

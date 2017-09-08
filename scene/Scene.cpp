@@ -45,7 +45,7 @@ struct Scene::Impl: InputInterface
 		}
 	}
 	
-	void pointerClick(bool down)
+	void pointerClick(uint button, bool down)
 	{
 		if (windows.size() < 1)
 		{
@@ -57,7 +57,7 @@ struct Scene::Impl: InputInterface
 			assert(window);
 			auto input = window->getInputInterface().lock();
 			assert(input);
-			input->pointerClick(down);
+			input->pointerClick(button, down);
 		}
 	}
 };
