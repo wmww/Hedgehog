@@ -3,6 +3,7 @@
 
 #include "std_headers/wayland-server-protocol.h"
 #include <unordered_map>
+#include <linux/input.h> // for BTN_LEFT and maybe other stuff
 
 // change to toggle debug statements on and off
 #define debug debug_off
@@ -173,13 +174,18 @@ void WlSeat::pointerClick(bool down, wl_resource * surface)
 		return;
 	}
 	
-	warning("sending click");
+	warning(down ? "mouse down" : "mouse up");
+	assert(surface);
+	assert(string(wl_resource_get_class(surface)) == "wl_surface");
+	assert(impl->pointerResource);
+	assert(string(wl_resource_get_class(impl->pointerResource)) == "wl_pointer");
+	
 	
 	wl_pointer_send_button(
 		impl->pointerResource,
 		WaylandServer::nextSerialNum(),
 		timeSinceStartMili(),
-		1,
+		BTN_LEFT, // defined in <linux/input.h>
 		down ? WL_POINTER_BUTTON_STATE_PRESSED : WL_POINTER_BUTTON_STATE_RELEASED
 		);
 }
