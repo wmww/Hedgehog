@@ -28,6 +28,7 @@ struct WaylandSurface::Impl: WaylandObject, InputInterface
 	
 	// instance data
 	V2d dim;
+	bool isDamaged = false;
 	Texture texture;
 	wl_resource * bufferResource = nullptr;
 	wl_resource * surfaceResource = nullptr;
@@ -88,19 +89,23 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface destroy
 	+[](wl_client * client, wl_resource * resource)
 	{
-		warning("surface interface surface destroy callback called (not yet implemented)");
+		debug("surface interface surface destroy callback called");
+		wlObjDestroy(resource);
 	},
 	// surface attach
 	+[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y)
 	{
-		warning("surface interface surface attach callback called");
+		debug("surface interface surface attach callback called");
 		GET_IMPL_FROM(resource);
 		impl->bufferResource = buffer;
 	},
 	// surface damage
 	+[](wl_client * client, wl_resource * resource, int32_t x, int32_t y, int32_t width, int32_t height)
 	{
-		warning("surface interface surface damage callback called (not yet implemented)");
+		debug("surface interface surface damage callback called");
+		// TODO: OPTIMIZATION: only repaint damaged region
+		GET_IMPL_FROM(resource);
+		impl->isDamaged = true;
 	},
 	// surface frame
 	+[](wl_client * client, wl_resource * resource, uint32_t callback)
@@ -134,6 +139,11 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 		struct wl_resource * buffer = impl->bufferResource;
 		if (buffer != nullptr)
 		{
+			if (!impl->isDamaged)
+			{
+				warning("wl_surface_interface.commit called with new buffer but no damage. is this bad? idk.");
+			}
+			
 			EGLint texture_format;
 			Display * display = (Display *)Backend::instance.getXDisplay();
 			
@@ -172,6 +182,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 				impl->texture.loadFromData(data, bufferDim);
 			}
 			wl_buffer_send_release(buffer);
+			impl->bufferResource = nullptr;
 			impl->dim = V2d(bufferDim.x, bufferDim.y);
 		}
 	},
