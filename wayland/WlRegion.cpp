@@ -6,16 +6,29 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
-/*
-struct RegionBase
+struct Area
 {
-	virtual bool checkPoint(V2d pt);
+	virtual bool checkPoint(V2d pt) = 0;
 };
 
-struct RegionRect: RegionBase
+struct EmptyArea: Area
+{
+	bool checkPoint(V2d pt)
+	{
+		return false;
+	}
+};
+
+struct RectArea: Area
 {
 	V2d low;
 	V2d high;
+	
+	RectArea(V2d low, V2d high)
+	{
+		this->low = low;
+		this->high = high;
+	}
 	
 	bool checkPoint(V2d pt)
 	{
@@ -26,11 +39,63 @@ struct RegionRect: RegionBase
 			pt.y <= high.y;
 	}
 };
-* */
 
+struct UnionArea: Area
+{
+	unique_ptr<Area> a, b;
+	
+	UnionArea(unique_ptr<Area> a, unique_ptr<Area> b)
+	{
+		this->a = move(a);
+		this->b = move(b);
+	}
+	
+	bool checkPoint(V2d pt)
+	{
+		return a->checkPoint(pt) || b->checkPoint(pt);
+	}
+};
+
+struct IntersectionArea: Area
+{
+	unique_ptr<Area> a, b;
+	
+	IntersectionArea(unique_ptr<Area> a, unique_ptr<Area> b)
+	{
+		this->a = move(a);
+		this->b = move(b);
+	}
+	
+	bool checkPoint(V2d pt)
+	{
+		return a->checkPoint(pt) && b->checkPoint(pt);
+	}
+};
+
+struct InverseArea: Area
+{
+	unique_ptr<Area> a;
+	
+	InverseArea(unique_ptr<Area> a)
+	{
+		this->a = move(a);
+	}
+	
+	bool checkPoint(V2d pt)
+	{
+		return !a->checkPoint(pt);
+	}
+};
 struct WlRegion::Impl: WaylandObject
 {
 	// instance data
+	unique_ptr<Area> data;
+	
+	// members
+	Impl()
+	{
+		data = make_unique<EmptyArea>();
+	}
 	
 	// interface
 	static const struct wl_region_interface wlRegionInterface;
@@ -46,12 +111,52 @@ const struct wl_region_interface WlRegion::Impl::wlRegionInterface = {
 	// add
 	+[](struct wl_client *client, struct wl_resource *resource, int32_t x, int32_t y, int32_t width, int32_t height)
 	{
-		warning("wl_region_interface::add called (not yet implemented)");
+		debug("wl_region_interface::add called ("
+			"x: " + to_string(x) + ", "
+			"y: " + to_string(y) + ", "
+			"width: " + to_string(width) + ", "
+			"height: " + to_string(height) + ")");
+		
+		GET_IMPL_FROM(resource);
+		if (
+			x == INT32_MIN &&
+			y == INT32_MIN &&
+			width == INT32_MAX &&
+			height == INT32_MAX
+			)
+		{
+			impl->data = make_unique<InverseArea>(make_unique<EmptyArea>());
+		}
+		else
+		{
+			auto rect = make_unique<RectArea>(V2d(x, y), V2d(x + width, y + height));
+			impl->data = make_unique<UnionArea>(move(impl->data), move(rect));
+		}
 	},
 	// subtract
 	+[](struct wl_client *client, struct wl_resource *resource, int32_t x, int32_t y, int32_t width, int32_t height)
 	{
-		warning("wl_region_interface::subtract called (not yet implemented)");
+		debug("wl_region_interface::subtract called ("
+			"x: " + to_string(x) + ", "
+			"y: " + to_string(y) + ", "
+			"width: " + to_string(width) + ", "
+			"height: " + to_string(height) + ")");
+		
+		GET_IMPL_FROM(resource);
+		if (
+			x == INT32_MIN &&
+			y == INT32_MIN &&
+			width == INT32_MAX &&
+			height == INT32_MAX
+			)
+		{
+			impl->data = make_unique<EmptyArea>();
+		}
+		else
+		{
+			auto rect = make_unique<RectArea>(V2d(x, y), V2d(x + width, y + height));
+			impl->data = make_unique<IntersectionArea>(move(impl->data), make_unique<InverseArea>(move(rect)));
+		}
 	}
 };
 
