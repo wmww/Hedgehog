@@ -49,7 +49,7 @@ shared_ptr<Resource::Data> Resource::getData()
 	return impl->data;
 }
 
-wl_resource * Resource::getResource()
+wl_resource * Resource::getRaw()
 {
 	IMPL_ELSE
 	{

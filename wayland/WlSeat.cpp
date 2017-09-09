@@ -1,5 +1,5 @@
 #include "WlSeat.h"
-#include "WaylandObject.h"
+#include "Resource.h"
 
 #include "std_headers/wayland-server-protocol.h"
 #include <unordered_map>
@@ -7,12 +7,12 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
-struct WlSeat::Impl: WaylandObject
+struct WlSeat::Impl: Resource::Data
 {
 	// instance data
-	wl_resource * seatResource = nullptr;
-	wl_resource * pointerResource = nullptr;
-	wl_resource * keyboardResource = nullptr;
+	Resource seat;
+	Resource pointer;
+	Resource keyboard;
 	wl_resource * currentSurface = nullptr;
 	
 	// static
@@ -40,10 +40,7 @@ const struct wl_pointer_interface WlSeat::Impl::pointerInterface = {
 	+[](wl_client * client, wl_resource *resource)
 	{
 		debug("wl_pointer_interface.release called");
-		GET_IMPL_FROM(resource);
-		assert(resource == impl->pointerResource);
-		wlObjDestroy(resource);
-		impl->pointerResource = nullptr;
+		Resource(resource).destroy();
 	}
 };
 
@@ -52,37 +49,34 @@ const struct wl_keyboard_interface WlSeat::Impl::keyboardInterface {
 	+[](wl_client * client, wl_resource *resource)
 	{
 		debug("wl_keyboard_interface.release called");
-		GET_IMPL_FROM(resource);
-		assert(resource == impl->keyboardResource);
-		wlObjDestroy(resource);
-		impl->keyboardResource = nullptr;
+		Resource(resource).destroy();
 	}
 };
 
 const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 	
-	// get pointer
+	// get_pointer
 	+[](wl_client * client, wl_resource * resource, uint32_t id)
 	{
 		debug("wl_seat_interface.get_pointer called");
 		
-		GET_IMPL_FROM(resource);
-		assert(impl->pointerResource == nullptr);
-		
-		impl->pointerResource = impl->wlObjMake(client, id, &wl_pointer_interface, 1, &pointerInterface);
+		IMPL_FROM(resource);
+		if (!impl->pointer.isNull())
+			warning("wl_seat_interface.get_pointer called when the seat already has a pointer");
+		impl->pointer = Resource(impl, client, id, &wl_pointer_interface, 1, &pointerInterface);
 		//wl_resource * pointer = wl_resource_create(client, &wl_pointer_interface, 1, id);
 		//wl_resource_set_implementation(pointer, &pointerInterface, nullptr, nullptr);
 		//get_client(client)->pointer = pointer;
 	},
-	// get keyboard
+	// get_keyboard
 	+[](wl_client * client, wl_resource * resource, uint32_t id)
 	{
 		debug("wl_seat_interface.get_keyboard called");
 		
-		GET_IMPL_FROM(resource);
-		assert(impl->pointerResource == nullptr);
-		
-		impl->keyboardResource = impl->wlObjMake(client, id, &wl_keyboard_interface, 1, &keyboardInterface);
+		IMPL_FROM(resource);
+		if (!impl->pointer.isNull())
+			warning("wl_seat_interface.get_keyboard called when the seat already has a keyboard");
+		impl->keyboard = Resource(impl, client, id, &wl_keyboard_interface, 1, &keyboardInterface);
 		//struct wl_resource *keyboard = wl_resource_create (client, &wl_keyboard_interface, 1, id);
 		//wl_resource_set_implementation (keyboard, &keyboard_interface, NULL, NULL);
 		//get_client(client)->keyboard = keyboard;
@@ -91,7 +85,7 @@ const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 		//wl_keyboard_send_keymap (keyboard, WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, fd, size);
 		////close (fd);
 	},
-	// get touch
+	// get_touch
 	+[](wl_client * client, wl_resource * resource, uint32_t id)
 	{
 		warning("wl_seat_interface.get_touch called (not yet implemented)");
@@ -105,13 +99,13 @@ WlSeat::WlSeat(wl_client * client, uint32_t id)
 	auto iter = Impl::clientToImpl.find(client);
 	if (iter != Impl::clientToImpl.end())
 	{
-		fatal("single client made multiple seats");
+		warning("single client made multiple seats");
 	}
-	auto implShared = make_shared<Impl>();
-	Impl::clientToImpl[client] = implShared;
-	implShared->seatResource = implShared->wlObjMake(client, id, &wl_seat_interface, 1, &Impl::seatInterface);
-	wl_seat_send_capabilities(implShared->seatResource, WL_SEAT_CAPABILITY_POINTER);
-	impl = implShared;
+	auto impl = make_shared<Impl>();
+	this->impl = impl;
+	Impl::clientToImpl[client] = impl;
+	impl->seat = Resource(impl, client, id, &wl_seat_interface, 1, &Impl::seatInterface);
+	wl_seat_send_capabilities(impl->seat.getRaw(), WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
 }
 
 void WlSeat::pointerMotion(V2d position, wl_resource * surface)
@@ -123,7 +117,7 @@ void WlSeat::pointerMotion(V2d position, wl_resource * surface)
 		warning(FUNC + " called on deleted WaylandObject or something stupid like that");
 		return;
 	}
-	if (!impl->pointerResource)
+	if (impl->pointer.isNull())
 	{
 		warning(FUNC + " called on seat with no pointer resource");
 		return;
@@ -133,7 +127,7 @@ void WlSeat::pointerMotion(V2d position, wl_resource * surface)
 	{
 		impl->currentSurface = surface;
 		wl_pointer_send_enter(
-			impl->pointerResource,
+			impl->pointer.getRaw(),
 			WaylandServer::nextSerialNum(),
 			impl->currentSurface,
 			wl_fixed_from_double(position.x),
@@ -142,7 +136,7 @@ void WlSeat::pointerMotion(V2d position, wl_resource * surface)
 	}
 	
 	wl_pointer_send_motion(
-		impl->pointerResource,
+		impl->pointer.getRaw(),
 		timeSinceStartMili(),
 		wl_fixed_from_double(position.x),
 		wl_fixed_from_double(position.y)
@@ -158,7 +152,7 @@ void WlSeat::pointerLeave(wl_resource * surface)
 		warning(FUNC + " called on deleted WaylandObject or something stupid like that");
 		return;
 	}
-	if (!impl->pointerResource)
+	if (impl->pointer.isNull())
 	{
 		warning(FUNC + " called on seat with no pointer resource");
 		return;
@@ -170,7 +164,7 @@ void WlSeat::pointerLeave(wl_resource * surface)
 	}
 	
 	wl_pointer_send_leave(
-		impl->pointerResource,
+		impl->pointer.getRaw(),
 		WaylandServer::nextSerialNum(),
 		impl->currentSurface
 		);
@@ -185,7 +179,7 @@ void WlSeat::pointerClick(uint button, bool down, wl_resource * surface)
 		warning(FUNC + " called on deleted WaylandObject or something stupid like that");
 		return;
 	}
-	if (!impl->pointerResource)
+	if (impl->pointer.isNull())
 	{
 		warning(FUNC + " called on seat with no pointer resource");
 		return;
@@ -199,11 +193,10 @@ void WlSeat::pointerClick(uint button, bool down, wl_resource * surface)
 	warning(down ? "mouse down" : "mouse up");
 	assert(surface);
 	assert(string(wl_resource_get_class(surface)) == "wl_surface");
-	assert(impl->pointerResource);
-	assert(string(wl_resource_get_class(impl->pointerResource)) == "wl_pointer");
+	assert(!impl->pointer.isNull());
 	
 	wl_pointer_send_button(
-		impl->pointerResource,
+		impl->pointer.getRaw(),
 		WaylandServer::nextSerialNum(),
 		timeSinceStartMili(),
 		button,
