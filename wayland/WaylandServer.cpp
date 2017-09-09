@@ -52,10 +52,7 @@ struct wl_compositor_interface compositorInterface = {
 void compositorBindCallback(wl_client * client, void * data, uint32_t version, uint32_t id)
 {
 	debug("compositorBindCallback called");
-	if (version != 1)
-	{
-		warning("wl_compositor_interface version " + to_string(version) + " instead of 1");
-	}
+	ASSERT(version == 3);
 	//assert(version == 1);
 	
 	wl_resource * resource = wl_resource_create(client, &wl_compositor_interface, 1, id);

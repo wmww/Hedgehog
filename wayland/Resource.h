@@ -20,7 +20,8 @@ public:
 	Resource(shared_ptr<Data> dataIn, wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct);
 	Resource(wl_resource * resourceIn);
 	
-	bool isNull() { return impl.lock() == nullptr; };
+	inline bool isNull() { return impl.expired(); };
+	inline bool isValid() { return !isNull(); };
 	
 	shared_ptr<Data> getData();
 	

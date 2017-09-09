@@ -30,12 +30,9 @@ Resource::Resource(shared_ptr<Data> dataIn, wl_client * client, uint32_t id, con
 
 Resource::Resource(wl_resource * resourceIn)
 {
+	ASSERT_ELSE(resourceIn, return);
 	auto iter = Impl::map.find(resourceIn);
-	if (iter == Impl::map.end())
-	{
-		warning("Resource created with wl_resource * not in map");
-		return; // impl still nullptr
-	}
+	ASSERT_ELSE(iter != Impl::map.end(), return);
 	impl = iter->second;
 }
 

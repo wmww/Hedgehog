@@ -18,7 +18,7 @@ struct Scene::Impl: InputInterface
 		else
 		{
 			auto window = windows[windows.size() - 1].lock();
-			assert(window);
+			ASSERT_ELSE(window, return);
 			auto input = window->getInputInterface().lock();
 			if (!input)
 			{
