@@ -90,6 +90,8 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	+[](wl_client * client, wl_resource * resource)
 	{
 		debug("surface interface surface destroy callback called");
+		//GET_IMPL_FROM(resource);
+		//wlObjDestroy(impl->surfaceResource);
 		wlObjDestroy(resource);
 	},
 	// surface attach

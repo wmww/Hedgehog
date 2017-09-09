@@ -1,5 +1,6 @@
 #include "WlRegion.h"
-#include "WaylandObject.h"
+//#include "WaylandObject.h"
+#include "Resource.h"
 
 #include "std_headers/wayland-server-protocol.h"
 
@@ -86,10 +87,13 @@ struct InverseArea: Area
 		return !a->checkPoint(pt);
 	}
 };
-struct WlRegion::Impl: WaylandObject
+struct WlRegion::Impl: Resource::Data
 {
 	// instance data
 	unique_ptr<Area> data;
+	
+	//WaylandObject2<Impl> wlObj;
+	Resource resource;
 	
 	// members
 	Impl()
@@ -106,7 +110,7 @@ const struct wl_region_interface WlRegion::Impl::wlRegionInterface = {
 	+[](struct wl_client *client, struct wl_resource *resource)
 	{
 		debug("wl_region_interface::destroy called");
-		wlObjDestroy(resource);
+		Resource(resource).destroy();
 	},
 	// add
 	+[](struct wl_client *client, struct wl_resource *resource, int32_t x, int32_t y, int32_t width, int32_t height)
@@ -117,7 +121,10 @@ const struct wl_region_interface WlRegion::Impl::wlRegionInterface = {
 			"width: " + to_string(width) + ", "
 			"height: " + to_string(height) + ")");
 		
-		GET_IMPL_FROM(resource);
+		//GET_IMPL_FROM(resource);
+		//auto impl = WaylandObject2<Impl>::get(resource);
+		//assert(impl);
+		IMPL_FROM(resource);
 		if (
 			x == INT32_MIN &&
 			y == INT32_MIN &&
@@ -142,7 +149,10 @@ const struct wl_region_interface WlRegion::Impl::wlRegionInterface = {
 			"width: " + to_string(width) + ", "
 			"height: " + to_string(height) + ")");
 		
-		GET_IMPL_FROM(resource);
+		//GET_IMPL_FROM(resource);
+		//auto impl = WaylandObject2<Impl>::get(resource);
+		//assert(impl);
+		IMPL_FROM(resource);
 		if (
 			x == INT32_MIN &&
 			y == INT32_MIN &&
@@ -163,7 +173,7 @@ const struct wl_region_interface WlRegion::Impl::wlRegionInterface = {
 WlRegion::WlRegion(wl_client * client, uint32_t id)
 {
 	debug("creating WlRegion");
-	auto implShared = make_shared<Impl>();
-	implShared->wlObjMake(client, id, &wl_region_interface, 1, &Impl::wlRegionInterface);
-	impl = implShared;
+	auto impl = make_shared<Impl>();
+	this->impl = impl;
+	impl->resource = Resource(impl, client, id, &wl_region_interface, 1, &Impl::wlRegionInterface);
 }

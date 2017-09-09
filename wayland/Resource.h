@@ -1,35 +1,41 @@
 #include "WaylandServer.h"
 #include <wayland-server-core.h>
-#include <unordered_map>
 
 #pragma once
 
 // these macros are convenient and allow for proper file/line num if assert fails
-#define GET_IMPL shared_ptr<Impl> impl = this->impl.lock(); assert(impl);
-#define GET_IMPL_ELSE shared_ptr<Impl> impl = this->impl.lock(); if (!impl)
-#define GET_IMPL_FROM(resource) shared_ptr<Impl> impl = WaylandObject::get<Impl>(resource); assert(impl);
+// #define GET_IMPL shared_ptr<Impl> impl = this->impl.lock(); assert(impl);
+#define IMPL_ELSE shared_ptr<Impl> impl = this->impl.lock(); if (!impl)
+#define IMPL_FROM(resource) shared_ptr<Impl> impl = Resource(resource).get<Impl>(); if (!impl) { warning(FUNC + " called with invalid resource"); return; }
 
 // WaylandObjects manage their own memory. You should always hold weak pointers to them.
 
-class WaylandObject: public std::enable_shared_from_this<WaylandObject>
+class Resource
 {
 public:
 	
-	wl_resource * wlObjMake(wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct);
+	class Data {}; // the only purpose of this is to inherit from
 	
-	static shared_ptr<WaylandObject> getWaylandObject(wl_resource * resource);
+	Resource() {}
+	Resource(shared_ptr<Data> dataIn, wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct);
+	Resource(wl_resource * resourceIn);
+	
+	shared_ptr<Data> getData();
 	
 	template<typename T>
-	inline static shared_ptr<T> get(wl_resource * resource)
+	inline shared_ptr<T> get()
 	{
-		return std::static_pointer_cast<T>(getWaylandObject(resource));
+		return std::static_pointer_cast<T>(getData());
 	}
 	
-	//wl_resource * getResource() {return resource;}
+	wl_resource * getResource();
 	
-	static void wlObjDestroy(wl_resource * resource);
+	void destroy();
 	
 private:
+	
+	struct Impl;
+	weak_ptr<Impl> impl;
 };
 /*
 template<typename T>
