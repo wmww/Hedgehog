@@ -12,14 +12,16 @@ struct WlSeat::Impl: WaylandObject
 	// instance data
 	wl_resource * seatResource = nullptr;
 	wl_resource * pointerResource = nullptr;
+	wl_resource * keyboardResource = nullptr;
 	wl_resource * currentSurface = nullptr;
 	
 	// static
 	static std::unordered_map<wl_client *, weak_ptr<Impl>> clientToImpl;
 	
 	// interface
-	static const struct wl_seat_interface seatInterface;
 	static const struct wl_pointer_interface pointerInterface;
+	static const struct wl_keyboard_interface keyboardInterface;
+	static const struct wl_seat_interface seatInterface;
 };
 
 std::unordered_map<wl_client *, weak_ptr<WlSeat::Impl>> WlSeat::Impl::clientToImpl;
@@ -29,7 +31,7 @@ const struct wl_pointer_interface WlSeat::Impl::pointerInterface = {
 	// set_cursor
 	+[](wl_client * client, wl_resource * resource, uint32_t serial, wl_resource * _surface, int32_t hotspot_x, int32_t hotspot_y)
 	{
-		warning("wl_pointer_interface::set_cursor called (not yet implemented)");
+		warning("wl_pointer_interface.set_cursor called (not yet implemented)");
 		//surface * surface = wl_resource_get_user_data(_surface);
 		//cursor = surface;
 	},
@@ -37,7 +39,23 @@ const struct wl_pointer_interface WlSeat::Impl::pointerInterface = {
 	// pointer release
 	+[](wl_client * client, wl_resource *resource)
 	{
-		warning("wl_pointer_interface::pointer_release called (not yet implemented)");
+		debug("wl_pointer_interface.release called");
+		GET_IMPL_FROM(resource);
+		assert(resource == impl->pointerResource);
+		wlObjDestroy(resource);
+		impl->pointerResource = nullptr;
+	}
+};
+
+const struct wl_keyboard_interface WlSeat::Impl::keyboardInterface {
+	// release
+	+[](wl_client * client, wl_resource *resource)
+	{
+		debug("wl_keyboard_interface.release called");
+		GET_IMPL_FROM(resource);
+		assert(resource == impl->keyboardResource);
+		wlObjDestroy(resource);
+		impl->keyboardResource = nullptr;
 	}
 };
 
@@ -46,7 +64,7 @@ const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 	// get pointer
 	+[](wl_client * client, wl_resource * resource, uint32_t id)
 	{
-		debug("wl_seat_interface::get_pointer called");
+		debug("wl_seat_interface.get_pointer called");
 		
 		GET_IMPL_FROM(resource);
 		assert(impl->pointerResource == nullptr);
@@ -59,7 +77,12 @@ const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 	// get keyboard
 	+[](wl_client * client, wl_resource * resource, uint32_t id)
 	{
-		warning("wl_seat_interface::get_keyboard called (not yet implemented)");
+		debug("wl_seat_interface.get_keyboard called");
+		
+		GET_IMPL_FROM(resource);
+		assert(impl->pointerResource == nullptr);
+		
+		impl->keyboardResource = impl->wlObjMake(client, id, &wl_keyboard_interface, 1, &keyboardInterface);
 		//struct wl_resource *keyboard = wl_resource_create (client, &wl_keyboard_interface, 1, id);
 		//wl_resource_set_implementation (keyboard, &keyboard_interface, NULL, NULL);
 		//get_client(client)->keyboard = keyboard;
@@ -71,7 +94,7 @@ const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 	// get touch
 	+[](wl_client * client, wl_resource * resource, uint32_t id)
 	{
-		warning("wl_seat_interface::get_touch called (not yet implemented)");
+		warning("wl_seat_interface.get_touch called (not yet implemented)");
 	}
 };
 
@@ -178,7 +201,6 @@ void WlSeat::pointerClick(uint button, bool down, wl_resource * surface)
 	assert(string(wl_resource_get_class(surface)) == "wl_surface");
 	assert(impl->pointerResource);
 	assert(string(wl_resource_get_class(impl->pointerResource)) == "wl_pointer");
-	
 	
 	wl_pointer_send_button(
 		impl->pointerResource,
