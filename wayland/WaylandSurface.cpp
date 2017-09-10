@@ -1,6 +1,6 @@
 #include "WaylandSurface.h"
 #include "WaylandServer.h"
-#include "WaylandObject.h"
+#include "Resource.h"
 #include "../backend/Backend.h"
 #include "WlSeat.h"
 
@@ -9,9 +9,9 @@
 #include <EGL/eglext.h>
 
 // change to toggle debug statements on and off
-#define debug debug_off
+#define debug debug_on
 
-struct WaylandSurface::Impl: WaylandObject, InputInterface
+struct WaylandSurface::Impl: Resource::Data, InputInterface
 {
 	struct FrameCallback
 	{
@@ -30,8 +30,8 @@ struct WaylandSurface::Impl: WaylandObject, InputInterface
 	V2d dim;
 	bool isDamaged = false;
 	Texture texture;
-	wl_resource * bufferResource = nullptr;
-	wl_resource * surfaceResource = nullptr;
+	wl_resource * bufferResourceRaw;
+	Resource surfaceResource;
 	//struct wl_resource * surfaceResource = nullptr;
 	
 	// interface
@@ -55,21 +55,20 @@ struct WaylandSurface::Impl: WaylandObject, InputInterface
 	
 	void pointerMotion(V2d normalizedPos)
 	{
-		assert(surfaceResource);
+		ASSERT_ELSE(surfaceResource.isValid(), return);
 		V2d newPos = V2d(normalizedPos.x * dim.x, normalizedPos.y * dim.y);
-		//warning(to_string(dim));
 		WlSeat::pointerMotion(newPos, surfaceResource);
 	}
 	
 	void pointerLeave()
 	{
-		assert(surfaceResource);
+		ASSERT_ELSE(surfaceResource.isValid(), return);
 		WlSeat::pointerLeave(surfaceResource);
 	}
 	
 	void pointerClick(uint button, bool down)
 	{
-		assert(surfaceResource);
+		ASSERT_ELSE(surfaceResource.isValid(), return);
 		WlSeat::pointerClick(button, down, surfaceResource);
 	}
 	
@@ -90,23 +89,21 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	+[](wl_client * client, wl_resource * resource)
 	{
 		debug("surface interface surface destroy callback called");
-		//GET_IMPL_FROM(resource);
-		//wlObjDestroy(impl->surfaceResource);
-		wlObjDestroy(resource);
+		Resource(resource).destroy();
 	},
 	// surface attach
 	+[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y)
 	{
 		debug("surface interface surface attach callback called");
-		GET_IMPL_FROM(resource);
-		impl->bufferResource = buffer;
+		IMPL_FROM(resource);
+		impl->bufferResourceRaw = buffer;
 	},
 	// surface damage
 	+[](wl_client * client, wl_resource * resource, int32_t x, int32_t y, int32_t width, int32_t height)
 	{
 		debug("surface interface surface damage callback called");
 		// TODO: OPTIMIZATION: only repaint damaged region
-		GET_IMPL_FROM(resource);
+		IMPL_FROM(resource);
 		impl->isDamaged = true;
 	},
 	// surface frame
@@ -135,10 +132,10 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	{
 		debug("surface interface surface commit callback called");
 		
-		GET_IMPL_FROM(resource);
+		IMPL_FROM(resource);
 		
 		// get the data we'll need
-		struct wl_resource * buffer = impl->bufferResource;
+		struct wl_resource * buffer = impl->bufferResourceRaw;
 		if (buffer != nullptr)
 		{
 			if (!impl->isDamaged)
@@ -184,7 +181,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 				impl->texture.loadFromData(data, bufferDim);
 			}
 			wl_buffer_send_release(buffer);
-			impl->bufferResource = nullptr;
+			impl->bufferResourceRaw = nullptr;
 			impl->dim = V2d(bufferDim.x, bufferDim.y);
 		}
 	},
@@ -205,15 +202,15 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 	debug("creating WaylandSurface");
 	// important to use a temp var because impl is weak, so it would be immediately deleted
 	// in wlSetup, a shared_ptr to the object is saved by WaylandObject, so it is safe to store in a weak_ptr after
-	auto implShared = make_shared<Impl>();
-	implShared->surfaceResource = implShared->wlObjMake(client, id, &wl_surface_interface, 3, &Impl::surfaceInterface);
-	impl = implShared;
+	auto impl = make_shared<Impl>();
+	this->impl = impl;
+	impl->surfaceResource = Resource(impl, client, id, &wl_surface_interface, 3, &Impl::surfaceInterface);
 }
 
-WaylandSurface WaylandSurface::getFrom(wl_resource * resource)
+WaylandSurface WaylandSurface::getFrom(Resource resource)
 {
 	WaylandSurface out;
-	out.impl = WaylandObject::get<Impl>(resource);
+	out.impl = resource.get<Impl>();
 	return out;
 }
 
@@ -236,7 +233,7 @@ wl_resource * WaylandSurface::getSurfaceResource()
 
 Texture WaylandSurface::getTexture()
 {
-	GET_IMPL;
+	IMPL_ELSE(return Texture());
 	return impl->texture;
 }
 

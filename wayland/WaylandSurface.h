@@ -5,6 +5,7 @@
 #include "WaylandServer.h"
 #include "../opengl/Texture.h"
 #include "../main/InputInterface.h"
+#include "Resource.h"
 
 #include <wayland-server-core.h>
 
@@ -14,7 +15,7 @@ public:
 	// constructors
 	WaylandSurface() {}
 	WaylandSurface(wl_client * client, uint32_t id);
-	static WaylandSurface getFrom(wl_resource * resource); // to use this the resource must have been created by this class
+	static WaylandSurface getFrom(Resource resource); // to use this the resource must have been created by this class
 	
 	// doers
 	static void runFrameCallbacks();

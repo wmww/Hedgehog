@@ -4,7 +4,7 @@
 #pragma once
 
 // these macros are convenient and allow for proper file/line num if assert fails
-#define IMPL_ELSE shared_ptr<Impl> impl = this->impl.lock(); if (!impl)
+#define IMPL_ELSE(action) shared_ptr<Impl> impl = this->impl.lock(); ASSERT_ELSE(impl, action);
 #define IMPL_FROM(resource) shared_ptr<Impl> impl = Resource(resource).get<Impl>(); if (!impl) { warning(FUNC + " called with invalid resource"); return; }
 
 // an object that can be retrieved from a resource must inherit from Resource::Data
@@ -18,7 +18,7 @@ public:
 	
 	Resource() {}
 	Resource(shared_ptr<Data> dataIn, wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct);
-	Resource(wl_resource * resourceIn);
+	explicit Resource(wl_resource * resourceIn);
 	
 	inline bool isNull() { return impl.expired(); };
 	inline bool isValid() { return !isNull(); };

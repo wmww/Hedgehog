@@ -65,7 +65,7 @@ struct wl_shell_interface shellInterface = {
 		
 		debug("shell interface get shell surface called");
 		
-		WlShellSurface(client, id, WaylandSurface::getFrom(surface));
+		WlShellSurface(client, id, WaylandSurface::getFrom(Resource(resource)));
 	}
 };
 
@@ -96,7 +96,7 @@ struct zxdg_shell_v6_interface xdgShellV6Interface {
 	{
 		debug("zxdg_shell_v6_interface get_xdg_surface called");
 		
-		XdgShellV6Surface(client, id, WaylandSurface::getFrom(surface));
+		XdgShellV6Surface(client, id, WaylandSurface::getFrom(Resource(surface)));
 	},
 	// pong
 	+[](struct wl_client *client, struct wl_resource *resource, uint32_t serial)

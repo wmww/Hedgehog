@@ -133,14 +133,13 @@ void WlSeat::pointerMotion(V2d position, Resource surface)
 		);
 }
 
-void WlSeat::pointerLeave(wl_resource * surface)
+void WlSeat::pointerLeave(Resource surface)
 {
 	auto impl = getImplFromSurface(surface);
 	
 	ASSERT_ELSE(impl, return);
 	ASSERT_ELSE(impl->pointer.isValid(), return);
 	ASSERT_ELSE(impl->currentSurface.isValid(), return);
-	ASSERT_ELSE(surface, return);
 	
 	wl_pointer_send_leave(
 		impl->pointer.getRaw(),
