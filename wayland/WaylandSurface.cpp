@@ -9,7 +9,7 @@
 #include <EGL/eglext.h>
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 struct WaylandSurface::Impl: Resource::Data, InputInterface
 {
@@ -141,6 +141,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 			if (!impl->isDamaged)
 			{
 				warning("wl_surface_interface.commit called with new buffer but no damage. is this bad? idk.");
+				return;
 			}
 			
 			EGLint texture_format;
@@ -209,6 +210,7 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 
 WaylandSurface WaylandSurface::getFrom(Resource resource)
 {
+	ASSERT(resource.isValid());
 	WaylandSurface out;
 	out.impl = resource.get<Impl>();
 	return out;
