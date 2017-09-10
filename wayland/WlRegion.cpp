@@ -1,5 +1,4 @@
 #include "WlRegion.h"
-//#include "WaylandObject.h"
 #include "Resource.h"
 
 #include "std_headers/wayland-server-protocol.h"
@@ -175,5 +174,5 @@ WlRegion::WlRegion(wl_client * client, uint32_t id)
 	debug("creating WlRegion");
 	auto impl = make_shared<Impl>();
 	this->impl = impl;
-	impl->resource = Resource(impl, client, id, &wl_region_interface, 1, &Impl::wlRegionInterface);
+	impl->resource.setup(impl, client, id, &wl_region_interface, 1, &Impl::wlRegionInterface);
 }

@@ -1,6 +1,6 @@
 #include "WlShellSurface.h"
-#include "WaylandObject.h"
 #include "../scene/WindowInterface.h"
+#include "Resource.h"
 #include "WlSeat.h"
 
 #include "std_headers/wayland-server-protocol.h"
@@ -8,12 +8,12 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
-struct WlShellSurface::Impl: WaylandObject, WindowInterface
+struct WlShellSurface::Impl: Resource::Data, WindowInterface
 {
 	// instance data
 	WaylandSurface waylandSurface;
 	wl_client * client;
-	//Surface2D surface2D;
+	Resource resource;
 	
 	void setSize(V2i size)
 	{
@@ -85,13 +85,11 @@ const struct wl_shell_surface_interface WlShellSurface::Impl::wlShellSurfaceInte
 WlShellSurface::WlShellSurface(wl_client * client, uint32_t id, WaylandSurface surface)
 {
 	debug("creating WlShellSurface");
-	auto implShared = make_shared<Impl>();
-	implShared->waylandSurface = surface;
-	implShared->client = client;
-	//implShared->surface2D.setup();
-	//implShared->surface2D.setTexture(surface.getTexture());
-	implShared->texture = surface.getTexture();
-	Scene::instance.addWindow(implShared);
-	impl = implShared;
-	implShared->wlObjMake(client, id, &wl_shell_surface_interface, 1, &Impl::wlShellSurfaceInterface);
+	auto impl = make_shared<Impl>();
+	this->impl = impl;
+	impl->waylandSurface = surface;
+	impl->client = client;
+	impl->texture = surface.getTexture();
+	Scene::instance.addWindow(impl);
+	impl->resource.setup(impl, client, id, &wl_shell_surface_interface, 1, &Impl::wlShellSurfaceInterface);
 }

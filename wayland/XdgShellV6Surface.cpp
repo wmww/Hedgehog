@@ -1,5 +1,5 @@
 #include "XdgShellV6Surface.h"
-#include "WaylandObject.h"
+#include "Resource.h"
 #include "../scene/WindowInterface.h"
 
 #include "std_headers/wayland-server-protocol.h"
@@ -8,13 +8,12 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
-struct XdgShellV6Surface::Impl: WaylandObject, WindowInterface
+struct XdgShellV6Surface::Impl: Resource::Data, WindowInterface
 {
 	// instance data
 	WaylandSurface waylandSurface;
-	//Surface2D surface2D;
-	wl_resource * xdgSurfaceResource = nullptr;
-	wl_resource * xdgToplevelResource = nullptr;
+	Resource xdgSurfaceResource;
+	Resource xdgToplevelResource;
 	
 	void setSize(V2i size)
 	{
@@ -36,22 +35,25 @@ const struct zxdg_surface_v6_interface XdgShellV6Surface::Impl::xdgSurfaceV6Inte
 	+[](struct wl_client *client, struct wl_resource *resource)
 	{
 		debug("zxdg_surface_v6_interface::destroy called");
-		wlObjDestroy(resource);
+		Resource(resource).destroy();
 	},
 	// get_toplevel
 	+[](struct wl_client *client, struct wl_resource *resource, uint32_t id)
 	{
 		debug("zxdg_surface_v6_interface::get_toplevel called");
-		GET_IMPL_FROM(resource);
-		assert(impl->xdgToplevelResource == nullptr);
-		impl->xdgToplevelResource = impl->wlObjMake(client, id, &zxdg_toplevel_v6_interface, 1, &xdgToplevelV6Interface);
+		IMPL_FROM(resource);
+		ASSERT(impl->xdgToplevelResource.isNull());
+		impl->xdgToplevelResource.setup(impl, client, id, &zxdg_toplevel_v6_interface, 1, &xdgToplevelV6Interface);
 		
 		wl_array states;
 		wl_array_init(&states);
+		ASSERT_ELSE(impl->xdgToplevelResource.isValid(), return);
 		*((zxdg_toplevel_v6_state*)wl_array_add(&states, sizeof(zxdg_toplevel_v6_state))) = ZXDG_TOPLEVEL_V6_STATE_ACTIVATED;
-		zxdg_toplevel_v6_send_configure(impl->xdgToplevelResource, 0, 0, &states);
+		zxdg_toplevel_v6_send_configure(impl->xdgToplevelResource.getRaw(), 0, 0, &states);
 		wl_array_release(&states);
-		zxdg_surface_v6_send_configure(impl->xdgSurfaceResource, WaylandServer::nextSerialNum());
+		
+		ASSERT_ELSE(impl->xdgSurfaceResource.isValid(), return);
+		zxdg_surface_v6_send_configure(impl->xdgSurfaceResource.getRaw(), WaylandServer::nextSerialNum());
 	},
 	//get_popup
 	+[](struct wl_client *client, struct wl_resource *resource, uint32_t id, struct wl_resource *parent, struct wl_resource *positioner)
@@ -106,7 +108,7 @@ const struct zxdg_toplevel_v6_interface XdgShellV6Surface::Impl::xdgToplevelV6In
 	+[](struct wl_client *client, struct wl_resource *resource)
 	{
 		debug("zxdg_toplevel_v6_interface::destroy called");
-		wlObjDestroy(resource);
+		Resource(resource).destroy();
 	},
 	// set_parent
 	+[](struct wl_client *client, struct wl_resource *resource, struct wl_resource *parent)
@@ -195,15 +197,11 @@ const struct zxdg_toplevel_v6_interface XdgShellV6Surface::Impl::xdgToplevelV6In
 XdgShellV6Surface::XdgShellV6Surface(wl_client * client, uint32_t id, WaylandSurface surface)
 {
 	debug("creating XdgShellV6Surface");
-	// important to use a temp var because impl is weak, so it would be immediately deleted
-	// in wlSetup, a shared_ptr to the object is saved by WaylandObject, so it is safe to store in a weak_ptr after
-	auto implShared = make_shared<Impl>();
-	//implShared->surface2D.setup();
-	//implShared->surface2D.setTexture(surface.getTexture());
-	implShared->waylandSurface = surface;
-	implShared->texture = surface.getTexture();
-	Scene::instance.addWindow(implShared);
+	auto impl = make_shared<Impl>();
+	this->impl = impl;
+	impl->waylandSurface = surface;
+	impl->texture = surface.getTexture();
+	Scene::instance.addWindow(impl);
 	// sending 1 as the version number isn't a mistake. Idk why its called v6 but you send in 1, maybe always 1 until stable?
-	implShared->xdgSurfaceResource = implShared->wlObjMake(client, id, &zxdg_surface_v6_interface, 1, &Impl::xdgSurfaceV6Interface);
-	impl = implShared;
+	impl->xdgSurfaceResource.setup(impl, client, id, &zxdg_surface_v6_interface, 1, &Impl::xdgSurfaceV6Interface);
 }

@@ -205,7 +205,7 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 	// in wlSetup, a shared_ptr to the object is saved by WaylandObject, so it is safe to store in a weak_ptr after
 	auto impl = make_shared<Impl>();
 	this->impl = impl;
-	impl->surfaceResource = Resource(impl, client, id, &wl_surface_interface, 3, &Impl::surfaceInterface);
+	impl->surfaceResource.setup(impl, client, id, &wl_surface_interface, 3, &Impl::surfaceInterface);
 }
 
 WaylandSurface WaylandSurface::getFrom(Resource resource)

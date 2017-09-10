@@ -17,7 +17,8 @@ public:
 	class Data {}; // the only purpose of this is to inherit from
 	
 	Resource() {}
-	Resource(shared_ptr<Data> dataIn, wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct);
+	//Resource(shared_ptr<Data> dataIn, wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct);
+	void setup(shared_ptr<Data> dataIn, wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct);
 	explicit Resource(wl_resource * resourceIn);
 	
 	inline bool isNull() { return impl.expired(); };

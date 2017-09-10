@@ -16,8 +16,9 @@ struct Resource::Impl
 
 std::unordered_map<wl_resource *, shared_ptr<Resource::Impl>> Resource::Impl::map;
 
-Resource::Resource(shared_ptr<Data> dataIn, wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct)
+void Resource::setup(shared_ptr<Data> dataIn, wl_client * client, uint32_t id, const wl_interface * interface, int version, const void * implStruct)
 {
+	// its fine to call this multiple times on a single instance
 	auto impl = make_shared<Impl>();
 	this->impl = impl;
 	wl_resource * resource = wl_resource_create(client, interface, version, id);

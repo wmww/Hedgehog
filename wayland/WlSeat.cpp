@@ -62,7 +62,7 @@ const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 		
 		IMPL_FROM(resource);
 		ASSERT(impl->pointer.isNull());
-		impl->pointer = Resource(impl, client, id, &wl_pointer_interface, 1, &pointerInterface);
+		impl->pointer.setup(impl, client, id, &wl_pointer_interface, 1, &pointerInterface);
 		//wl_resource * pointer = wl_resource_create(client, &wl_pointer_interface, 1, id);
 		//wl_resource_set_implementation(pointer, &pointerInterface, nullptr, nullptr);
 		//get_client(client)->pointer = pointer;
@@ -74,7 +74,7 @@ const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 		
 		IMPL_FROM(resource);
 		ASSERT(impl->keyboard.isNull());
-		impl->keyboard = Resource(impl, client, id, &wl_keyboard_interface, 1, &keyboardInterface);
+		impl->keyboard.setup(impl, client, id, &wl_keyboard_interface, 1, &keyboardInterface);
 		//struct wl_resource *keyboard = wl_resource_create (client, &wl_keyboard_interface, 1, id);
 		//wl_resource_set_implementation (keyboard, &keyboard_interface, NULL, NULL);
 		//get_client(client)->keyboard = keyboard;
@@ -101,7 +101,7 @@ WlSeat::WlSeat(wl_client * client, uint32_t id)
 	auto impl = make_shared<Impl>();
 	this->impl = impl;
 	Impl::clientToImpl[client] = impl;
-	impl->seat = Resource(impl, client, id, &wl_seat_interface, 1, &Impl::seatInterface);
+	impl->seat.setup(impl, client, id, &wl_seat_interface, 1, &Impl::seatInterface);
 	wl_seat_send_capabilities(impl->seat.getRaw(), WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
 }
 
