@@ -9,54 +9,44 @@ struct Scene::Impl: InputInterface
 {
 	vector<weak_ptr<WindowInterface>> windows;
 	
+	weak_ptr<WindowInterface> getActiveWindow()
+	{
+		// TODO: OPTIMIZATION: do this well
+		weak_ptr<WindowInterface> active;
+		for (auto i: windows)
+		{
+			if (!i.expired())
+				active = i;
+		}
+		return active;
+	}
+	
 	void pointerMotion(V2d newPos)
 	{
-		if (windows.size() < 1)
+		if (auto window = getActiveWindow().lock())
 		{
-			// do nothing
-		}
-		else
-		{
-			auto window = windows[windows.size() - 1].lock();
-			ASSERT_ELSE(window, return);
 			auto input = window->getInputInterface().lock();
-			if (!input)
-			{
-				warning("input null in " + FUNC);
-				return;
-			}
+			ASSERT_ELSE(input, return);
 			input->pointerMotion(newPos);
 		}
 	}
 	
 	void pointerLeave()
 	{
-		if (windows.size() < 1)
+		if (auto window = getActiveWindow().lock())
 		{
-			// do nothing
-		}
-		else
-		{
-			auto window = windows[windows.size() - 1].lock();
-			assert(window);
 			auto input = window->getInputInterface().lock();
-			assert(input);
+			ASSERT_ELSE(input, return);
 			input->pointerLeave();
 		}
 	}
 	
 	void pointerClick(uint button, bool down)
 	{
-		if (windows.size() < 1)
+		if (auto window = getActiveWindow().lock())
 		{
-			// do nothing
-		}
-		else
-		{
-			auto window = windows[windows.size() - 1].lock();
-			assert(window);
 			auto input = window->getInputInterface().lock();
-			assert(input);
+			ASSERT_ELSE(input, return);
 			input->pointerClick(button, down);
 		}
 	}
@@ -72,23 +62,23 @@ void Scene::setup()
 void Scene::addWindow(weak_ptr<WindowInterface> window)
 {
 	debug("adding window to scene");
-	assert(window.lock() != nullptr);
-	assert(impl);
+	ASSERT_ELSE(impl, return);
 	impl->windows.push_back(window);
 }
 
 weak_ptr<InputInterface> Scene::getInputInterface()
 {
-	assert(impl);
+	ASSERT_ELSE(impl, return weak_ptr<InputInterface>());
 	return impl;
 }
 
 void Scene::draw()
 {
-	assert(impl);
+	ASSERT_ELSE(impl, return);
 	for (auto i: impl->windows)
 	{
-		if (auto window = i.lock())
+		auto window = i.lock();
+		if (window)
 		{
 			window->texture.draw();
 		}
