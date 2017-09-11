@@ -148,11 +148,6 @@ void seatBindCallback(wl_client * client, void * data, uint32_t version, uint32_
 	debug("seatBindCallback called");
 	assert(version == 1);
 	WlSeat(client, id);
-	//wl_resource * seat = wl_resource_create(client, &wl_seat_interface, 1, id);
-	//wl_resource_set_implementation(seat, &seatInterface, nullptr, nullptr);
-	//wl_seat_send_capabilities(seat, WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
-	//wl_seat_send_capabilities(seat, WL_SEAT_CAPABILITY_POINTER);
-	//wl_seat_send_capabilities(seat, 0);
 };
 
 void setup()

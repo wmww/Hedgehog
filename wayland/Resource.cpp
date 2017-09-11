@@ -1,6 +1,13 @@
 #include "Resource.h"
 #include <unordered_map>
 
+// change to toggle debug statements on and off
+#define debug debug_off
+
+// the only purpose of this is to be the user data of wl_resources created wit this class
+// its only use is error checking
+int wlResourceMadeWithResourceClass;
+
 struct Resource::Impl
 {
 	wl_resource * resource = nullptr;
@@ -8,9 +15,26 @@ struct Resource::Impl
 	
 	static std::unordered_map<wl_resource *, shared_ptr<Impl>> map;
 	
-	static void destroyWaylandResource(wl_resource * resource)
+	void removeFromMap()
 	{
-		Resource(resource).destroy();
+		ASSERT_ELSE(resource, throw true);
+		auto iter = map.find(resource);
+		ASSERT_ELSE(iter != Impl::map.end(), return);
+		ASSERT_ELSE(&*iter->second == this, return);
+		//warning("erasing from map resource " + to_string((long)(impl->resource)));
+		resource = nullptr; // this shouldn't be needed as the entire object should be deleted next line, but best to be safe
+		Impl::map.erase(iter);
+		debug("there are now " + to_string(Impl::map.size()) + " resources");
+		return; // 'this' will be invalid now, so don't do anything else!
+	}
+	
+	static void destroyWaylandResource(wl_resource * resourceRaw)
+	{
+		auto resource = Resource(resourceRaw);
+		auto impl = resource.impl.lock();
+		ASSERT_ELSE(impl, return);
+		impl->removeFromMap();
+		return; // 'this' will be invalid now, so don't do anything else!
 	}
 };
 
@@ -22,17 +46,19 @@ void Resource::setup(shared_ptr<Data> dataIn, wl_client * client, uint32_t id, c
 	auto impl = make_shared<Impl>();
 	this->impl = impl;
 	wl_resource * resource = wl_resource_create(client, interface, version, id);
-	wl_resource_set_implementation(resource, implStruct, nullptr, Impl::destroyWaylandResource);
-	impl->resource = resource;
-	impl->data = dataIn;
 	ASSERT(Impl::map.find(resource) == Impl::map.end());
 	Impl::map[resource] = impl;
+	debug("there are now " + to_string(Impl::map.size()) + " resources");
+	wl_resource_set_implementation(resource, implStruct, &wlResourceMadeWithResourceClass, Impl::destroyWaylandResource);
+	impl->resource = resource;
+	impl->data = dataIn;
 }
 
 Resource::Resource(wl_resource * resource)
 {
 	ASSERT_ELSE(resource, return);
 	auto iter = Impl::map.find(resource);
+	ASSERT_ELSE(wl_resource_get_user_data(resource) == &wlResourceMadeWithResourceClass, return);
 	ASSERT_ELSE(iter != Impl::map.end(), return);
 	ASSERT(iter->second->resource == resource);
 	impl = iter->second;
@@ -53,14 +79,7 @@ wl_resource * Resource::getRaw()
 void Resource::destroy()
 {
 	IMPL_ELSE(return);
-	auto iter = Impl::map.find(impl->resource);
-	if (iter == Impl::map.end())
-	{
-		warning("Resource::destroy called with wl_resource * not in map");
-		return;
-	}
-	if (iter->second)
-		iter->second->resource = nullptr; // this shouldn't be needed as the entire object should be deleted next line, but best to be safe
-	Impl::map.erase(iter);
+	ASSERT_ELSE(impl->resource, return);
+	wl_resource_destroy(impl->resource);
 }
 
