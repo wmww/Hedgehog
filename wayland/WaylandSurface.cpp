@@ -120,7 +120,8 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface set opaque region
 	+[](wl_client * client, wl_resource * resource, wl_resource * region)
 	{
-		warning("surface interface surface set opaque region callback called (not yet implemented)");
+		debug("surface interface surface set opaque region callback called");
+		// this is just for optimizing the redrawing of things behind this surface, fine to ignore for now
 	},
 	// surface set input region
 	+[](wl_client * client, wl_resource * resource, wl_resource * region)
@@ -136,14 +137,8 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 		
 		// get the data we'll need
 		struct wl_resource * buffer = impl->bufferResourceRaw;
-		if (buffer != nullptr)
+		if (buffer != nullptr && impl->isDamaged)
 		{
-			if (!impl->isDamaged)
-			{
-				warning("wl_surface_interface.commit called with new buffer but no damage. is this bad? idk.");
-				return;
-			}
-			
 			EGLint texture_format;
 			Display * display = (Display *)Backend::instance.getXDisplay();
 			

@@ -78,7 +78,7 @@ void Scene::draw()
 	for (auto i: impl->windows)
 	{
 		auto window = i.lock();
-		if (window)
+		if (window && window->texture.isSetUp())
 		{
 			window->texture.draw();
 		}

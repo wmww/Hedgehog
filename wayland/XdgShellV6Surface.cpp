@@ -93,7 +93,8 @@ const struct zxdg_surface_v6_interface XdgShellV6Surface::Impl::xdgSurfaceV6Inte
 	// set_window_geometry
 	+[](struct wl_client *client, struct wl_resource *resource, int32_t x, int32_t y, int32_t width, int32_t height)
 	{
-		warning("zxdg_surface_v6_interface::set_window_geometry called (not yet implemented)");
+		debug("zxdg_surface_v6_interface::set_window_geometry called");
+		// we don't need to handle this yet
 	},
 	// ack_configure
 	+[](struct wl_client *client, struct wl_resource *resource, uint32_t serial)
