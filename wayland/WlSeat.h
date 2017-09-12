@@ -11,6 +11,7 @@ public:
 	static void pointerMotion(V2d position, Resource surface);
 	static void pointerLeave(Resource surface); // call this before pointerMove on the new surface
 	static void pointerClick(uint button, bool down, Resource surface);
+	static void keyPress(uint key, bool down, Resource surface);
 	static WlSeat getFromClient(wl_client * client);
 	
 private:

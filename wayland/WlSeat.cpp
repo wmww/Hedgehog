@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 // change to toggle debug statements on and off
-#define debug debug_off
+#define debug debug_on
 
 struct WlSeat::Impl: Resource::Data
 {
@@ -150,7 +150,7 @@ void WlSeat::pointerLeave(Resource surface)
 
 void WlSeat::pointerClick(uint button, bool down, Resource surface)
 {
-	debug(down ? "mouse down" : "mouse up");
+	debug("mouse button '" + to_string(button) + "' " + (down ? "down" : "up"));
 	
 	auto impl = getImplFromSurface(surface);
 	
@@ -167,28 +167,59 @@ void WlSeat::pointerClick(uint button, bool down, Resource surface)
 		);
 }
 
+void WlSeat::keyPress(uint key, bool down, Resource surface)
+{
+	debug("key '" + to_string(key) + "' " + (down ? "down" : "up"));
+	
+	auto impl = getImplFromSurface(surface);
+	
+	ASSERT_ELSE(impl, return);
+	ASSERT_ELSE(impl->keyboard.isValid(), return);
+	ASSERT_ELSE(impl->currentSurface.isValid(), return);
+	
+	wl_array wlArray;
+	wl_array_init(&wlArray);
+	
+	wl_keyboard_send_enter(
+		impl->keyboard.getRaw(),
+		WaylandServer::nextSerialNum(),
+		impl->currentSurface.getRaw(),
+		&wlArray
+		);
+	
+	wl_array_release(&wlArray);
+	
+	wl_keyboard_send_key(
+		impl->keyboard.getRaw(),
+		WaylandServer::nextSerialNum(),
+		timeSinceStartMili(),
+		key,
+		down ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED
+		);
+	
+	wl_keyboard_send_leave(
+		impl->keyboard.getRaw(),
+		WaylandServer::nextSerialNum(),
+		impl->currentSurface.getRaw()
+		);
+}
+
 WlSeat WlSeat::getFromClient(wl_client * client)
 {
-	assert(client);
+	ASSERT(client);
 	auto iter = Impl::clientToImpl.find(client);
-	if (iter == Impl::clientToImpl.end())
-	{
-		warning(FUNC + " called with client not in clientToImpl");
-		return WlSeat();
-	}
-	else
-	{
-		WlSeat seat;
-		seat.impl = iter->second;
-		return seat;
-	}
+	ASSERT_ELSE(iter != Impl::clientToImpl.end(), return WlSeat());
+	WlSeat seat;
+	seat.impl = iter->second;
+	return seat;
+	
 }
 
 shared_ptr<WlSeat::Impl> WlSeat::getImplFromSurface(Resource surface)
 {
 	ASSERT_ELSE(surface.isValid(), return nullptr);
+	ASSERT_ELSE(surface.getRaw(), return nullptr);
 	wl_client * client = surface.getRaw()->client;
-	ASSERT_ELSE(client, return nullptr);
 	auto impl = getFromClient(client).impl.lock();
 	return impl;
 }

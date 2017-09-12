@@ -50,6 +50,16 @@ struct Scene::Impl: InputInterface
 			input->pointerClick(button, down);
 		}
 	}
+	
+	void keyPress(uint key, bool down)
+	{
+		if (auto window = getActiveWindow().lock())
+		{
+			auto input = window->getInputInterface().lock();
+			ASSERT_ELSE(input, return);
+			input->keyPress(key, down);
+		}
+	}
 };
 
 void Scene::setup()

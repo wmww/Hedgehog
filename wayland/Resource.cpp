@@ -17,11 +17,9 @@ struct Resource::Impl
 	
 	void removeFromMap()
 	{
-		ASSERT_ELSE(resource, throw true);
 		auto iter = map.find(resource);
 		ASSERT_ELSE(iter != Impl::map.end(), return);
 		ASSERT_ELSE(&*iter->second == this, return);
-		//warning("erasing from map resource " + to_string((long)(impl->resource)));
 		resource = nullptr; // this shouldn't be needed as the entire object should be deleted next line, but best to be safe
 		Impl::map.erase(iter);
 		debug("there are now " + to_string(Impl::map.size()) + " resources");

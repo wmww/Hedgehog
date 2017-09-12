@@ -172,6 +172,16 @@ struct BackendGLX: Backend::ImplBase
 				{
 					interface->pointerClick(x11BtnToLinuxBtn(event.xbutton.button), false);
 				}
+				else if (event.type == KeyPress) {
+					interface->keyPress(event.xkey.keycode - 8, true);
+					//xkb_state_update_key(state, event.xkey.keycode, XKB_KEY_DOWN);
+					//update_modifiers ();
+				}
+				else if (event.type == KeyRelease) {
+					interface->keyPress(event.xkey.keycode - 8, false);
+					//xkb_state_update_key(state, event.xkey.keycode, XKB_KEY_UP);
+					//update_modifiers ();
+				}
 			}
 		}
 		

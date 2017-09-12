@@ -72,6 +72,12 @@ struct WaylandSurface::Impl: Resource::Data, InputInterface
 		WlSeat::pointerClick(button, down, surfaceResource);
 	}
 	
+	void keyPress(uint key, bool down)
+	{
+		ASSERT_ELSE(surfaceResource.isValid(), return);
+		WlSeat::keyPress(key, down, surfaceResource);
+	}
+	
 	static void firstInstanceSetup()
 	{
 		// function pointers that need to be retrieved at run time. This is Cs sad, pathetic attempt at duck typing.
