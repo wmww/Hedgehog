@@ -3,6 +3,7 @@
 #include "WaylandServer.h"
 #include "WaylandSurface.h"
 #include "WlSeat.h"
+#include "WlDataDeviceManager.h"
 #include "WlRegion.h"
 #include "WlShellSurface.h"
 #include "XdgShellV6Surface.h"
@@ -152,7 +153,9 @@ void seatBindCallback(wl_client * client, void * data, uint32_t version, uint32_
 
 void dataDeviceManagerBindCallback(wl_client * client, void * data, uint32_t version, uint32_t id)
 {
-	warning("dataDeviceManagerBindCallback not yet implemented");
+	debug("dataDeviceManagerBindCallback called");
+	ASSERT(version == 1);
+	WlDataDeviceManager(client, id);
 }
 
 void setup()
@@ -172,7 +175,7 @@ void setup()
 	wl_global_create(display, &wl_shell_interface, 1, nullptr, shellBindCallback);
 	wl_global_create(display, &zxdg_shell_v6_interface, 1, nullptr, xdgShellV6BindCallback);
 	wl_global_create(display, &wl_seat_interface, 1, nullptr, seatBindCallback);
-	//wl_global_create(display, &wl_data_device_manager_interface, 1, nullptr, dataDeviceManagerBindCallback);
+	wl_global_create(display, &wl_data_device_manager_interface, 1, nullptr, dataDeviceManagerBindCallback);
 	
 	wl_display_init_shm(display);
 	
