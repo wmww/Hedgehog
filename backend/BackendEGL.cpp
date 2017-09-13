@@ -5,6 +5,7 @@
 #include <X11/Xlib.h>
 #include <linux/input.h>
 #include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <X11/Xlib-xcb.h>
 #include <xkbcommon/xkbcommon-x11.h>
 #include <sys/mman.h>
@@ -24,6 +25,8 @@ struct BackendEGL: Backend::ImplBase
 	Display * xDisplay = nullptr;
 	xcb_connection_t * xcbConnection = nullptr;
 	EGLDisplay eglDisplay;
+	EGLContext windowContext;
+	EGLSurface windowSurface;
 	Window win;
 	V2i dim;
 	
@@ -44,7 +47,7 @@ struct BackendEGL: Backend::ImplBase
 		eglDisplay = eglGetDisplay(xDisplay);
 		eglInitialize(eglDisplay, nullptr, nullptr);
 		
-		createWindow();	
+		createWindow();
 	}
 	
 	~BackendEGL()
@@ -66,58 +69,65 @@ struct BackendEGL: Backend::ImplBase
 	
 	void createWindow()
 	{
-		/*
 		// setup EGL
-		EGLint attribs[] = {
-			EGL_RED_SIZE, 1,
-			EGL_GREEN_SIZE, 1,
-			EGL_BLUE_SIZE, 1,
-			EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-		EGL_NONE};
+		EGLint eglAttribs[] = {
+			EGL_RENDERABLE_TYPE,	EGL_OPENGL_BIT,
+			EGL_RED_SIZE,			1,
+			EGL_GREEN_SIZE,			1,
+			EGL_BLUE_SIZE,			1,
+			EGL_NONE
+			};
 		EGLConfig config;
-		EGLint num_configs_returned;
-		eglChooseConfig (egl_display, attribs, &config, 1, &num_configs_returned);
+		EGLint configsCount;
+		eglChooseConfig(eglDisplay, eglAttribs, &config, 1, &configsCount);
+		EGLint visualId;
+		eglGetConfigAttrib(eglDisplay, config, EGL_NATIVE_VISUAL_ID, &visualId);
+		XVisualInfo visualTemplate;
+		visualTemplate.visualid = visualId;
+		int visualsCount;
+		XVisualInfo * visual = XGetVisualInfo(xDisplay, VisualIDMask, &visualTemplate, &visualsCount);
 		
-		// get the visual from the EGL config
-		EGLint visual_id;
-		eglGetConfigAttrib (egl_display, config, EGL_NATIVE_VISUAL_ID, &visual_id);
-		XVisualInfo visual_template;
-		visual_template.visualid = visual_id;
-		int num_visuals_returned;
-		XVisualInfo *visual = XGetVisualInfo (x_display, VisualIDMask, &visual_template, &num_visuals_returned);
-		
-		// create a window
-		XSetWindowAttributes window_attributes;
-		window_attributes.event_mask = ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
-		window_attributes.colormap = XCreateColormap (x_display, RootWindow(x_display,DefaultScreen(x_display)), visual->visual, AllocNone);
-		window.window = XCreateWindow (
-			x_display,
-			RootWindow(x_display, DefaultScreen(x_display)),
-			0, 0,
-			WINDOW_WIDTH, WINDOW_HEIGHT,
-			0, // border width
-			visual->depth, // depth
-			InputOutput, // class
+		// create the window
+		XSetWindowAttributes windowAttributes;
+		windowAttributes.event_mask = ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
+		auto rootWindow = RootWindow(xDisplay,DefaultScreen(xDisplay));
+		windowAttributes.colormap = XCreateColormap(xDisplay, rootWindow, visual->visual, AllocNone);
+		int x = 0;
+		int y = 0;
+		win = XCreateWindow(
+			xDisplay,
+			rootWindow, // parent
+			x, y, dim.x, dim.y, // geometry
+			0, // either boarder width or Z-depth
+			visual->depth,
+			InputOutput,
 			visual->visual, // visual
 			CWEventMask|CWColormap, // attribute mask
-			&window_attributes // attributes
-		);
+			&windowAttributes
+			);
+		
+		XFree(visual);
+		XMapWindow(xDisplay, win);
 		
 		// EGL context and surface
-		eglBindAPI (EGL_OPENGL_API);
-		window.context = eglCreateContext (egl_display, config, EGL_NO_CONTEXT, NULL);
-		window.surface = eglCreateWindowSurface (egl_display, config, window.window, NULL);
-		eglMakeCurrent (egl_display, window.surface, window.surface, window.context);
+		eglBindAPI(EGL_OPENGL_API);
+		const EGLint moreAttribs[] = {
+			EGL_CONTEXT_MAJOR_VERSION_KHR, 3,
+			EGL_CONTEXT_MINOR_VERSION_KHR, 3,
+			EGL_NONE
+			};
+		windowContext = eglCreateContext(eglDisplay, config, EGL_NO_CONTEXT, moreAttribs);
+		ASSERT(windowContext != EGL_NO_CONTEXT);
+		windowSurface = eglCreateWindowSurface(eglDisplay, config, win, nullptr);
+		ASSERT(windowSurface != EGL_NO_SURFACE);
+		eglMakeCurrent(eglDisplay, windowSurface, windowSurface, windowContext);
 		
-		XFree (visual);
 		
-		XMapWindow (x_display, window.window);
-		*/
 	}
 	
 	void swapBuffer()
 	{
-		//eglSwapBuffers(eglDisplay, window.surface);
+		eglSwapBuffers(eglDisplay, windowSurface);
 	}
 	
 	static uint x11BtnToLinuxBtn(uint x11Btn)
