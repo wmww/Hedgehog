@@ -1,11 +1,12 @@
 #include "WlSeat.h"
 #include "Resource.h"
+#include "WlArray.h"
 
 #include "std_headers/wayland-server-protocol.h"
 #include <unordered_map>
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 struct WlSeat::Impl: Resource::Data
 {
@@ -13,7 +14,9 @@ struct WlSeat::Impl: Resource::Data
 	Resource seat;
 	Resource pointer;
 	Resource keyboard;
-	Resource currentSurface;
+	// these are ONLY used to see if the last surface to receive input matches the current one
+	wl_resource * lastPointerSurfaceRaw = nullptr;
+	//wl_resource * lastKeyboardSurfaceRaw = nullptr;
 	
 	// static
 	static std::unordered_map<wl_client *, weak_ptr<Impl>> clientToImpl;
@@ -75,11 +78,17 @@ const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 		IMPL_FROM(resource);
 		ASSERT(impl->keyboard.isNull());
 		impl->keyboard.setup(impl, client, id, &wl_keyboard_interface, 1, &keyboardInterface);
-		//struct wl_resource *keyboard = wl_resource_create (client, &wl_keyboard_interface, 1, id);
-		//wl_resource_set_implementation (keyboard, &keyboard_interface, NULL, NULL);
-		//get_client(client)->keyboard = keyboard;
 		//int fd, size;
-		//backend_get_keymap (&fd, &size);
+		/*string keymapString = xkb_keymap_get_as_string(keymap, XKB_KEYMAP_FORMAT_TEXT_V1);
+		size_t dataSize = keymapString.size() + 1;
+		string xdgRuntimeDir = getenv("XDG_RUNTIME_DIR");
+		ASSERT_ELSE(!xdgRuntimeDir.empty(), return);
+		int fd = open(xdg_runtime_dir, O_TMPFILE|O_RDWR|O_EXCL, 0600);
+		ftruncate(fd, dataSize);
+		void * data = mmap(nullptr, dataSize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+		memcpy(data, keymapString, dataSize);
+		munmap(data, dataSize);
+		**/
 		//wl_keyboard_send_keymap (keyboard, WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, fd, size);
 		////close (fd);
 	},
@@ -113,13 +122,14 @@ void WlSeat::pointerMotion(V2d position, Resource surface)
 	ASSERT_ELSE(impl->pointer.isValid(), return);
 	ASSERT_ELSE(surface.isValid(), return);
 	
-	if (impl->currentSurface.getRaw() != surface.getRaw())
+	if (impl->lastPointerSurfaceRaw != surface.getRaw())
 	{
-		impl->currentSurface = surface;
+		impl->lastPointerSurfaceRaw = surface.getRaw();
+		
 		wl_pointer_send_enter(
 			impl->pointer.getRaw(),
 			WaylandServer::nextSerialNum(),
-			impl->currentSurface.getRaw(),
+			surface.getRaw(),
 			wl_fixed_from_double(position.x),
 			wl_fixed_from_double(position.y)
 			);
@@ -136,15 +146,18 @@ void WlSeat::pointerMotion(V2d position, Resource surface)
 void WlSeat::pointerLeave(Resource surface)
 {
 	auto impl = getImplFromSurface(surface);
-	
+		
 	ASSERT_ELSE(impl, return);
+	ASSERT_ELSE(impl->lastPointerSurfaceRaw != nullptr, return);
+	ASSERT_ELSE(impl->lastPointerSurfaceRaw == surface.getRaw(), return);
 	ASSERT_ELSE(impl->pointer.isValid(), return);
-	ASSERT_ELSE(impl->currentSurface.isValid(), return);
+	
+	impl->lastPointerSurfaceRaw = nullptr;
 	
 	wl_pointer_send_leave(
 		impl->pointer.getRaw(),
 		WaylandServer::nextSerialNum(),
-		impl->currentSurface.getRaw()
+		surface.getRaw()
 		);
 }
 
@@ -156,7 +169,8 @@ void WlSeat::pointerClick(uint button, bool down, Resource surface)
 	
 	ASSERT_ELSE(impl, return);
 	ASSERT_ELSE(impl->pointer.isValid(), return);
-	ASSERT_ELSE(impl->currentSurface.isValid(), return);
+	ASSERT_ELSE(impl->lastPointerSurfaceRaw != nullptr, return);
+	ASSERT_ELSE(impl->lastPointerSurfaceRaw == surface.getRaw(), return);
 	
 	wl_pointer_send_button(
 		impl->pointer.getRaw(),
@@ -175,19 +189,17 @@ void WlSeat::keyPress(uint key, bool down, Resource surface)
 	
 	ASSERT_ELSE(impl, return);
 	ASSERT_ELSE(impl->keyboard.isValid(), return);
-	ASSERT_ELSE(impl->currentSurface.isValid(), return);
+	ASSERT_ELSE(impl->lastPointerSurfaceRaw != nullptr, return);
+	ASSERT_ELSE(impl->lastPointerSurfaceRaw == surface.getRaw(), return);
 	
-	wl_array wlArray;
-	wl_array_init(&wlArray);
+	WlArray<uint> keysDownArray;
 	
 	wl_keyboard_send_enter(
 		impl->keyboard.getRaw(),
 		WaylandServer::nextSerialNum(),
-		impl->currentSurface.getRaw(),
-		&wlArray
+		surface.getRaw(),
+		keysDownArray.getRaw()
 		);
-	
-	wl_array_release(&wlArray);
 	
 	wl_keyboard_send_key(
 		impl->keyboard.getRaw(),
@@ -200,7 +212,7 @@ void WlSeat::keyPress(uint key, bool down, Resource surface)
 	wl_keyboard_send_leave(
 		impl->keyboard.getRaw(),
 		WaylandServer::nextSerialNum(),
-		impl->currentSurface.getRaw()
+		surface.getRaw()
 		);
 }
 
