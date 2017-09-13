@@ -12,13 +12,16 @@ env.Append(CCFLAGS=[
 ])
 
 libs = [
+	'wayland-server',
 	'X11',
-	'GL',
-	'GLU',
 	'EGL',
+	'GL',
+	'X11-xcb',
+	'xkbcommon-x11',
+	'xkbcommon',
+	'GLU',
 	'GLEW',
 	'SOIL',
-	'wayland-server',
 ]
 
 def get_contents_of_dir(base):

@@ -1,21 +1,29 @@
 #include "Backend.h"
 #include "BackendImplBase.h"
 
-#include <GL/glx.h>
-#include <GL/gl.h>
-#include <cstring>
-#include <linux/input.h> // for BTN_LEFT and maybe other stuff
-//#include <xkbcommon/xkbcommon.h> // for getting the keymap
+#include <wayland-server.h>
+#include <X11/Xlib.h>
+#include <linux/input.h>
+#include <EGL/egl.h>
+#include <X11/Xlib-xcb.h>
+#include <xkbcommon/xkbcommon-x11.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <stdio.h>
+#include <poll.h>
 
 // change to toggle debug statements on and off
 #define debug debug_off
 
-typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
-
 struct BackendEGL: Backend::ImplBase
 {
-	Display * display = nullptr;
-	GLXContext ctx;
+	Display * xDisplay = nullptr;
+	xcb_connection_t * xcbConnection = nullptr;
+	EGLDisplay eglDisplay;
 	Window win;
 	V2i dim;
 	
@@ -23,122 +31,93 @@ struct BackendEGL: Backend::ImplBase
 	{
 		dim = dimIn;
 		
-		debug("opening X display...");
+		debug("opening X display");
 		
-		display = XOpenDisplay(0);
+		xDisplay = XOpenDisplay(nullptr);
 		
-		glXCreateContextAttribsARBProc glXCreateContextAttribsARB = NULL;
+		debug("getting XCB connection");
 		
-		//const char *extensions = glXQueryExtensionsString(display, DefaultScreen(display));
-		//cout << extensions << endl;
+		xcbConnection = XGetXCBConnection(xDisplay);
 		
-		static int visual_attribs[] =
-		{
-			GLX_RENDER_TYPE, GLX_RGBA_BIT,
-			GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
-			GLX_DOUBLEBUFFER, true,
-			GLX_RED_SIZE, 1,
-			GLX_GREEN_SIZE, 1,
-			GLX_BLUE_SIZE, 1,
-			None
-		};
+		setupXKB();
 		
-		debug("getting framebuffer config...");
+		eglDisplay = eglGetDisplay(xDisplay);
+		eglInitialize(eglDisplay, nullptr, nullptr);
 		
-		int fbcount;
-		GLXFBConfig *fbc = glXChooseFBConfig(display, DefaultScreen(display), visual_attribs, &fbcount);
-		
-		assert(fbc != nullptr);
-		
-		debug("getting XVisualInfo...");
-		
-		XVisualInfo *vi = glXGetVisualFromFBConfig(display, fbc[0]);
-		
-		XSetWindowAttributes windowAttribs;
-		windowAttribs.colormap = XCreateColormap(display, RootWindow(display, vi->screen), vi->visual, AllocNone);
-		windowAttribs.border_pixel = 0;
-		//windowAttribs.event_mask = StructureNotifyMask;
-		windowAttribs.event_mask = ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
-		
-		int x = 0;
-		int y = 0;
-		
-		debug("creating window...");
-		
-		win = XCreateWindow(
-			display,
-			RootWindow(display, vi->screen), // parent
-			x, y, dim.x, dim.y, // geometry
-			0, // I think this is Z-depth
-			vi->depth,
-			InputOutput,
-			vi->visual,
-			CWBorderPixel|CWColormap|CWEventMask,
-			&windowAttribs);
-		
-		string winName = "Hedgehog";
-		
-		// We use the XTextProperty structure to store the title.
-        XTextProperty windowName;
-        windowName.value    = (unsigned char *) winName.c_str();
-        
-        // XA_STRING is not defined, but its value appears to be 31
-        //windowName.encoding = XA_STRING;
-        windowName.encoding = 31;
-        
-        windowName.format   = 8;
-        windowName.nitems   = strlen((char *) windowName.value);
-		
-		XSetWMName(display, win, &windowName);
-		
-		assert(win != 0);
-		
-		debug("mapping window...");
-		
-		XMapWindow(display, win);
-		
-		// Create an oldstyle context first, to get the correct function pointer for glXCreateContextAttribsARB
-		GLXContext ctx_old = glXCreateContext(display, vi, 0, GL_TRUE);
-		glXCreateContextAttribsARB =  (glXCreateContextAttribsARBProc)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
-		glXMakeCurrent(display, 0, 0);
-		glXDestroyContext(display, ctx_old);
-	 
-		assert(glXCreateContextAttribsARB != nullptr);
-	 
-		static int context_attribs[] =
-		{
-			GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-			GLX_CONTEXT_MINOR_VERSION_ARB, 3,
-			None
-		};
-		
-		debug("creating context...");
-		
-		ctx = glXCreateContextAttribsARB(display, fbc[0], NULL, true, context_attribs);
-		assert(ctx != nullptr);
-	 
-		debug("Making context current");
-		glXMakeCurrent(display, win, ctx);
-		
-		//debug("getting keymap with xkbcommon");
-		//xkb_context * xkbContext;
-		//xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-		//ASSERT_ELSE(xkbContext != nullptr, return);
-		
+		createWindow();	
 	}
 	
 	~BackendEGL()
 	{
 		debug("cleaning up context...");
-		XDestroyWindow(display, win);
-		//ctx = glXGetCurrentContext();
-		//glXMakeCurrent(display, 0, 0);
-		glXDestroyContext(display, ctx);
+		XDestroyWindow(xDisplay, win);
+	}
+	
+	void setupXKB()
+	{
+		/*
+		xkb_context * xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+		xkb_x11_setup_xkb_extension (xcb_connection, XKB_X11_MIN_MAJOR_XKB_VERSION, XKB_X11_MIN_MINOR_XKB_VERSION, 0, NULL, NULL, NULL, NULL);
+		keyboard_device_id = xkb_x11_get_core_keyboard_device_id (xcb_connection);
+		keymap = xkb_x11_keymap_new_from_device (context, xcb_connection, keyboard_device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
+		state = xkb_x11_state_new_from_device (keymap, xcb_connection, keyboard_device_id);
+		*/
+	}
+	
+	void createWindow()
+	{
+		/*
+		// setup EGL
+		EGLint attribs[] = {
+			EGL_RED_SIZE, 1,
+			EGL_GREEN_SIZE, 1,
+			EGL_BLUE_SIZE, 1,
+			EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+		EGL_NONE};
+		EGLConfig config;
+		EGLint num_configs_returned;
+		eglChooseConfig (egl_display, attribs, &config, 1, &num_configs_returned);
+		
+		// get the visual from the EGL config
+		EGLint visual_id;
+		eglGetConfigAttrib (egl_display, config, EGL_NATIVE_VISUAL_ID, &visual_id);
+		XVisualInfo visual_template;
+		visual_template.visualid = visual_id;
+		int num_visuals_returned;
+		XVisualInfo *visual = XGetVisualInfo (x_display, VisualIDMask, &visual_template, &num_visuals_returned);
+		
+		// create a window
+		XSetWindowAttributes window_attributes;
+		window_attributes.event_mask = ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
+		window_attributes.colormap = XCreateColormap (x_display, RootWindow(x_display,DefaultScreen(x_display)), visual->visual, AllocNone);
+		window.window = XCreateWindow (
+			x_display,
+			RootWindow(x_display, DefaultScreen(x_display)),
+			0, 0,
+			WINDOW_WIDTH, WINDOW_HEIGHT,
+			0, // border width
+			visual->depth, // depth
+			InputOutput, // class
+			visual->visual, // visual
+			CWEventMask|CWColormap, // attribute mask
+			&window_attributes // attributes
+		);
+		
+		// EGL context and surface
+		eglBindAPI (EGL_OPENGL_API);
+		window.context = eglCreateContext (egl_display, config, EGL_NO_CONTEXT, NULL);
+		window.surface = eglCreateWindowSurface (egl_display, config, window.window, NULL);
+		eglMakeCurrent (egl_display, window.surface, window.surface, window.context);
+		
+		XFree (visual);
+		
+		XMapWindow (x_display, window.window);
+		*/
 	}
 	
 	void swapBuffer()
 	{
-		glXSwapBuffers(display, win);
+		//eglSwapBuffers(eglDisplay, window.surface);
 	}
 	
 	static uint x11BtnToLinuxBtn(uint x11Btn)
@@ -160,9 +139,9 @@ struct BackendEGL: Backend::ImplBase
 	void checkEvents()
 	{	
 		XEvent event;
-		while (XPending(display))
+		while (XPending(xDisplay))
 		{
-			XNextEvent(display, &event);
+			XNextEvent(xDisplay, &event);
 			
 			if (auto interface = inputInterface.lock())
 			{
@@ -242,7 +221,7 @@ struct BackendEGL: Backend::ImplBase
 	
 	void * getXDisplay()
 	{
-		return display;
+		return xDisplay;
 	}
 };
 
