@@ -9,23 +9,47 @@
 struct WlDataDeviceManager::Impl: Resource::Data
 {
 	// instance data
-	Resource resource;
+	Resource dataDeviceManager;
+	Resource dataDevice;
 	
 	// interface
-	static const struct wl_data_device_manager_interface deviceManagerInterface;
+	static const struct wl_data_device_manager_interface dataDeviceManagerInterface;
+	static const struct wl_data_device_interface dataDeviceInterface;
 };
 
-const struct wl_data_device_manager_interface WlDataDeviceManager::Impl::deviceManagerInterface {
+const struct wl_data_device_manager_interface WlDataDeviceManager::Impl::dataDeviceManagerInterface {
 	// create_data_source
 	+[](struct wl_client *client, struct wl_resource *resource, uint32_t id)
 	{
-		warning("wl_data_device_manager_interface.create_data_source called (not yet implemented)");
+		warning("wl_data_device_manager_interface.create_data_source not yet implemented");
 	},
 	// get_data_device
 	+[](struct wl_client *client, struct wl_resource *resource, uint32_t id, struct wl_resource *seat)
 	{
-		warning("wl_data_device_manager_interface.get_data_device called (not yet implemented)");
+		debug("wl_data_device_manager_interface.get_data_device called");
+		IMPL_FROM(resource);
+		ASSERT(impl->dataDevice.isNull());
+		impl->dataDevice.setup(impl, client, id, &wl_data_device_interface, 1, &Impl::dataDeviceInterface);
 	}
+};
+
+const struct wl_data_device_interface WlDataDeviceManager::Impl::dataDeviceInterface {
+	// start_drag
+	+[](struct wl_client *client, struct wl_resource *resource, struct wl_resource *source, struct wl_resource *origin, struct wl_resource *icon, uint32_t serial)
+	{
+		warning("wl_data_device_interface.start_drag not yet implemented");
+	},
+	// set_selection
+	+[](struct wl_client *client, struct wl_resource *resource, struct wl_resource *source, uint32_t serial)
+	{
+		warning("wl_data_device_interface.set_selection not yet implemented");
+	},
+	// release
+	+[](struct wl_client *client, struct wl_resource *resource)
+	{
+		debug("wl_data_device_interface.release called");
+		Resource(resource).destroy();
+	},
 };
 
 WlDataDeviceManager::WlDataDeviceManager(wl_client * client, uint32_t id)
@@ -33,5 +57,5 @@ WlDataDeviceManager::WlDataDeviceManager(wl_client * client, uint32_t id)
 	debug("creating WlDataDeviceManager");
 	auto impl = make_shared<Impl>();
 	this->impl = impl;
-	impl->resource.setup(impl, client, id, &wl_data_device_manager_interface, 1, &Impl::deviceManagerInterface);
+	impl->dataDeviceManager.setup(impl, client, id, &wl_data_device_manager_interface, 1, &Impl::dataDeviceManagerInterface);
 }
