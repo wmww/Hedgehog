@@ -195,7 +195,11 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	// surface set buffer scale
 	+[](wl_client * client, wl_resource * resource, int32_t scale)
 	{
-		warning("surface interface surface set buffer scale callback called (not yet implemented)");
+		debug("surface interface surface set buffer scale callback called");
+		if (scale != 1)
+		{
+			warning("scale is " + to_string(scale) + " which is not 1 and thus shouldn't be ignored");
+		}
 	},
 };
 

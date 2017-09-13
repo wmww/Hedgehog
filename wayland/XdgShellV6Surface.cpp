@@ -119,8 +119,9 @@ const struct zxdg_toplevel_v6_interface XdgShellV6Surface::Impl::xdgToplevelV6In
 	// set_parent
 	+[](struct wl_client *client, struct wl_resource *resource, struct wl_resource *parent)
 	{
-		warning("zxdg_toplevel_v6_interface::set_parent called (not yet implemented)");
+		debug("zxdg_toplevel_v6_interface::set_parent called (not yet implemented)");
 		// this is for popups n shit that are separate windows but are always on top of their parent
+		// safe to ignore for now
 	},
 	// set_title
 	+[](struct wl_client *client, struct wl_resource *resource,const char *title)

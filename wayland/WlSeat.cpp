@@ -130,8 +130,11 @@ void WlSeat::pointerMotion(V2d position, Resource surface)
 {
 	auto impl = getImplFromSurface(surface);
 	
-	ASSERT_ELSE(impl, return);
-	ASSERT_ELSE(impl->pointer.isValid(), return);
+	if (!impl || impl->pointer.isNull())
+	{
+		debug("client has not created the needed objects");
+		return;
+	}
 	ASSERT_ELSE(surface.isValid(), return);
 	
 	if (impl->lastPointerSurfaceRaw != surface.getRaw())
@@ -158,11 +161,14 @@ void WlSeat::pointerMotion(V2d position, Resource surface)
 void WlSeat::pointerLeave(Resource surface)
 {
 	auto impl = getImplFromSurface(surface);
-		
-	ASSERT_ELSE(impl, return);
+	
+	if (!impl || impl->pointer.isNull())
+	{
+		debug("client has not created the needed objects");
+		return;
+	}
 	ASSERT_ELSE(impl->lastPointerSurfaceRaw != nullptr, return);
 	ASSERT_ELSE(impl->lastPointerSurfaceRaw == surface.getRaw(), return);
-	ASSERT_ELSE(impl->pointer.isValid(), return);
 	
 	impl->lastPointerSurfaceRaw = nullptr;
 	
@@ -179,8 +185,11 @@ void WlSeat::pointerClick(uint button, bool down, Resource surface)
 	
 	auto impl = getImplFromSurface(surface);
 	
-	ASSERT_ELSE(impl, return);
-	ASSERT_ELSE(impl->pointer.isValid(), return);
+	if (!impl || impl->pointer.isNull())
+	{
+		debug("client has not created the needed objects");
+		return;
+	}
 	ASSERT_ELSE(impl->lastPointerSurfaceRaw != nullptr, return);
 	ASSERT_ELSE(impl->lastPointerSurfaceRaw == surface.getRaw(), return);
 	
@@ -199,8 +208,11 @@ void WlSeat::keyPress(uint key, bool down, Resource surface)
 	
 	auto impl = getImplFromSurface(surface);
 	
-	ASSERT_ELSE(impl, return);
-	ASSERT_ELSE(impl->keyboard.isValid(), return);
+	if (!impl || impl->keyboard.isNull())
+	{
+		debug("client has not created the needed objects");
+		return;
+	}
 	ASSERT_ELSE(impl->lastPointerSurfaceRaw != nullptr, return);
 	ASSERT_ELSE(impl->lastPointerSurfaceRaw == surface.getRaw(), return);
 	
@@ -232,7 +244,11 @@ WlSeat WlSeat::getFromClient(wl_client * client)
 {
 	ASSERT(client);
 	auto iter = Impl::clientToImpl.find(client);
-	ASSERT_ELSE(iter != Impl::clientToImpl.end(), return WlSeat());
+	if (iter == Impl::clientToImpl.end())
+	{
+		debug("requested client has not made a seat");
+		return WlSeat();
+	}
 	WlSeat seat;
 	seat.impl = iter->second;
 	return seat;
