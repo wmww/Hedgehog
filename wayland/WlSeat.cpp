@@ -1,11 +1,14 @@
 #include "WlSeat.h"
 #include "Resource.h"
 #include "WlArray.h"
+#include "../backend/Backend.h"
 
 #include "std_headers/wayland-server-protocol.h"
 #include <unordered_map>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/mman.h>
+#include <cstring>
 
 // change to toggle debug statements on and off
 #define debug debug_off
@@ -89,18 +92,17 @@ const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 			);
 		close(null_fd);
 		//int fd, size;
-		/*string keymapString = xkb_keymap_get_as_string(keymap, XKB_KEYMAP_FORMAT_TEXT_V1);
+		string keymapString = Backend::instance.getKeymap();
 		size_t dataSize = keymapString.size() + 1;
 		string xdgRuntimeDir = getenv("XDG_RUNTIME_DIR");
 		ASSERT_ELSE(!xdgRuntimeDir.empty(), return);
-		int fd = open(xdg_runtime_dir, O_TMPFILE|O_RDWR|O_EXCL, 0600);
+		int fd = open(xdgRuntimeDir.c_str(), O_TMPFILE|O_RDWR|O_EXCL, 0600);
 		ftruncate(fd, dataSize);
 		void * data = mmap(nullptr, dataSize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-		memcpy(data, keymapString, dataSize);
+		memcpy(data, keymapString.c_str(), dataSize);
 		munmap(data, dataSize);
-		**/
-		//wl_keyboard_send_keymap (keyboard, WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, fd, size);
-		////close (fd);
+		wl_keyboard_send_keymap(impl->keyboard.getRaw(), WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, fd, dataSize);
+		close(fd);
 	},
 	// get_touch
 	+[](wl_client * client, wl_resource * resource, uint32_t id)

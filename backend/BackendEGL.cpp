@@ -229,6 +229,7 @@ struct BackendEGL: Backend::ImplBase
 	
 	string getKeymap()
 	{
+		warning("BackendEGL::getKeymap not yet implemented");
 		return "";
 	}
 	
