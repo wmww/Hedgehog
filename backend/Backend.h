@@ -17,6 +17,7 @@ public:
 	void * getXDisplay(); // will be of type Display or null
 	
 	static Backend makeGLX(V2i dim);
+	static Backend makeEGL(V2i dim);
 	
 	static Backend instance;
 	

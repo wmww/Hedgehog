@@ -12,14 +12,14 @@
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 
-struct BackendGLX: Backend::ImplBase
+struct BackendEGL: Backend::ImplBase
 {
 	Display * display = nullptr;
 	GLXContext ctx;
 	Window win;
 	V2i dim;
 	
-	BackendGLX(V2i dimIn)
+	BackendEGL(V2i dimIn)
 	{
 		dim = dimIn;
 		
@@ -127,7 +127,7 @@ struct BackendGLX: Backend::ImplBase
 		
 	}
 	
-	~BackendGLX()
+	~BackendEGL()
 	{
 		debug("cleaning up context...");
 		XDestroyWindow(display, win);
@@ -246,9 +246,9 @@ struct BackendGLX: Backend::ImplBase
 	}
 };
 
-Backend Backend::makeGLX(V2i dim)
+Backend Backend::makeEGL(V2i dim)
 {
-	shared_ptr<BackendGLX> impl = make_shared<BackendGLX>(dim);
+	shared_ptr<BackendEGL> impl = make_shared<BackendEGL>(dim);
 	Backend backend = Backend(impl);
 	return backend;
 }
