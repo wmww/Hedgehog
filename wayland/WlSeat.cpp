@@ -4,6 +4,8 @@
 
 #include "std_headers/wayland-server-protocol.h"
 #include <unordered_map>
+#include <fcntl.h>
+#include <unistd.h>
 
 // change to toggle debug statements on and off
 #define debug debug_off
@@ -78,6 +80,14 @@ const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 		IMPL_FROM(resource);
 		ASSERT(impl->keyboard.isNull());
 		impl->keyboard.setup(impl, client, id, &wl_keyboard_interface, 1, &keyboardInterface);
+		auto null_fd = open("/dev/null", O_RDONLY);
+		wl_keyboard_send_keymap(
+			impl->keyboard.getRaw(),
+			WL_KEYBOARD_KEYMAP_FORMAT_NO_KEYMAP,
+			null_fd,
+			0
+			);
+		close(null_fd);
 		//int fd, size;
 		/*string keymapString = xkb_keymap_get_as_string(keymap, XKB_KEYMAP_FORMAT_TEXT_V1);
 		size_t dataSize = keymapString.size() + 1;
