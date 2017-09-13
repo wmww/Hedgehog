@@ -121,8 +121,6 @@ struct BackendEGL: Backend::ImplBase
 		windowSurface = eglCreateWindowSurface(eglDisplay, config, win, nullptr);
 		ASSERT(windowSurface != EGL_NO_SURFACE);
 		eglMakeCurrent(eglDisplay, windowSurface, windowSurface, windowContext);
-		
-		
 	}
 	
 	void swapBuffer()

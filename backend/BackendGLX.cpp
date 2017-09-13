@@ -15,8 +15,8 @@ typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXC
 struct BackendGLX: Backend::ImplBase
 {
 	Display * display = nullptr;
-	GLXContext ctx;
-	Window win;
+	GLXContext glxContext;
+	Window window;
 	V2i dim;
 	
 	BackendGLX(V2i dimIn)
@@ -24,10 +24,7 @@ struct BackendGLX: Backend::ImplBase
 		dim = dimIn;
 		
 		debug("opening X display...");
-		
 		display = XOpenDisplay(0);
-		
-		glXCreateContextAttribsARBProc glXCreateContextAttribsARB = NULL;
 		
 		//const char *extensions = glXQueryExtensionsString(display, DefaultScreen(display));
 		//cout << extensions << endl;
@@ -44,66 +41,38 @@ struct BackendGLX: Backend::ImplBase
 		};
 		
 		debug("getting framebuffer config...");
-		
 		int fbcount;
-		GLXFBConfig *fbc = glXChooseFBConfig(display, DefaultScreen(display), visual_attribs, &fbcount);
-		
-		assert(fbc != nullptr);
+		GLXFBConfig * glxfb = glXChooseFBConfig(display, DefaultScreen(display), visual_attribs, &fbcount);
+		ASSERT(glxfb != nullptr);
 		
 		debug("getting XVisualInfo...");
+		XVisualInfo * visual = glXGetVisualFromFBConfig(display, glxfb[0]);
+		ASSERT(visual != nullptr);
 		
-		XVisualInfo *vi = glXGetVisualFromFBConfig(display, fbc[0]);
+		openWindow(visual);
 		
-		XSetWindowAttributes windowAttribs;
-		windowAttribs.colormap = XCreateColormap(display, RootWindow(display, vi->screen), vi->visual, AllocNone);
-		windowAttribs.border_pixel = 0;
-		//windowAttribs.event_mask = StructureNotifyMask;
-		windowAttribs.event_mask = ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
+		setupGLXContext(visual, glxfb);
 		
-		int x = 0;
-		int y = 0;
+		XFree(visual);
+		XFree(glxfb);
 		
-		debug("creating window...");
+		//debug("getting keymap with xkbcommon");
+		//xkb_context * xkbContext;
+		//xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+		//ASSERT_ELSE(xkbContext != nullptr, return);
 		
-		win = XCreateWindow(
-			display,
-			RootWindow(display, vi->screen), // parent
-			x, y, dim.x, dim.y, // geometry
-			0, // I think this is Z-depth
-			vi->depth,
-			InputOutput,
-			vi->visual,
-			CWBorderPixel|CWColormap|CWEventMask,
-			&windowAttribs);
-		
-		string winName = "Hedgehog";
-		
-		// We use the XTextProperty structure to store the title.
-        XTextProperty windowName;
-        windowName.value    = (unsigned char *) winName.c_str();
-        
-        // XA_STRING is not defined, but its value appears to be 31
-        //windowName.encoding = XA_STRING;
-        windowName.encoding = 31;
-        
-        windowName.format   = 8;
-        windowName.nitems   = strlen((char *) windowName.value);
-		
-		XSetWMName(display, win, &windowName);
-		
-		assert(win != 0);
-		
-		debug("mapping window...");
-		
-		XMapWindow(display, win);
+	}
+	
+	void setupGLXContext(XVisualInfo * visual, GLXFBConfig * glxfb)
+	{
+		glXCreateContextAttribsARBProc glXCreateContextAttribsARB = nullptr;
 		
 		// Create an oldstyle context first, to get the correct function pointer for glXCreateContextAttribsARB
-		GLXContext ctx_old = glXCreateContext(display, vi, 0, GL_TRUE);
+		GLXContext ctx_old = glXCreateContext(display, visual, 0, GL_TRUE);
 		glXCreateContextAttribsARB =  (glXCreateContextAttribsARBProc)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
 		glXMakeCurrent(display, 0, 0);
 		glXDestroyContext(display, ctx_old);
-	 
-		assert(glXCreateContextAttribsARB != nullptr);
+		ASSERT(glXCreateContextAttribsARB != nullptr);
 	 
 		static int context_attribs[] =
 		{
@@ -114,31 +83,70 @@ struct BackendGLX: Backend::ImplBase
 		
 		debug("creating context...");
 		
-		ctx = glXCreateContextAttribsARB(display, fbc[0], NULL, true, context_attribs);
-		assert(ctx != nullptr);
+		glxContext = glXCreateContextAttribsARB(display, glxfb[0], NULL, true, context_attribs);
+		ASSERT(glxContext != nullptr);
 	 
 		debug("Making context current");
-		glXMakeCurrent(display, win, ctx);
+		glXMakeCurrent(display, window, glxContext);
+	}
+	
+	void openWindow(XVisualInfo * visual)
+	{
+		XSetWindowAttributes windowAttribs;
+		windowAttribs.colormap = XCreateColormap(display, RootWindow(display, visual->screen), visual->visual, AllocNone);
+		windowAttribs.border_pixel = 0;
+		//windowAttribs.event_mask = StructureNotifyMask;
+		windowAttribs.event_mask = ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
 		
-		//debug("getting keymap with xkbcommon");
-		//xkb_context * xkbContext;
-		//xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-		//ASSERT_ELSE(xkbContext != nullptr, return);
+		int x = 0;
+		int y = 0;
 		
+		debug("creating window...");
+		
+		window = XCreateWindow(
+			display,
+			RootWindow(display, visual->screen), // parent
+			x, y, dim.x, dim.y, // geometry
+			0, // I think this is Z-depth
+			visual->depth,
+			InputOutput,
+			visual->visual,
+			CWBorderPixel|CWColormap|CWEventMask,
+			&windowAttribs);
+		
+		string winName = "Hedgehog";
+		
+		// We use the XTextProperty structure to store the title.
+        XTextProperty windowName;
+        windowName.value = (unsigned char *) winName.c_str();
+        
+        // XA_STRING is not defined, but its value appears to be 31
+        // I should probably just find the right header to include, but hey, who doesn't love magic numbers?
+        windowName.encoding = 31;
+        // windowName.encoding = XA_STRING;
+        
+        windowName.format = 8;
+        windowName.nitems = strlen((char *)windowName.value);
+		
+		XSetWMName(display, window, &windowName);
+		
+		ASSERT(window != 0);
+		
+		debug("mapping window...");
+		
+		XMapWindow(display, window);
 	}
 	
 	~BackendGLX()
 	{
 		debug("cleaning up context...");
-		XDestroyWindow(display, win);
-		//ctx = glXGetCurrentContext();
-		//glXMakeCurrent(display, 0, 0);
-		glXDestroyContext(display, ctx);
+		XDestroyWindow(display, window);
+		glXDestroyContext(display, glxContext);
 	}
 	
 	void swapBuffer()
 	{
-		glXSwapBuffers(display, win);
+		glXSwapBuffers(display, window);
 	}
 	
 	static uint x11BtnToLinuxBtn(uint x11Btn)
@@ -181,63 +189,26 @@ struct BackendGLX: Backend::ImplBase
 				}
 				else if (event.type == KeyPress) {
 					interface->keyPress(event.xkey.keycode - 8, true);
-					//xkb_state_update_key(state, event.xkey.keycode, XKB_KEY_DOWN);
-					//update_modifiers ();
 				}
 				else if (event.type == KeyRelease) {
 					interface->keyPress(event.xkey.keycode - 8, false);
-					//xkb_state_update_key(state, event.xkey.keycode, XKB_KEY_UP);
-					//update_modifiers ();
 				}
+				/*
+				else if (event.type == ConfigureNotify) {
+					event.xconfigure.width and event.xconfigure.height are used;
+				}
+				else if (event.type == Expose) {
+					// time to redraw?
+				}
+				else if (event.type == FocusIn) {
+					// idk what these things do:s
+					xkb_state_unref(state);
+					state = xkb_x11_state_new_from_device(keymap, xcb_connection, keyboard_device_id);
+					update_modifiers();
+				}
+				*/
 			}
 		}
-		
-		/*
-		XEvent event;
-		while (XPending(display)) {
-			XNextEvent (display, &event);
-			if (event.type == ConfigureNotify) {
-				callbacks.resize (event.xconfigure.width, event.xconfigure.height);
-			}
-			else if (event.type == Expose) {
-				callbacks.draw ();
-			}
-			else if (event.type == MotionNotify) {
-				callbacks.mouse_motion (event.xbutton.x, event.xbutton.y);
-			}
-			else if (event.type == ButtonPress) {
-				if (event.xbutton.button == Button1)
-					callbacks.mouse_button (BTN_LEFT, WL_POINTER_BUTTON_STATE_PRESSED);
-				else if (event.xbutton.button == Button2)
-					callbacks.mouse_button (BTN_MIDDLE, WL_POINTER_BUTTON_STATE_PRESSED);
-				else if (event.xbutton.button == Button3)
-					callbacks.mouse_button (BTN_RIGHT, WL_POINTER_BUTTON_STATE_PRESSED);
-			}
-			else if (event.type == ButtonRelease) {
-				if (event.xbutton.button == Button1)
-					callbacks.mouse_button (BTN_LEFT, WL_POINTER_BUTTON_STATE_RELEASED);
-				else if (event.xbutton.button == Button2)
-					callbacks.mouse_button (BTN_MIDDLE, WL_POINTER_BUTTON_STATE_RELEASED);
-				else if (event.xbutton.button == Button3)
-					callbacks.mouse_button (BTN_RIGHT, WL_POINTER_BUTTON_STATE_RELEASED);
-			}
-			else if (event.type == KeyPress) {
-				callbacks.key (event.xkey.keycode - 8, WL_KEYBOARD_KEY_STATE_PRESSED);
-				xkb_state_update_key (state, event.xkey.keycode, XKB_KEY_DOWN);
-				update_modifiers ();
-			}
-			else if (event.type == KeyRelease) {
-				callbacks.key (event.xkey.keycode - 8, WL_KEYBOARD_KEY_STATE_RELEASED);
-				xkb_state_update_key (state, event.xkey.keycode, XKB_KEY_UP);
-				update_modifiers ();
-			}
-			else if (event.type == FocusIn) {
-				xkb_state_unref (state);
-				state = xkb_x11_state_new_from_device (keymap, xcb_connection, keyboard_device_id);
-				update_modifiers ();
-			}
-		}
-		*/
 	}
 	
 	void * getXDisplay()
