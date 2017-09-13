@@ -17,7 +17,7 @@
 int main (int argc, char ** argv)
 {
 	//auto backend = Backend::makeGLX(V2i(800, 800));
-	auto backend = Backend::makeEGL(V2i(800, 800));
+	auto backend = Backend::makeDefault(V2i(800, 800));
 	
 	glewInit();
 	

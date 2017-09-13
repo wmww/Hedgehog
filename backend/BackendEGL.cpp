@@ -132,7 +132,7 @@ struct BackendEGL: Backend::ImplBase
 	
 	static uint x11BtnToLinuxBtn(uint x11Btn)
 	{
-		switch (x11Btn)
+		switch (x11Btn) 
 		{
 		case Button1:
 			return BTN_LEFT;

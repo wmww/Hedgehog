@@ -19,6 +19,8 @@ public:
 	static Backend makeGLX(V2i dim);
 	static Backend makeEGL(V2i dim);
 	
+	static Backend makeDefault(V2i dim) { return makeGLX(dim); }
+	
 	static Backend instance;
 	
 private:
