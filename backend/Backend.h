@@ -13,6 +13,7 @@ public:
 	Backend(shared_ptr<ImplBase> implIn);
 	void swapBuffer();
 	void checkEvents();
+	string getKeymap();
 	void setInputInterface(weak_ptr<InputInterface> inputInterface);
 	void * getXDisplay(); // will be of type Display or null
 	

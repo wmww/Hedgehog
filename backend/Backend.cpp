@@ -18,25 +18,31 @@ Backend::Backend(shared_ptr<ImplBase> implIn)
 
 void Backend::swapBuffer()
 {
-	assert(impl);
+	ASSERT_ELSE(impl, return);
 	impl->swapBuffer();
 }
 
 void Backend::checkEvents()
 {
-	assert(impl);
+	ASSERT_ELSE(impl, return);
 	impl->checkEvents();
+}
+
+string Backend::getKeymap()
+{
+	assert(impl);
+	return impl->getKeymap();
 }
 
 void Backend::setInputInterface(weak_ptr<InputInterface> inputInterface)
 {
-	assert(impl);
+	ASSERT_ELSE(impl, return);
 	impl->inputInterface = inputInterface;
 }
 
 void * Backend::getXDisplay()
 {
-	assert(impl);
+	ASSERT_ELSE(impl, return nullptr);
 	return impl->getXDisplay();
 }
 

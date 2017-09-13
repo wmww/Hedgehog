@@ -227,6 +227,11 @@ struct BackendEGL: Backend::ImplBase
 		*/
 	}
 	
+	string getKeymap()
+	{
+		return "";
+	}
+	
 	void * getXDisplay()
 	{
 		return xDisplay;

@@ -3,6 +3,7 @@
 
 #include <GL/glx.h>
 #include <GL/gl.h>
+#include <X11/Xlib-xcb.h>
 #include <xkbcommon/xkbcommon-x11.h>
 #include <cstring>
 #include <linux/input.h> // for BTN_LEFT and maybe other stuff
@@ -19,6 +20,7 @@ struct BackendGLX: Backend::ImplBase
 	GLXContext glxContext;
 	Window window;
 	V2i dim;
+	xkb_keymap * keymap = nullptr;
 	
 	BackendGLX(V2i dimIn)
 	{
@@ -143,14 +145,18 @@ struct BackendGLX: Backend::ImplBase
 	
 	void setupXKB()
 	{
-		/*
 		xcb_connection_t * xcbConnection = XGetXCBConnection(xDisplay);
 		xkb_context * xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-		xkb_x11_setup_xkb_extension (xcb_connection, XKB_X11_MIN_MAJOR_XKB_VERSION, XKB_X11_MIN_MINOR_XKB_VERSION, 0, NULL, NULL, NULL, NULL);
-		keyboard_device_id = xkb_x11_get_core_keyboard_device_id (xcb_connection);
-		keymap = xkb_x11_keymap_new_from_device (context, xcb_connection, keyboard_device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
-		state = xkb_x11_state_new_from_device (keymap, xcb_connection, keyboard_device_id);
-		*/
+		xkb_x11_setup_xkb_extension(
+			xcbConnection,
+			XKB_X11_MIN_MAJOR_XKB_VERSION,
+			XKB_X11_MIN_MINOR_XKB_VERSION,
+			XKB_X11_SETUP_XKB_EXTENSION_NO_FLAGS,
+			nullptr, nullptr, nullptr, nullptr
+			);
+		int32_t keyboardDeviceId = xkb_x11_get_core_keyboard_device_id(xcbConnection);
+		keymap = xkb_x11_keymap_new_from_device(xkbContext, xcbConnection, keyboardDeviceId, XKB_KEYMAP_COMPILE_NO_FLAGS);
+		//xkb_state * xkbState = xkb_x11_state_new_from_device(keymap, xcbConnection, keyboardDeviceId);
 	}
 	
 	~BackendGLX()
@@ -225,6 +231,12 @@ struct BackendGLX: Backend::ImplBase
 				*/
 			}
 		}
+	}
+	
+	string getKeymap()
+	{
+		ASSERT_ELSE(keymap, return "");
+		return xkb_keymap_get_as_string(keymap, XKB_KEYMAP_FORMAT_TEXT_V1);
 	}
 	
 	void * getXDisplay()
