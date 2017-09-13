@@ -3,6 +3,7 @@
 
 #include <GL/glx.h>
 #include <GL/gl.h>
+#include <xkbcommon/xkbcommon-x11.h>
 #include <cstring>
 #include <linux/input.h> // for BTN_LEFT and maybe other stuff
 //#include <xkbcommon/xkbcommon.h> // for getting the keymap
@@ -14,7 +15,7 @@ typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXC
 
 struct BackendGLX: Backend::ImplBase
 {
-	Display * display = nullptr;
+	Display * xDisplay = nullptr;
 	GLXContext glxContext;
 	Window window;
 	V2i dim;
@@ -24,7 +25,10 @@ struct BackendGLX: Backend::ImplBase
 		dim = dimIn;
 		
 		debug("opening X display...");
-		display = XOpenDisplay(0);
+		xDisplay = XOpenDisplay(0);
+		
+		debug("setting up XKB (keymap shit)");
+		setupXKB();
 		
 		//const char *extensions = glXQueryExtensionsString(display, DefaultScreen(display));
 		//cout << extensions << endl;
@@ -42,11 +46,11 @@ struct BackendGLX: Backend::ImplBase
 		
 		debug("getting framebuffer config...");
 		int fbcount;
-		GLXFBConfig * glxfb = glXChooseFBConfig(display, DefaultScreen(display), visual_attribs, &fbcount);
+		GLXFBConfig * glxfb = glXChooseFBConfig(xDisplay, DefaultScreen(xDisplay), visual_attribs, &fbcount);
 		ASSERT(glxfb != nullptr);
 		
 		debug("getting XVisualInfo...");
-		XVisualInfo * visual = glXGetVisualFromFBConfig(display, glxfb[0]);
+		XVisualInfo * visual = glXGetVisualFromFBConfig(xDisplay, glxfb[0]);
 		ASSERT(visual != nullptr);
 		
 		openWindow(visual);
@@ -68,10 +72,10 @@ struct BackendGLX: Backend::ImplBase
 		glXCreateContextAttribsARBProc glXCreateContextAttribsARB = nullptr;
 		
 		// Create an oldstyle context first, to get the correct function pointer for glXCreateContextAttribsARB
-		GLXContext ctx_old = glXCreateContext(display, visual, 0, GL_TRUE);
+		GLXContext oldContext = glXCreateContext(xDisplay, visual, 0, GL_TRUE);
 		glXCreateContextAttribsARB =  (glXCreateContextAttribsARBProc)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
-		glXMakeCurrent(display, 0, 0);
-		glXDestroyContext(display, ctx_old);
+		glXMakeCurrent(xDisplay, 0, 0);
+		glXDestroyContext(xDisplay, oldContext);
 		ASSERT(glXCreateContextAttribsARB != nullptr);
 	 
 		static int context_attribs[] =
@@ -83,17 +87,17 @@ struct BackendGLX: Backend::ImplBase
 		
 		debug("creating context...");
 		
-		glxContext = glXCreateContextAttribsARB(display, glxfb[0], NULL, true, context_attribs);
+		glxContext = glXCreateContextAttribsARB(xDisplay, glxfb[0], NULL, true, context_attribs);
 		ASSERT(glxContext != nullptr);
 	 
 		debug("Making context current");
-		glXMakeCurrent(display, window, glxContext);
+		glXMakeCurrent(xDisplay, window, glxContext);
 	}
 	
 	void openWindow(XVisualInfo * visual)
 	{
 		XSetWindowAttributes windowAttribs;
-		windowAttribs.colormap = XCreateColormap(display, RootWindow(display, visual->screen), visual->visual, AllocNone);
+		windowAttribs.colormap = XCreateColormap(xDisplay, RootWindow(xDisplay, visual->screen), visual->visual, AllocNone);
 		windowAttribs.border_pixel = 0;
 		//windowAttribs.event_mask = StructureNotifyMask;
 		windowAttribs.event_mask = ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
@@ -104,8 +108,8 @@ struct BackendGLX: Backend::ImplBase
 		debug("creating window...");
 		
 		window = XCreateWindow(
-			display,
-			RootWindow(display, visual->screen), // parent
+			xDisplay,
+			RootWindow(xDisplay, visual->screen), // parent
 			x, y, dim.x, dim.y, // geometry
 			0, // I think this is Z-depth
 			visual->depth,
@@ -128,25 +132,37 @@ struct BackendGLX: Backend::ImplBase
         windowName.format = 8;
         windowName.nitems = strlen((char *)windowName.value);
 		
-		XSetWMName(display, window, &windowName);
+		XSetWMName(xDisplay, window, &windowName);
 		
 		ASSERT(window != 0);
 		
 		debug("mapping window...");
 		
-		XMapWindow(display, window);
+		XMapWindow(xDisplay, window);
+	}
+	
+	void setupXKB()
+	{
+		/*
+		xcb_connection_t * xcbConnection = XGetXCBConnection(xDisplay);
+		xkb_context * xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+		xkb_x11_setup_xkb_extension (xcb_connection, XKB_X11_MIN_MAJOR_XKB_VERSION, XKB_X11_MIN_MINOR_XKB_VERSION, 0, NULL, NULL, NULL, NULL);
+		keyboard_device_id = xkb_x11_get_core_keyboard_device_id (xcb_connection);
+		keymap = xkb_x11_keymap_new_from_device (context, xcb_connection, keyboard_device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
+		state = xkb_x11_state_new_from_device (keymap, xcb_connection, keyboard_device_id);
+		*/
 	}
 	
 	~BackendGLX()
 	{
 		debug("cleaning up context...");
-		XDestroyWindow(display, window);
-		glXDestroyContext(display, glxContext);
+		XDestroyWindow(xDisplay, window);
+		glXDestroyContext(xDisplay, glxContext);
 	}
 	
 	void swapBuffer()
 	{
-		glXSwapBuffers(display, window);
+		glXSwapBuffers(xDisplay, window);
 	}
 	
 	static uint x11BtnToLinuxBtn(uint x11Btn)
@@ -168,9 +184,9 @@ struct BackendGLX: Backend::ImplBase
 	void checkEvents()
 	{	
 		XEvent event;
-		while (XPending(display))
+		while (XPending(xDisplay))
 		{
-			XNextEvent(display, &event);
+			XNextEvent(xDisplay, &event);
 			
 			if (auto interface = inputInterface.lock())
 			{
@@ -213,7 +229,7 @@ struct BackendGLX: Backend::ImplBase
 	
 	void * getXDisplay()
 	{
-		return display;
+		return xDisplay;
 	}
 };
 
