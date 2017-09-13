@@ -1,6 +1,7 @@
 #include "XdgShellV6Surface.h"
 #include "Resource.h"
 #include "../scene/WindowInterface.h"
+#include "WlArray.h"
 
 #include "std_headers/wayland-server-protocol.h"
 #include "protocols/xdg-shell-unstable-v6.h"
@@ -45,13 +46,17 @@ const struct zxdg_surface_v6_interface XdgShellV6Surface::Impl::xdgSurfaceV6Inte
 		ASSERT(impl->xdgToplevelResource.isNull());
 		impl->xdgToplevelResource.setup(impl, client, id, &zxdg_toplevel_v6_interface, 1, &xdgToplevelV6Interface);
 		
+		WlArray<zxdg_toplevel_v6_state> states;
+		states.append(ZXDG_TOPLEVEL_V6_STATE_ACTIVATED);
+		zxdg_toplevel_v6_send_configure(impl->xdgToplevelResource.getRaw(), 0, 0, states.getRaw());
+		/*
 		wl_array states;
 		wl_array_init(&states);
 		ASSERT_ELSE(impl->xdgToplevelResource.isValid(), return);
 		*((zxdg_toplevel_v6_state*)wl_array_add(&states, sizeof(zxdg_toplevel_v6_state))) = ZXDG_TOPLEVEL_V6_STATE_ACTIVATED;
 		zxdg_toplevel_v6_send_configure(impl->xdgToplevelResource.getRaw(), 0, 0, &states);
 		wl_array_release(&states);
-		
+		*/
 		ASSERT_ELSE(impl->xdgSurfaceResource.isValid(), return);
 		zxdg_surface_v6_send_configure(impl->xdgSurfaceResource.getRaw(), WaylandServer::nextSerialNum());
 	},
