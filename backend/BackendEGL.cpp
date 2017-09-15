@@ -1,6 +1,4 @@
 #include "Backend.h"
-#include "BackendImplBase.h"
-
 #include <wayland-server.h>
 #include <X11/Xlib.h>
 #include <linux/input.h>
@@ -20,7 +18,7 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
-struct BackendEGL: Backend::ImplBase
+struct BackendEGL: Backend
 {
 	Display * xDisplay = nullptr;
 	xcb_connection_t * xcbConnection = nullptr;
@@ -239,10 +237,8 @@ struct BackendEGL: Backend::ImplBase
 	}
 };
 
-Backend Backend::makeEGL(V2i dim)
+unique_ptr<Backend> Backend::makeEGL(V2i dim)
 {
-	shared_ptr<BackendEGL> impl = make_shared<BackendEGL>(dim);
-	Backend backend = Backend(impl);
-	return backend;
+	return make_unique<BackendEGL>(dim);
 }
 

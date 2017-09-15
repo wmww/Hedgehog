@@ -1,5 +1,5 @@
 #include "Backend.h"
-#include "BackendImplBase.h"
+//#include "BackendImplBase.h"
 
 #include <GL/glx.h>
 #include <GL/gl.h>
@@ -14,7 +14,7 @@
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 
-struct BackendGLX: Backend::ImplBase
+struct BackendGLX: Backend
 {
 	Display * xDisplay = nullptr;
 	GLXContext glxContext;
@@ -245,10 +245,8 @@ struct BackendGLX: Backend::ImplBase
 	}
 };
 
-Backend Backend::makeGLX(V2i dim)
+unique_ptr<Backend> Backend::makeGLX(V2i dim)
 {
-	shared_ptr<BackendGLX> impl = make_shared<BackendGLX>(dim);
-	Backend backend = Backend(impl);
-	return backend;
+	return make_unique<BackendGLX>(dim);
 }
 

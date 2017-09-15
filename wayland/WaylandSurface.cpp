@@ -146,7 +146,9 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 		if (buffer != nullptr && impl->isDamaged)
 		{
 			EGLint texture_format;
-			Display * display = (Display *)Backend::instance.getXDisplay();
+			ASSERT_ELSE(Backend::instance, return);
+			Display * display = (Display *)Backend::instance->getXDisplay();
+			ASSERT_ELSE(display, return);
 			
 			assert(buffer != nullptr);
 			

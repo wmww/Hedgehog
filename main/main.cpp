@@ -14,10 +14,13 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
+unique_ptr<Backend> Backend::instance;
+
 int main (int argc, char ** argv)
 {
 	//auto backend = Backend::makeGLX(V2i(800, 800));
-	auto backend = Backend::makeDefault(V2i(800, 800));
+	Backend::setup(V2i(800, 800));
+	ASSERT_ELSE(Backend::instance, exit(1));
 	
 	glewInit();
 	
@@ -29,15 +32,15 @@ int main (int argc, char ** argv)
 	Scene scene;
 	scene.setup();
 	
-	backend.setInputInterface(scene.getInputInterface());
+	Backend::instance->setInputInterface(scene.getInputInterface());
 	
 	while (true)
 	{
-		backend.checkEvents();
+		Backend::instance->checkEvents();
 		texture.draw();
 		WaylandServer::iteration();
 		scene.draw();
-		backend.swapBuffer();
+		Backend::instance->swapBuffer();
 		sleepForSeconds(0.01667);
 	}
 	

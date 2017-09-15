@@ -7,24 +7,26 @@ class Backend
 {
 public:
 	
-	class ImplBase;
+	virtual void swapBuffer() = 0;
+	virtual void checkEvents() = 0;
+	virtual string getKeymap() = 0;
+	virtual void * getXDisplay() = 0; // will be of type Display * or null
 	
-	Backend() {}
-	Backend(shared_ptr<ImplBase> implIn);
-	void swapBuffer();
-	void checkEvents();
-	string getKeymap();
-	void setInputInterface(weak_ptr<InputInterface> inputInterface);
-	void * getXDisplay(); // will be of type Display or null
+	void setInputInterface(weak_ptr<InputInterface> ptr) { inputInterface = ptr; }
 	
-	static Backend makeGLX(V2i dim);
-	static Backend makeEGL(V2i dim);
+	static void setup(V2i dim)
+	{
+		ASSERT_ELSE(instance == nullptr, return);
+		instance = makeGLX(dim);
+	}
 	
-	static Backend makeDefault(V2i dim) { return makeGLX(dim); }
+	static unique_ptr<Backend> instance; // defined in main.cpp because there is no Backend.cpp
 	
-	static Backend instance;
+protected:
 	
-private:
-	shared_ptr<ImplBase> impl;
+	static unique_ptr<Backend> makeGLX(V2i dim);
+	static unique_ptr<Backend> makeEGL(V2i dim);
+	
+	weak_ptr<InputInterface> inputInterface;
 };
 

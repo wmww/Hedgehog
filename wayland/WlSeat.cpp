@@ -92,7 +92,8 @@ const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 			);
 		close(null_fd);
 		//int fd, size;
-		string keymapString = Backend::instance.getKeymap();
+		ASSERT_ELSE(Backend::instance, return);
+		string keymapString = Backend::instance->getKeymap();
 		size_t dataSize = keymapString.size() + 1;
 		string xdgRuntimeDir = getenv("XDG_RUNTIME_DIR");
 		ASSERT_ELSE(!xdgRuntimeDir.empty(), return);
