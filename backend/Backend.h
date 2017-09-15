@@ -17,7 +17,7 @@ public:
 	static void setup(V2i dim)
 	{
 		ASSERT_ELSE(instance == nullptr, return);
-		instance = makeGLX(dim);
+		instance = makeEGL(dim);
 	}
 	
 	static unique_ptr<Backend> instance; // defined in main.cpp because there is no Backend.cpp

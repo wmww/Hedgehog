@@ -1,4 +1,4 @@
-#include "Backend.h"
+#include "BackendX11Base.h"
 #include <wayland-server.h>
 #include <X11/Xlib.h>
 #include <linux/input.h>
@@ -18,55 +18,17 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
-struct BackendEGL: Backend
+struct BackendEGL: BackendX11Base
 {
-	Display * xDisplay = nullptr;
-	xcb_connection_t * xcbConnection = nullptr;
 	EGLDisplay eglDisplay;
 	EGLContext windowContext;
 	EGLSurface windowSurface;
-	Window win;
-	V2i dim;
 	
-	BackendEGL(V2i dimIn)
+	BackendEGL(V2i dim): BackendX11Base(dim)
 	{
-		dim = dimIn;
-		
-		debug("opening X display");
-		
-		xDisplay = XOpenDisplay(nullptr);
-		
-		debug("getting XCB connection");
-		
-		xcbConnection = XGetXCBConnection(xDisplay);
-		
-		setupXKB();
-		
 		eglDisplay = eglGetDisplay(xDisplay);
 		eglInitialize(eglDisplay, nullptr, nullptr);
 		
-		createWindow();
-	}
-	
-	~BackendEGL()
-	{
-		debug("cleaning up context...");
-		XDestroyWindow(xDisplay, win);
-	}
-	
-	void setupXKB()
-	{
-		/*
-		xkb_context * xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-		xkb_x11_setup_xkb_extension (xcb_connection, XKB_X11_MIN_MAJOR_XKB_VERSION, XKB_X11_MIN_MINOR_XKB_VERSION, 0, NULL, NULL, NULL, NULL);
-		keyboard_device_id = xkb_x11_get_core_keyboard_device_id (xcb_connection);
-		keymap = xkb_x11_keymap_new_from_device (context, xcb_connection, keyboard_device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
-		state = xkb_x11_state_new_from_device (keymap, xcb_connection, keyboard_device_id);
-		*/
-	}
-	
-	void createWindow()
-	{
 		// setup EGL
 		EGLint eglAttribs[] = {
 			EGL_RENDERABLE_TYPE,	EGL_OPENGL_BIT,
@@ -85,27 +47,7 @@ struct BackendEGL: Backend
 		int visualsCount;
 		XVisualInfo * visual = XGetVisualInfo(xDisplay, VisualIDMask, &visualTemplate, &visualsCount);
 		
-		// create the window
-		XSetWindowAttributes windowAttributes;
-		windowAttributes.event_mask = ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
-		auto rootWindow = RootWindow(xDisplay,DefaultScreen(xDisplay));
-		windowAttributes.colormap = XCreateColormap(xDisplay, rootWindow, visual->visual, AllocNone);
-		int x = 0;
-		int y = 0;
-		win = XCreateWindow(
-			xDisplay,
-			rootWindow, // parent
-			x, y, dim.x, dim.y, // geometry
-			0, // either boarder width or Z-depth
-			visual->depth,
-			InputOutput,
-			visual->visual, // visual
-			CWEventMask|CWColormap, // attribute mask
-			&windowAttributes
-			);
-		
-		XFree(visual);
-		XMapWindow(xDisplay, win);
+		openWindow(visual, "Hedgehog");
 		
 		// EGL context and surface
 		eglBindAPI(EGL_OPENGL_API);
@@ -116,9 +58,25 @@ struct BackendEGL: Backend
 			};
 		windowContext = eglCreateContext(eglDisplay, config, EGL_NO_CONTEXT, moreAttribs);
 		ASSERT(windowContext != EGL_NO_CONTEXT);
-		windowSurface = eglCreateWindowSurface(eglDisplay, config, win, nullptr);
+		windowSurface = eglCreateWindowSurface(eglDisplay, config, window, nullptr);
 		ASSERT(windowSurface != EGL_NO_SURFACE);
 		eglMakeCurrent(eglDisplay, windowSurface, windowSurface, windowContext);
+	}
+	
+	~BackendEGL()
+	{
+		
+	}
+	
+	void setupXKB()
+	{
+		/*
+		xkb_context * xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+		xkb_x11_setup_xkb_extension (xcb_connection, XKB_X11_MIN_MAJOR_XKB_VERSION, XKB_X11_MIN_MINOR_XKB_VERSION, 0, NULL, NULL, NULL, NULL);
+		keyboard_device_id = xkb_x11_get_core_keyboard_device_id (xcb_connection);
+		keymap = xkb_x11_keymap_new_from_device (context, xcb_connection, keyboard_device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
+		state = xkb_x11_state_new_from_device (keymap, xcb_connection, keyboard_device_id);
+		*/
 	}
 	
 	void swapBuffer()
