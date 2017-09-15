@@ -52,10 +52,11 @@ const struct wl_data_device_interface WlDataDeviceManager::Impl::dataDeviceInter
 	},
 };
 
-WlDataDeviceManager::WlDataDeviceManager(wl_client * client, uint32_t id)
+WlDataDeviceManager::WlDataDeviceManager(wl_client * client, uint32_t id, uint version)
 {
 	debug("creating WlDataDeviceManager");
 	auto impl = make_shared<Impl>();
 	this->impl = impl;
-	impl->dataDeviceManager.setup(impl, client, id, &wl_data_device_manager_interface, 1, &Impl::dataDeviceManagerInterface);
+	ASSERT(version <= wl_data_device_manager_MAX_VERSION);
+	impl->dataDeviceManager.setup(impl, client, id, &wl_data_device_manager_interface, version, &Impl::dataDeviceManagerInterface);
 }

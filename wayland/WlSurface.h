@@ -10,7 +10,7 @@ class WaylandSurface
 {
 public:
 	WaylandSurface() {}
-	WaylandSurface(wl_client * client, uint32_t id);
+	WaylandSurface(wl_client * client, uint32_t id, uint version);
 	static WaylandSurface getFrom(Resource resource); // to use this the resource must have been created by this class
 	
 	static void runFrameCallbacks();

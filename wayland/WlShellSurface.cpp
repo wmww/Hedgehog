@@ -82,7 +82,7 @@ const struct wl_shell_surface_interface WlShellSurface::Impl::wlShellSurfaceInte
 	},
 };
 
-WlShellSurface::WlShellSurface(wl_client * client, uint32_t id, WaylandSurface surface)
+WlShellSurface::WlShellSurface(wl_client * client, uint32_t id, uint version, WaylandSurface surface)
 {
 	debug("creating WlShellSurface");
 	auto impl = make_shared<Impl>();
@@ -91,5 +91,5 @@ WlShellSurface::WlShellSurface(wl_client * client, uint32_t id, WaylandSurface s
 	impl->client = client;
 	impl->texture = surface.getTexture();
 	Scene::instance.addWindow(impl);
-	impl->resource.setup(impl, client, id, &wl_shell_surface_interface, 1, &Impl::wlShellSurfaceInterface);
+	impl->resource.setup(impl, client, id, &wl_shell_surface_interface, version, &Impl::wlShellSurfaceInterface);
 }

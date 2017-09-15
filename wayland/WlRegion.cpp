@@ -147,9 +147,6 @@ const struct wl_region_interface WlRegion::Impl::wlRegionInterface = {
 			"width: " + to_string(width) + ", "
 			"height: " + to_string(height) + ")");
 		
-		//GET_IMPL_FROM(resource);
-		//auto impl = WaylandObject2<Impl>::get(resource);
-		//assert(impl);
 		IMPL_FROM(resource);
 		if (
 			x == INT32_MIN &&
@@ -168,10 +165,10 @@ const struct wl_region_interface WlRegion::Impl::wlRegionInterface = {
 	}
 };
 
-WlRegion::WlRegion(wl_client * client, uint32_t id)
+WlRegion::WlRegion(wl_client * client, uint32_t id, uint version)
 {
 	debug("creating WlRegion");
 	auto impl = make_shared<Impl>();
 	this->impl = impl;
-	impl->resource.setup(impl, client, id, &wl_region_interface, 1, &Impl::wlRegionInterface);
+	impl->resource.setup(impl, client, id, &wl_region_interface, version, &Impl::wlRegionInterface);
 }

@@ -201,7 +201,7 @@ const struct zxdg_toplevel_v6_interface XdgShellV6Surface::Impl::xdgToplevelV6In
 	},
 };
 
-XdgShellV6Surface::XdgShellV6Surface(wl_client * client, uint32_t id, WaylandSurface surface)
+XdgShellV6Surface::XdgShellV6Surface(wl_client * client, uint32_t id, uint version, WaylandSurface surface)
 {
 	debug("creating XdgShellV6Surface");
 	auto impl = make_shared<Impl>();
@@ -210,5 +210,5 @@ XdgShellV6Surface::XdgShellV6Surface(wl_client * client, uint32_t id, WaylandSur
 	impl->texture = surface.getTexture();
 	Scene::instance.addWindow(impl);
 	// sending 1 as the version number isn't a mistake. Idk why its called v6 but you send in 1, maybe always 1 until stable?
-	impl->xdgSurfaceResource.setup(impl, client, id, &zxdg_surface_v6_interface, 1, &Impl::xdgSurfaceV6Interface);
+	impl->xdgSurfaceResource.setup(impl, client, id, &zxdg_surface_v6_interface, version, &Impl::xdgSurfaceV6Interface);
 }

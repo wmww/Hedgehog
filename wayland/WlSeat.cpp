@@ -112,7 +112,7 @@ const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 	}
 };
 
-WlSeat::WlSeat(wl_client * client, uint32_t id)
+WlSeat::WlSeat(wl_client * client, uint32_t id, uint version)
 {
 	debug("creating WlSeat");
 	auto iter = Impl::clientToImpl.find(client);
@@ -123,7 +123,8 @@ WlSeat::WlSeat(wl_client * client, uint32_t id)
 	auto impl = make_shared<Impl>();
 	this->impl = impl;
 	Impl::clientToImpl[client] = impl;
-	impl->seat.setup(impl, client, id, &wl_seat_interface, 1, &Impl::seatInterface);
+	ASSERT(version <= wl_seat_MAX_VERSION);
+	impl->seat.setup(impl, client, id, &wl_seat_interface, version, &Impl::seatInterface);
 	wl_seat_send_capabilities(impl->seat.getRaw(), WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
 }
 

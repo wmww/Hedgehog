@@ -5,7 +5,7 @@
 class XdgShellV6Surface
 {
 public:
-	XdgShellV6Surface(wl_client * client, uint32_t id, WaylandSurface surface);
+	XdgShellV6Surface(wl_client * client, uint32_t id, uint version, WaylandSurface surface);
 	
 private:
 	struct Impl;

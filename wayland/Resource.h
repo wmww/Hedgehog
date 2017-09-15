@@ -3,24 +3,6 @@
 #include "../main/util.h"
 #include <wayland-server-core.h>
 
-const int wl_display_VERSION		= 1;
-const int wl_callback_VERSION		= 1;
-const int wl_compositor_VERSION		= 4;
-const int wl_shm_pool_VERSION		= 1;
-const int wl_shm_VERSION			= 1;
-const int wl_buffer_VERSION			= 1;
-const int wl_data_offer_VERSION		= 3;
-const int wl_data_source_VERSION	= 3;
-const int wl_data_device_VERSION	= 3;
-const int wl_data_device_manager_VERSION = 3;
-const int wl_shell_VERSION			= 1;
-const int wl_shell_surface_VERSION	= 1;
-//const int zzzzzzzzz _VERSION		= 1;
-//const int zzzzzzzzz _VERSION		= 1;
-//const int zzzzzzzzz _VERSION		= 1;
-//const int zzzzzzzzz _VERSION		= 1;
-//const int zzzzzzzzz _VERSION		= 1;
-
 // these macros are convenient and allow for proper file/line num if assert fails
 #define IMPL_ELSE(action) shared_ptr<Impl> impl = this->impl.lock(); ASSERT_ELSE(impl, action);
 #define IMPL_FROM(resource) shared_ptr<Impl> impl = Resource(resource).get<Impl>(); if (!impl) { warning(FUNC + " called with invalid resource"); return; }

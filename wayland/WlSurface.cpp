@@ -11,9 +11,6 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
-const int wl_surface_MAX_VERSION = 4;
-const int wl_callback_MAX_VERSION = 1;
-
 struct WaylandSurface::Impl: Resource::Data, InputInterface
 {
 	// instance data
@@ -100,7 +97,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 		debug("wl_surface.frame called");
 		// TODO: OPTIMIZATION: don't call the callback if the window is hidden (this may take some restructuring)
 		Resource callbackResource;
-		callbackResource.setup(nullptr, client, callback, &wl_callback_interface, wl_callback_MAX_VERSION, nullptr);
+		callbackResource.setup(nullptr, client, callback, &wl_callback_interface, 1, nullptr);
 		frameCallbacks.push_back(callbackResource);
 	},
 	.set_opaque_region = +[](wl_client * client, wl_resource * resource, wl_resource * region) {
@@ -178,14 +175,12 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	},
 };
 
-WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
+WaylandSurface::WaylandSurface(wl_client * client, uint32_t id, uint version)
 {
 	debug("creating WaylandSurface");
-	// important to use a temp var because impl is weak, so it would be immediately deleted
-	// in wlSetup, a shared_ptr to the object is saved by WaylandObject, so it is safe to store in a weak_ptr after
 	auto impl = make_shared<Impl>();
 	this->impl = impl;
-	impl->surfaceResource.setup(impl, client, id, &wl_surface_interface, wl_surface_MAX_VERSION, &Impl::surfaceInterface);
+	impl->surfaceResource.setup(impl, client, id, &wl_surface_interface, version, &Impl::surfaceInterface);
 }
 
 WaylandSurface WaylandSurface::getFrom(Resource resource)
@@ -200,8 +195,7 @@ void WaylandSurface::runFrameCallbacks()
 {
 	for (auto i: Impl::frameCallbacks)
 	{
-		ASSERT(i.isValid());
-		if (i.isValid())
+		ASSERT_THEN(i.isValid())
 		{
 			if (i.getVersion() >= WL_CALLBACK_DONE_SINCE_VERSION)
 				wl_callback_send_done(i.getRaw(), timeSinceStartMili());
