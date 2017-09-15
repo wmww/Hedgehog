@@ -10,6 +10,22 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
+BackendX11Base::BackendX11Base(V2i dim)
+{
+	this->dim = dim;
+	
+	debug("opening X display");
+	xDisplay = XOpenDisplay(0);
+	
+	debug("setting up XKB (keymap shit)");
+	setupXKB();
+}
+
+BackendX11Base::~BackendX11Base()
+{
+	XDestroyWindow(xDisplay, window);
+}
+
 void BackendX11Base::setWindowName(string name)
 {
 	ASSERT(window != 0);
@@ -26,6 +42,39 @@ void BackendX11Base::setWindowName(string name)
 	windowName.nitems = name.size();
 	
 	XSetWMName(xDisplay, window, &windowName);
+}
+
+void BackendX11Base::openWindow(XVisualInfo * visual, string name)
+{
+	XSetWindowAttributes windowAttribs;
+	windowAttribs.colormap = XCreateColormap(xDisplay, RootWindow(xDisplay, visual->screen), visual->visual, AllocNone);
+	windowAttribs.border_pixel = 0;
+	//windowAttribs.event_mask = StructureNotifyMask;
+	windowAttribs.event_mask = ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
+	
+	int x = 0;
+	int y = 0;
+	
+	debug("creating window...");
+	
+	window = XCreateWindow(
+		xDisplay,
+		RootWindow(xDisplay, visual->screen), // parent
+		x, y, dim.x, dim.y, // geometry
+		0, // I think this is Z-depth
+		visual->depth,
+		InputOutput,
+		visual->visual,
+		CWBorderPixel|CWColormap|CWEventMask,
+		&windowAttribs);
+	
+	setWindowName(name);
+	
+	ASSERT(window != 0);
+	
+	debug("mapping window...");
+	
+	XMapWindow(xDisplay, window);
 }
 
 uint BackendX11Base::x11BtnToLinuxBtn(uint x11Btn)

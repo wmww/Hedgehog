@@ -14,12 +14,15 @@ protected:
 	V2i dim;
 	
 	void setupXKB();
+	void openWindow(XVisualInfo * visual, string name);
 	void setWindowName(string name);
 	
 private:
 	static uint x11BtnToLinuxBtn(uint x11Btn);
 	
 public:
+	BackendX11Base(V2i dim);
+	~BackendX11Base();
 	void checkEvents();
 	string getKeymap();
 	void * getXDisplay() { return xDisplay; }
