@@ -1,6 +1,6 @@
 #pragma once
 
-#include "WaylandSurface.h"
+#include "../WlSurface.h"
 
 class WlShellSurface
 {
