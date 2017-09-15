@@ -2,8 +2,8 @@ import os
 
 env = Environment()
 
-obj_file_path = '.obj'
-exe_bin_path = 'bin/main'
+obj_file_path = 'build/obj'
+exe_bin_path = 'build/run'
 debug_symbols = True
 
 env.Append(CCFLAGS=[

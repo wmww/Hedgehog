@@ -1,4 +1,5 @@
 *.o
 *.gch
 bin
+build
 *.sconsign.dblite
