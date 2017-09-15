@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../main/utils.h"
-#include "../main/InputInterface.h"
+#include "../main/util.h"
+#include "InputInterface.h"
 #include "../opengl/Texture.h"
 
 class WindowInterface

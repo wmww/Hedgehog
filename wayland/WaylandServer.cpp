@@ -1,4 +1,4 @@
-#include "../main/utils.h"
+#include "../main/util.h"
 #include "../opengl/Texture.h"
 #include "WaylandServer.h"
 #include "WaylandSurface.h"

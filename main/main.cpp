@@ -8,7 +8,6 @@
 #include "../opengl/Texture.h"
 #include "../backend/Backend.h"
 #include "../wayland/WaylandServer.h"
-#include "Surface2D.h"
 #include "../scene/Scene.h"
 
 // change to toggle debug statements on and off

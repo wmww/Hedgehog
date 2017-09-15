@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../main/utils.h"
+#include "../main/util.h"
 #include "std_headers/wayland-util.h"
 
 template<typename T>

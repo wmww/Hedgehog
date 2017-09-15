@@ -1,10 +1,9 @@
 #pragma once
 
-#include "../main/Surface2D.h"
-#include "../main/utils.h"
+#include "../main/util.h"
 #include "WaylandServer.h"
 #include "../opengl/Texture.h"
-#include "../main/InputInterface.h"
+#include "../scene/InputInterface.h"
 #include "Resource.h"
 
 #include <wayland-server-core.h>
