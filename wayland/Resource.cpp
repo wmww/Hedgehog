@@ -15,23 +15,18 @@ struct Resource::Impl
 	
 	static std::unordered_map<wl_resource *, shared_ptr<Impl>> map;
 	
-	void removeFromMap()
-	{
-		auto iter = map.find(resource);
-		ASSERT_ELSE(iter != Impl::map.end(), return);
-		ASSERT_ELSE(&*iter->second == this, return);
-		resource = nullptr; // this shouldn't be needed as the entire object should be deleted next line, but best to be safe
-		Impl::map.erase(iter);
-		debug("there are now " + to_string(Impl::map.size()) + " resources");
-		return; // 'this' will be invalid now, so don't do anything else!
-	}
-	
-	static void destroyWaylandResource(wl_resource * resourceRaw)
+	static void destroyCallback(wl_resource * resourceRaw)
 	{
 		auto resource = Resource(resourceRaw);
 		auto impl = resource.impl.lock();
 		ASSERT_ELSE(impl, return);
-		impl->removeFromMap();
+		auto iter = map.find(impl->resource);
+		ASSERT_ELSE(iter != Impl::map.end(), return);
+		ASSERT_ELSE(&*iter->second == &*impl, return);
+		impl->resource = nullptr; // this shouldn't be needed as the entire object should be deleted next line, but best to be safe
+		impl->data = nullptr;
+		Impl::map.erase(iter);
+		debug("'" + string(wl_resource_get_class(resourceRaw)) + "' removed, there are now " + to_string(Impl::map.size()) + " resources");
 		return; // 'this' will be invalid now, so don't do anything else!
 	}
 };
@@ -46,8 +41,8 @@ void Resource::setup(shared_ptr<Data> dataIn, wl_client * client, uint32_t id, c
 	wl_resource * resource = wl_resource_create(client, interface, version, id);
 	ASSERT(Impl::map.find(resource) == Impl::map.end());
 	Impl::map[resource] = impl;
-	debug("there are now " + to_string(Impl::map.size()) + " resources");
-	wl_resource_set_implementation(resource, implStruct, &wlResourceMadeWithResourceClass, Impl::destroyWaylandResource);
+	debug("'" + string(wl_resource_get_class(resource)) + "' created, there are now " + to_string(Impl::map.size()) + " resources");
+	wl_resource_set_implementation(resource, implStruct, &wlResourceMadeWithResourceClass, Impl::destroyCallback);
 	impl->resource = resource;
 	impl->data = dataIn;
 }
