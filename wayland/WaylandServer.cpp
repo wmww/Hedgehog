@@ -114,6 +114,8 @@ void xdgShellV6BindCallback(wl_client * client, void * data, uint32_t version, u
 	wl_resource * resource = wl_resource_create(client, &zxdg_shell_v6_interface, 1, id);
 	wl_resource_set_implementation(resource, &xdgShellV6Interface, nullptr, nullptr);
 	
+	//zxdg_shell_v6_send_ping(resource, WaylandServer::nextSerialNum());
+	
 	/*
 	wl_resource * resource = wl_resource_create(client, &xdg_shell_interface, version, id);
 	//wl_resource_set_implementation(resource, &xdgShellInterface, nullptr, nullptr);
@@ -147,7 +149,7 @@ void xdgShellV6BindCallback(wl_client * client, void * data, uint32_t version, u
 void seatBindCallback(wl_client * client, void * data, uint32_t version, uint32_t id)
 {
 	debug("seatBindCallback called");
-	assert(version == 1);
+	ASSERT(version == 1);
 	WlSeat(client, id);
 };
 
@@ -156,6 +158,35 @@ void dataDeviceManagerBindCallback(wl_client * client, void * data, uint32_t ver
 	debug("dataDeviceManagerBindCallback called");
 	ASSERT(version == 1);
 	WlDataDeviceManager(client, id);
+}
+
+const struct wl_output_interface outputInterface {
+	// release
+	+[](struct wl_client *client, struct wl_resource *resource)
+	{
+		debug("wl_output_interface.release called");
+		Resource(resource).destroy();
+	}
+};
+
+void outputBindCallback(wl_client * client, void * data, uint32_t version, uint32_t id)
+{
+	debug("outputBindCallback called");
+	ASSERT(version == 2);
+	wl_resource * resource = wl_resource_create(client, &wl_output_interface, 2, id);
+	wl_resource_set_implementation(resource, &wl_output_interface, nullptr, nullptr);
+	wl_output_send_geometry(resource, 0, 0, 1600, 1024, WL_OUTPUT_SUBPIXEL_NONE, "", "", WL_OUTPUT_TRANSFORM_NORMAL);
+	wl_output_send_scale(resource, 1);
+	wl_output_send_mode(resource, WL_OUTPUT_MODE_CURRENT | WL_OUTPUT_MODE_PREFERRED, 800, 800, 60000);
+	wl_output_send_done(resource);
+	//for (auto i: surfaces)
+	//{
+	//	if (i.isValid())
+	//	{
+	//		wl_surface_send_enter(i.getRaw(), resource);
+	//		warning("calling wl_surface_send_enter");
+	//	}
+	//}
 }
 
 void setup()
@@ -174,8 +205,9 @@ void setup()
 	wl_global_create(display, &wl_compositor_interface, 3, nullptr, compositorBindCallback);
 	wl_global_create(display, &wl_shell_interface, 1, nullptr, shellBindCallback);
 	wl_global_create(display, &zxdg_shell_v6_interface, 1, nullptr, xdgShellV6BindCallback);
-	wl_global_create(display, &wl_seat_interface, 1, nullptr, seatBindCallback);
-	wl_global_create(display, &wl_data_device_manager_interface, 1, nullptr, dataDeviceManagerBindCallback);
+	wl_global_create(display, &wl_seat_interface, 4, nullptr, seatBindCallback);
+	wl_global_create(display, &wl_data_device_manager_interface, 2, nullptr, dataDeviceManagerBindCallback);
+	wl_global_create(display, &wl_output_interface, 2, nullptr, outputBindCallback);
 	
 	wl_display_init_shm(display);
 	
