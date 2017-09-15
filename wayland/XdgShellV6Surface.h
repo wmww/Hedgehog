@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../WlSurface.h"
+#include "WlSurface.h"
 
 class XdgShellV6Surface
 {

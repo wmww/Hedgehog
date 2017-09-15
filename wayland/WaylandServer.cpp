@@ -1,7 +1,7 @@
 #include "../main/util.h"
 #include "../opengl/Texture.h"
 #include "WaylandServer.h"
-#include "../../WlSurface.h"
+#include "WlSurface.h"
 #include "WlSeat.h"
 #include "WlDataDeviceManager.h"
 #include "WlRegion.h"

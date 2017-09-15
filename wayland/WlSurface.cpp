@@ -1,4 +1,4 @@
-#include "../../WlSurface.h"
+#include "WlSurface.h"
 #include "WaylandServer.h"
 #include "Resource.h"
 #include "../backend/Backend.h"
