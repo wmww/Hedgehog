@@ -4,28 +4,18 @@
 #include "../backend/Backend.h"
 #include "WlSeat.h"
 
-#include "std_headers/wayland-server-protocol.h"
+#include <wayland-server-protocol.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
 // change to toggle debug statements on and off
 #define debug debug_off
 
+const int wl_surface_MAX_VERSION = 4;
+const int wl_callback_MAX_VERSION = 1;
+
 struct WaylandSurface::Impl: Resource::Data, InputInterface
 {
-	struct FrameCallback
-	{
-		wl_resource * callbackResource = nullptr;
-		
-		void done()
-		{
-			assert(callbackResource);
-			wl_callback_send_done(callbackResource, timeSinceStartMili());
-			wl_resource_destroy(callbackResource);
-			callbackResource = nullptr;
-		}
-	};
-	
 	// instance data
 	V2d dim;
 	bool isDamaged = false;
@@ -41,7 +31,7 @@ struct WaylandSurface::Impl: Resource::Data, InputInterface
 	// they will be fetched when the first instance of this class is created
 	static PFNEGLBINDWAYLANDDISPLAYWL eglBindWaylandDisplayWL;
 	static PFNEGLQUERYWAYLANDBUFFERWL eglQueryWaylandBufferWL;
-	static vector<FrameCallback> frameCallbacks;
+	static vector<Resource> frameCallbacks;
 	
 	Impl()
 	{
@@ -88,56 +78,40 @@ struct WaylandSurface::Impl: Resource::Data, InputInterface
 
 PFNEGLBINDWAYLANDDISPLAYWL WaylandSurface::Impl::eglBindWaylandDisplayWL = nullptr;
 PFNEGLQUERYWAYLANDBUFFERWL WaylandSurface::Impl::eglQueryWaylandBufferWL = nullptr;
-vector<WaylandSurface::Impl::FrameCallback> WaylandSurface::Impl::frameCallbacks;
+vector<Resource> WaylandSurface::Impl::frameCallbacks;
 
 const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
-	// surface destroy
-	+[](wl_client * client, wl_resource * resource)
-	{
-		debug("surface interface surface destroy callback called");
+	.destroy = +[](wl_client * client, wl_resource * resource) {
+		debug("wl_surface.destroy called");
 		Resource(resource).destroy();
 	},
-	// surface attach
-	+[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y)
-	{
-		debug("surface interface surface attach callback called");
+	.attach = +[](wl_client * client, wl_resource * resource, wl_resource * buffer, int32_t x, int32_t y) {
+		debug("wl_surface.attach called");
 		IMPL_FROM(resource);
 		impl->bufferResourceRaw = buffer;
 	},
-	// surface damage
-	+[](wl_client * client, wl_resource * resource, int32_t x, int32_t y, int32_t width, int32_t height)
-	{
-		debug("surface interface surface damage callback called");
+	.damage = +[](wl_client * client, wl_resource * resource, int32_t x, int32_t y, int32_t width, int32_t height) {
+		debug("wl_surface.damage called");
 		// TODO: OPTIMIZATION: only repaint damaged region
 		IMPL_FROM(resource);
 		impl->isDamaged = true;
 	},
-	// surface frame
-	+[](wl_client * client, wl_resource * resource, uint32_t callback)
-	{
-		debug("surface interface surface frame callback called");
+	.frame = +[](wl_client * client, wl_resource * resource, uint32_t callback) {
+		debug("wl_surface.frame called");
 		// TODO: OPTIMIZATION: don't call the callback if the window is hidden (this may take some restructuring)
-		wl_resource * callbackResource = wl_resource_create(client, &wl_callback_interface, 1, callback);
-		FrameCallback callbackStruct {callbackResource};
-		frameCallbacks.push_back(callbackStruct);
-		//struct surface *surface = wl_resource_get_user_data (resource);
-		//surface->frame_callback = wl_resource_create (client, &wl_callback_interface, 1, callback);
+		Resource callbackResource;
+		callbackResource.setup(nullptr, client, callback, &wl_callback_interface, wl_callback_MAX_VERSION, nullptr);
+		frameCallbacks.push_back(callbackResource);
 	},
-	// surface set opaque region
-	+[](wl_client * client, wl_resource * resource, wl_resource * region)
-	{
-		debug("surface interface surface set opaque region callback called");
+	.set_opaque_region = +[](wl_client * client, wl_resource * resource, wl_resource * region) {
+		debug("wl_surface.set_opaque_region called");
 		// this is just for optimizing the redrawing of things behind this surface, fine to ignore for now
 	},
-	// surface set input region
-	+[](wl_client * client, wl_resource * resource, wl_resource * region)
-	{
-		warning("surface interface surface set input region callback called (not yet implemented)");
+	.set_input_region = +[](wl_client * client, wl_resource * resource, wl_resource * region) {
+		warning("wl_surface.set_input_region not implemented");
 	},
-	// surface commit
-	+[](wl_client * client, wl_resource * resource)
-	{
-		debug("surface interface surface commit callback called");
+	.commit = +[](wl_client * client, wl_resource * resource) {
+		debug("wl_surface.commit called");
 		
 		IMPL_FROM(resource);
 		
@@ -189,19 +163,18 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 			impl->dim = V2d(bufferDim.x, bufferDim.y);
 		}
 	},
-	// surface set buffer transform
-	+[](wl_client * client, wl_resource * resource, int32_t transform)
-	{
-		warning("surface interface surface set buffer transform callback called (not yet implemented)");
+	.set_buffer_transform = +[](wl_client * client, wl_resource * resource, int32_t transform) {
+		warning("wl_surface.set_buffer_transform not implemented");
 	},
-	// surface set buffer scale
-	+[](wl_client * client, wl_resource * resource, int32_t scale)
-	{
-		debug("surface interface surface set buffer scale callback called");
+	.set_buffer_scale = +[](wl_client * client, wl_resource * resource, int32_t scale) {
+		debug("wl_surface.set_buffer_scale called");
 		if (scale != 1)
 		{
 			warning("scale is " + to_string(scale) + " which is not 1 and thus shouldn't be ignored");
 		}
+	},
+	.damage_buffer = +[](struct wl_client *client, struct wl_resource *resource, int32_t x, int32_t y, int32_t width, int32_t height) {
+		warning("wl_surface.damage_buffer not implemented");
 	},
 };
 
@@ -212,7 +185,7 @@ WaylandSurface::WaylandSurface(wl_client * client, uint32_t id)
 	// in wlSetup, a shared_ptr to the object is saved by WaylandObject, so it is safe to store in a weak_ptr after
 	auto impl = make_shared<Impl>();
 	this->impl = impl;
-	impl->surfaceResource.setup(impl, client, id, &wl_surface_interface, 3, &Impl::surfaceInterface);
+	impl->surfaceResource.setup(impl, client, id, &wl_surface_interface, wl_surface_MAX_VERSION, &Impl::surfaceInterface);
 }
 
 WaylandSurface WaylandSurface::getFrom(Resource resource)
@@ -227,18 +200,16 @@ void WaylandSurface::runFrameCallbacks()
 {
 	for (auto i: Impl::frameCallbacks)
 	{
-		i.done();
+		ASSERT(i.isValid());
+		if (i.isValid())
+		{
+			if (i.getVersion() >= WL_CALLBACK_DONE_SINCE_VERSION)
+				wl_callback_send_done(i.getRaw(), timeSinceStartMili());
+			i.destroy();
+		}
 	}
 	Impl::frameCallbacks.clear();
 }
-
-/*
-wl_resource * WaylandSurface::getSurfaceResource()
-{
-	GET_IMPL;
-	return impl->getResource();
-}
-*/
 
 Texture WaylandSurface::getTexture()
 {
