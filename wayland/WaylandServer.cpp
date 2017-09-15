@@ -8,8 +8,8 @@
 #include "WlShellSurface.h"
 #include "XdgShellV6Surface.h"
 
-#include "std_headers/wayland-server.h"
-#include "std_headers/wayland-server-protocol.h"
+#include <wayland-server.h>
+#include <wayland-server-protocol.h>
 #include "protocols/xdg-shell-unstable-v6.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>

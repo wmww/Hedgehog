@@ -1,7 +1,7 @@
+#include <wayland-server-protocol.h>
 #include "WlDataDeviceManager.h"
 #include "Resource.h"
 #include "WlArray.h"
-#include "std_headers/wayland-server-protocol.h"
 
 // change to toggle debug statements on and off
 #define debug debug_off

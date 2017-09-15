@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../main/util.h"
-#include "std_headers/wayland-util.h"
+#include <wayland-util.h>
 
 template<typename T>
 class WlArray

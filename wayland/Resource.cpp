@@ -11,6 +11,7 @@ int wlResourceMadeWithResourceClass;
 struct Resource::Impl
 {
 	wl_resource * resource = nullptr;
+	uint resourceVersion = 0;
 	shared_ptr<Data> data;
 	
 	static std::unordered_map<wl_resource *, shared_ptr<Impl>> map;
@@ -44,6 +45,7 @@ void Resource::setup(shared_ptr<Data> dataIn, wl_client * client, uint32_t id, c
 	debug("'" + string(wl_resource_get_class(resource)) + "' created, there are now " + to_string(Impl::map.size()) + " resources");
 	wl_resource_set_implementation(resource, implStruct, &wlResourceMadeWithResourceClass, Impl::destroyCallback);
 	impl->resource = resource;
+	impl->resourceVersion = version;
 	impl->data = dataIn;
 }
 
@@ -67,6 +69,12 @@ wl_resource * Resource::getRaw()
 {
 	IMPL_ELSE(return nullptr);
 	return impl->resource;
+}
+
+uint Resource::getVersion()
+{
+	IMPL_ELSE(return 0);
+	return impl->resourceVersion;
 }
 
 void Resource::destroy()

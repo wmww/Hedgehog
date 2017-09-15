@@ -28,7 +28,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include "../std_headers/wayland-util.h"
+#include "wayland-util.h"
 
 extern const struct wl_interface wl_output_interface;
 extern const struct wl_interface wl_seat_interface;

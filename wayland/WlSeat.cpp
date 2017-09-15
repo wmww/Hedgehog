@@ -3,7 +3,7 @@
 #include "WlArray.h"
 #include "../backend/Backend.h"
 
-#include "std_headers/wayland-server-protocol.h"
+#include <wayland-server-protocol.h>
 #include <unordered_map>
 #include <fcntl.h>
 #include <unistd.h>
