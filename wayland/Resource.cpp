@@ -77,6 +77,12 @@ uint Resource::getVersion()
 	return impl->resourceVersion;
 }
 
+bool Resource::check(uint version)
+{
+	IMPL_ELSE(return false);
+	return impl->resourceVersion >= version;
+}
+
 void Resource::destroy()
 {
 	IMPL_ELSE(return);

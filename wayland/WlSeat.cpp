@@ -36,18 +36,14 @@ std::unordered_map<wl_client *, weak_ptr<WlSeat::Impl>> WlSeat::Impl::clientToIm
 
 const struct wl_pointer_interface WlSeat::Impl::pointerInterface = {
 	
-	// set_cursor
-	+[](wl_client * client, wl_resource * resource, uint32_t serial, wl_resource * _surface, int32_t hotspot_x, int32_t hotspot_y)
-	{
-		warning("wl_pointer_interface.set_cursor called (not yet implemented)");
+	.set_cursor = +[](wl_client * client, wl_resource * resource, uint32_t serial, wl_resource * _surface, int32_t hotspot_x, int32_t hotspot_y) {
+		warning("wl_pointer.set_cursor not implemented");
 		//surface * surface = wl_resource_get_user_data(_surface);
 		//cursor = surface;
 	},
 	
-	// pointer release
-	+[](wl_client * client, wl_resource *resource)
-	{
-		debug("wl_pointer_interface.release called");
+	.release = +[](wl_client * client, wl_resource *resource) {
+		debug("wl_pointer.release called");
 		Resource(resource).destroy();
 	}
 };
@@ -63,52 +59,58 @@ const struct wl_keyboard_interface WlSeat::Impl::keyboardInterface {
 
 const struct wl_seat_interface WlSeat::Impl::seatInterface = {
 	
-	// get_pointer
-	+[](wl_client * client, wl_resource * resource, uint32_t id)
-	{
-		debug("wl_seat_interface.get_pointer called");
-		
+	.get_pointer = +[](wl_client * client, wl_resource * resource, uint32_t id) {
+		debug("wl_seat.get_pointer called");
 		IMPL_FROM(resource);
 		ASSERT(impl->pointer.isNull());
-		impl->pointer.setup(impl, client, id, &wl_pointer_interface, 1, &pointerInterface);
-		//wl_resource * pointer = wl_resource_create(client, &wl_pointer_interface, 1, id);
-		//wl_resource_set_implementation(pointer, &pointerInterface, nullptr, nullptr);
-		//get_client(client)->pointer = pointer;
+		impl->pointer.setup(
+			impl,
+			client,
+			id,
+			&wl_pointer_interface,
+			wl_resource_get_version(resource),
+			&pointerInterface
+		);
 	},
-	// get_keyboard
-	+[](wl_client * client, wl_resource * resource, uint32_t id)
-	{
-		debug("wl_seat_interface.get_keyboard called");
-		
+	.get_keyboard = +[](wl_client * client, wl_resource * resource, uint32_t id) {
+		debug("wl_seat.get_keyboard called");
 		IMPL_FROM(resource);
 		ASSERT(impl->keyboard.isNull());
-		impl->keyboard.setup(impl, client, id, &wl_keyboard_interface, 1, &keyboardInterface);
-		auto null_fd = open("/dev/null", O_RDONLY);
-		wl_keyboard_send_keymap(
-			impl->keyboard.getRaw(),
-			WL_KEYBOARD_KEYMAP_FORMAT_NO_KEYMAP,
-			null_fd,
-			0
-			);
-		close(null_fd);
-		//int fd, size;
-		ASSERT_ELSE(Backend::instance, return);
-		string keymapString = Backend::instance->getKeymap();
-		size_t dataSize = keymapString.size() + 1;
-		string xdgRuntimeDir = getenv("XDG_RUNTIME_DIR");
-		ASSERT_ELSE(!xdgRuntimeDir.empty(), return);
-		int fd = open(xdgRuntimeDir.c_str(), O_TMPFILE|O_RDWR|O_EXCL, 0600);
-		ftruncate(fd, dataSize);
-		void * data = mmap(nullptr, dataSize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-		memcpy(data, keymapString.c_str(), dataSize);
-		munmap(data, dataSize);
-		wl_keyboard_send_keymap(impl->keyboard.getRaw(), WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, fd, dataSize);
-		close(fd);
+		impl->keyboard.setup(
+			impl,
+			client,
+			id,
+			&wl_keyboard_interface,
+			wl_resource_get_version(resource),
+			&keyboardInterface
+		);
+		Resource keyboard = impl->keyboard;
+		if (keyboard.check(WL_KEYBOARD_REPEAT_INFO_SINCE_VERSION))
+		{
+			wl_keyboard_send_repeat_info(keyboard.getRaw(), 0, 0);
+		}
+		if (keyboard.check(WL_KEYBOARD_KEYMAP_SINCE_VERSION))
+		{
+			ASSERT_ELSE(Backend::instance, return);
+			string keymapString = Backend::instance->getKeymap();
+			size_t dataSize = keymapString.size() + 1;
+			string xdgRuntimeDir = getenv("XDG_RUNTIME_DIR");
+			ASSERT_ELSE(!xdgRuntimeDir.empty(), return);
+			int fd = open(xdgRuntimeDir.c_str(), O_TMPFILE|O_RDWR|O_EXCL, 0600);
+			ftruncate(fd, dataSize);
+			void * data = mmap(nullptr, dataSize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+			memcpy(data, keymapString.c_str(), dataSize);
+			munmap(data, dataSize);
+			wl_keyboard_send_keymap(impl->keyboard.getRaw(), WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, fd, dataSize);
+			close(fd);
+		}
 	},
-	// get_touch
-	+[](wl_client * client, wl_resource * resource, uint32_t id)
-	{
-		warning("wl_seat_interface.get_touch called (not yet implemented)");
+	.get_touch = +[](wl_client * client, wl_resource * resource, uint32_t id) {
+		warning("wl_seat.get_touch not implemented");
+	},
+	.release = +[](wl_client * client, wl_resource * resource) {
+		debug("wl_seat.release called");
+		Resource(resource).destroy();
 	}
 };
 
@@ -138,26 +140,40 @@ void WlSeat::pointerMotion(V2d position, Resource surface)
 		return;
 	}
 	ASSERT_ELSE(surface.isValid(), return);
-	
+	Resource pointer = impl->pointer;
+	auto fixedPos = V2<wl_fixed_t>(wl_fixed_from_double(position.x), wl_fixed_from_double(position.y));
 	if (impl->lastPointerSurfaceRaw != surface.getRaw())
 	{
-		impl->lastPointerSurfaceRaw = surface.getRaw();
-		
-		wl_pointer_send_enter(
-			impl->pointer.getRaw(),
-			WaylandServer::nextSerialNum(),
-			surface.getRaw(),
-			wl_fixed_from_double(position.x),
-			wl_fixed_from_double(position.y)
+		if (pointer.check(WL_POINTER_ENTER_SINCE_VERSION))
+		{
+			impl->lastPointerSurfaceRaw = surface.getRaw();
+			
+			wl_pointer_send_enter(
+				pointer.getRaw(),
+				WaylandServer::nextSerialNum(),
+				surface.getRaw(),
+				fixedPos.x,
+				fixedPos.y
 			);
+		}
+	}
+	else
+	{
+		if (pointer.check(WL_POINTER_MOTION_SINCE_VERSION))
+		{
+			wl_pointer_send_motion(
+				pointer.getRaw(),
+				timeSinceStartMili(),
+				fixedPos.x,
+				fixedPos.y
+			);
+		}
+	}
+	if (pointer.check(WL_POINTER_FRAME_SINCE_VERSION))
+	{
+		wl_pointer_send_frame(pointer.getRaw());
 	}
 	
-	wl_pointer_send_motion(
-		impl->pointer.getRaw(),
-		timeSinceStartMili(),
-		wl_fixed_from_double(position.x),
-		wl_fixed_from_double(position.y)
-		);
 }
 
 void WlSeat::pointerLeave(Resource surface)
@@ -171,22 +187,26 @@ void WlSeat::pointerLeave(Resource surface)
 	}
 	ASSERT_ELSE(impl->lastPointerSurfaceRaw != nullptr, return);
 	ASSERT_ELSE(impl->lastPointerSurfaceRaw == surface.getRaw(), return);
-	
+	Resource pointer = impl->pointer;
 	impl->lastPointerSurfaceRaw = nullptr;
-	
-	wl_pointer_send_leave(
-		impl->pointer.getRaw(),
-		WaylandServer::nextSerialNum(),
-		surface.getRaw()
+	if (pointer.check(WL_POINTER_LEAVE_SINCE_VERSION))
+	{
+		wl_pointer_send_leave(
+			pointer.getRaw(),
+			WaylandServer::nextSerialNum(),
+			surface.getRaw()
 		);
+	}
+	if (pointer.check(WL_POINTER_FRAME_SINCE_VERSION))
+	{
+		wl_pointer_send_frame(pointer.getRaw());
+	}
 }
 
 void WlSeat::pointerClick(uint button, bool down, Resource surface)
 {
 	debug("mouse button '" + to_string(button) + "' " + (down ? "down" : "up"));
-	
 	auto impl = getImplFromSurface(surface);
-	
 	if (!impl || impl->pointer.isNull())
 	{
 		debug("client has not created the needed objects");
@@ -194,14 +214,22 @@ void WlSeat::pointerClick(uint button, bool down, Resource surface)
 	}
 	ASSERT_ELSE(impl->lastPointerSurfaceRaw != nullptr, return);
 	ASSERT_ELSE(impl->lastPointerSurfaceRaw == surface.getRaw(), return);
+	Resource pointer = impl->pointer;
 	
-	wl_pointer_send_button(
-		impl->pointer.getRaw(),
-		WaylandServer::nextSerialNum(),
-		timeSinceStartMili(),
-		button,
-		down ? WL_POINTER_BUTTON_STATE_PRESSED : WL_POINTER_BUTTON_STATE_RELEASED
+	if (pointer.check(WL_POINTER_BUTTON_SINCE_VERSION))
+	{
+		wl_pointer_send_button(
+			pointer.getRaw(),
+			WaylandServer::nextSerialNum(),
+			timeSinceStartMili(),
+			button,
+			down ? WL_POINTER_BUTTON_STATE_PRESSED : WL_POINTER_BUTTON_STATE_RELEASED
 		);
+	}
+	if (pointer.check(WL_POINTER_FRAME_SINCE_VERSION))
+	{
+		wl_pointer_send_frame(pointer.getRaw());
+	}
 }
 
 void WlSeat::keyPress(uint key, bool down, Resource surface)
@@ -217,29 +245,37 @@ void WlSeat::keyPress(uint key, bool down, Resource surface)
 	}
 	ASSERT_ELSE(impl->lastPointerSurfaceRaw != nullptr, return);
 	ASSERT_ELSE(impl->lastPointerSurfaceRaw == surface.getRaw(), return);
+	Resource keyboard = impl->keyboard;
 	
-	WlArray<uint> keysDownArray;
+	WlArray<uint> keysDownArray; // it will be empty for now
 	
-	wl_keyboard_send_enter(
-		impl->keyboard.getRaw(),
-		WaylandServer::nextSerialNum(),
-		surface.getRaw(),
-		keysDownArray.getRaw()
+	if (keyboard.check(WL_KEYBOARD_ENTER_SINCE_VERSION))
+	{
+		wl_keyboard_send_enter(
+			keyboard.getRaw(),
+			WaylandServer::nextSerialNum(),
+			surface.getRaw(),
+			keysDownArray.getRaw()
 		);
-	
-	wl_keyboard_send_key(
-		impl->keyboard.getRaw(),
-		WaylandServer::nextSerialNum(),
-		timeSinceStartMili(),
-		key,
-		down ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED
+	}
+	if (keyboard.check(WL_KEYBOARD_KEY_SINCE_VERSION))
+	{
+		wl_keyboard_send_key(
+			keyboard.getRaw(),
+			WaylandServer::nextSerialNum(),
+			timeSinceStartMili(),
+			key,
+			down ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED
 		);
-	
-	wl_keyboard_send_leave(
-		impl->keyboard.getRaw(),
-		WaylandServer::nextSerialNum(),
-		surface.getRaw()
+	}
+	if (keyboard.check(WL_KEYBOARD_LEAVE_SINCE_VERSION))
+	{
+		wl_keyboard_send_leave(
+			keyboard.getRaw(),
+			WaylandServer::nextSerialNum(),
+			surface.getRaw()
 		);
+	}
 }
 
 WlSeat WlSeat::getFromClient(wl_client * client)

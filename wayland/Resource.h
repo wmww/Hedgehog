@@ -34,6 +34,7 @@ public:
 	
 	wl_resource * getRaw();
 	uint getVersion();
+	bool check(uint version); // check if version is >= given one (also returns false for null resource)
 	
 	void destroy();
 	
