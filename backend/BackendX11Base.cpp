@@ -116,7 +116,7 @@ void BackendX11Base::checkEvents()
 			switch (event.type)
 			{
 			case MotionNotify: {
-				auto movement = V2d((double)event.xbutton.x / dim.x, (double)event.xbutton.y / dim.y);
+				auto movement = V2d((double)event.xbutton.x / dim.x, 1 - (double)event.xbutton.y / dim.y);
 				interface->pointerMotion(movement);
 			}	break;
 				

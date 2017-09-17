@@ -28,7 +28,7 @@ struct WaylandSurface::Impl: Resource::Data, InputInterface
 	void pointerMotion(V2d normalizedPos)
 	{
 		ASSERT_ELSE(surfaceResource.isValid(), return);
-		V2d newPos = V2d(normalizedPos.x * dim.x, normalizedPos.y * dim.y);
+		V2d newPos = V2d(normalizedPos.x * dim.x, (1 - normalizedPos.y) * dim.y);
 		WlSeat::pointerMotion(newPos, surfaceResource);
 	}
 	
