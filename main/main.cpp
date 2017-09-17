@@ -40,7 +40,7 @@ int main (int argc, char ** argv)
 	debug("starting main loop");
 	while (Backend::instance)
 	{
-		renderer.draw(texture);
+		renderer.draw(texture, V2d(0, 0), V2d(1, 1));
 		WaylandServer::iteration();
 		scene.draw();
 		Backend::instance->swapBuffer();

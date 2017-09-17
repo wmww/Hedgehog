@@ -17,6 +17,9 @@ public:
 	inline bool isNull() { return impl == nullptr; };
 	inline bool isValid() { return !isNull(); };
 	
+	// add more uniform functions as needed
+	void uniformMatrix4fv(string name, GLfloat * data);
+	
 private:
 	struct Impl;
 	shared_ptr<Impl> impl = nullptr;

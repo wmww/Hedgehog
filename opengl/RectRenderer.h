@@ -8,9 +8,9 @@ class RectRenderer
 {
 public:
 	RectRenderer();
-	RectRenderer(const RectRenderer& that) = delete;
+	RectRenderer(const RectRenderer& that) = delete; // you may not copy this class, use a shared_ptr if you must
 	~RectRenderer();
-	void draw(Texture texture);
+	void draw(Texture texture, V2d pos, V2d size);
 	
 private:
 	uint vertexArrayID = 0;

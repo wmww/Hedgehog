@@ -10,9 +10,10 @@ const string vertShaderCode = "#version 330 core\n"
 "layout (location = 0) in vec2 position; "
 "layout (location = 1) in vec2 texturePositionIn; "
 "out vec2 texturePosition; "
+"uniform mat4 transform; "
 "void main() "
 "{ "
-	"gl_Position = vec4(position, 0.0f, 1.0f); "
+	"gl_Position = transform * vec4(position, 0.0f, 1.0f); "
     "texturePosition = texturePositionIn; "
 "} ";
 
@@ -95,10 +96,18 @@ RectRenderer::~RectRenderer()
 	glDeleteVertexArrays(1, &vertexArrayID);
 }
 
-void RectRenderer::draw(Texture texture)
+void RectRenderer::draw(Texture texture, V2d pos, V2d size)
 {
 	shaderProgram.bind();
 	{
+		GLfloat transform[] = {
+			(float)size.x,	0.0,			0.0,			(float)pos.x,
+			0.0,			(float)size.y,	0.0,			(float)pos.y,
+			0.0,			0.0,			1.0,			0.0,
+			0.0,			0.0,			0.0,			1.0,
+		};
+		shaderProgram.uniformMatrix4fv("transform", transform);
+		
 		texture.bind();
 		{
 			glBindVertexArray(vertexArrayID);
