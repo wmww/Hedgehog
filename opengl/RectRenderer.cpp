@@ -101,10 +101,10 @@ void RectRenderer::draw(Texture texture, V2d pos, V2d size)
 	shaderProgram.bind();
 	{
 		GLfloat transform[] = {
-			(float)size.x,	0.0,			0.0,			(float)pos.x,
-			0.0,			(float)size.y,	0.0,			(float)pos.y,
-			0.0,			0.0,			1.0,			0.0,
-			0.0,			0.0,			0.0,			1.0,
+			(GLfloat)size.x,	0.0,				0.0,				0.0,
+			0.0,				(GLfloat)size.y,	0.0,				0.0,
+			0.0,				0.0,				1.0,				0.0,
+			(GLfloat)(pos.x*2 + size.x - 1), (GLfloat)(pos.y*2 + size.y - 1), 0.0, 1.0,
 		};
 		shaderProgram.uniformMatrix4fv("transform", transform);
 		
