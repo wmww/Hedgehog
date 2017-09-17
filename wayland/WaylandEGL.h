@@ -4,11 +4,12 @@
 #include "../opengl/Texture.h"
 
 #include <wayland-server.h>
+#include <EGL/egl.h>
 
 namespace WaylandEGL
 {
 
-void setEglDisplay(void * eglDisplay);
+void setEglVars(EGLDisplay eglDisplay, EGLContext eglContext);
 
 void setup(wl_display * display);
 

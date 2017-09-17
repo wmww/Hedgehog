@@ -63,7 +63,7 @@ struct BackendEGL: BackendX11Base
 		ASSERT(windowSurface != EGL_NO_SURFACE);
 		eglMakeCurrent(eglDisplay, windowSurface, windowSurface, windowContext);
 		
-		WaylandEGL::setEglDisplay(eglDisplay);
+		WaylandEGL::setEglVars(eglDisplay, windowContext);
 	}
 	
 	~BackendEGL()

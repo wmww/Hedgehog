@@ -212,7 +212,7 @@ void Texture::loadFromData(void * data, V2i dim)
 void Texture::loadFromEGLImage(EGLImage image, V2i dim)
 {
 	impl->setup();
-	
+	ASSERT_ELSE(glEGLImageTargetTexture2DOES, return);
 	glBindTexture(GL_TEXTURE_2D, impl->textureId);
 	{
 		glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);
