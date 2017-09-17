@@ -84,7 +84,7 @@ void Scene::setCursor(Texture texture, V2d hotspot)
 {
 	debug("setting cursor");
 	ASSERT_ELSE(impl, return);
-	impl->cursorTexture = texture;
+	//impl->cursorTexture = texture;
 	impl->cursorHotspot = hotspot;
 }
 
@@ -97,14 +97,18 @@ weak_ptr<InputInterface> Scene::getInputInterface()
 void Scene::draw()
 {
 	ASSERT_ELSE(impl, return);
+	//warning(to_string(impl->windows.size()) + " windows");
 	for (auto i: impl->windows)
 	{
 		auto window = i.lock();
 		if (window && window->texture.isValid())
 		{
 			impl->renderer.draw(window->texture, V2d(0.25, 0.25), V2d(0.5, 0.5));
+			//mpl->renderer.draw(window->texture, V2d(0, 0), V2d(1, 1));
 		}
 	}
 	if (impl->cursorTexture.isValid())
+	{
 		impl->renderer.draw(impl->cursorTexture, V2d(0, 0), V2d(0.5, 0.5));
+	}
 }

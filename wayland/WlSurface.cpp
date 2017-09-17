@@ -187,6 +187,8 @@ void WaylandSurface::runFrameCallbacks()
 Texture WaylandSurface::getTexture()
 {
 	IMPL_ELSE(return Texture());
+	if (impl->texture.isNull())
+		impl->texture.setupEmpty();
 	return impl->texture;
 }
 

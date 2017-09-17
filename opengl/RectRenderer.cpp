@@ -14,7 +14,7 @@ const string vertShaderCode = "#version 330 core\n"
 "void main() "
 "{ "
 	"gl_Position = transform * vec4(position, 0.0f, 1.0f); "
-    "texturePosition = texturePositionIn; "
+	"texturePosition = texturePositionIn; "
 "} ";
 
 const string fragShaderCode = "#version 330 core\n"

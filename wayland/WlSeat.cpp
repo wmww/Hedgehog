@@ -45,8 +45,6 @@ const struct wl_pointer_interface WlSeat::Impl::pointerInterface = {
 		Texture texture = surface.getTexture();
 		ASSERT_ELSE(texture.isValid(), return);
 		Scene::instance.setCursor(texture, V2d(0, 0));
-		//surface * surface = wl_resource_get_user_data(_surface);
-		//cursor = surface;
 	},
 	
 	.release = +[](wl_client * client, wl_resource *resource) {

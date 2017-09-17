@@ -140,6 +140,10 @@ void ShaderProgram::uniformMatrix4fv(string name, GLfloat * data)
 {
 	ASSERT_ELSE(impl, return);
 	GLint loc = glGetUniformLocation(impl->programId, "transform");
-	ASSERT_ELSE(loc > -1, return);
+	if (loc == -1)
+	{
+		warning("unknown shader uniform name '" + name + "' given");
+		return;
+	}
 	glUniformMatrix4fv(loc, 1, GL_FALSE, data);
 }

@@ -17,33 +17,15 @@ struct Texture::Impl
 {
 	GLuint textureId = 0;
 	V2i dim;
-	bool isSetUp = false;
 	
 	Impl()
-	{}
-	
-	~Impl()
 	{
-		debug("deleting texture");
-		if (isSetUp)
+		if (glEGLImageTargetTexture2DOES == nullptr)
 		{
-			glDeleteTextures(1, &textureId);
+			glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
+			ASSERT(glEGLImageTargetTexture2DOES != nullptr);
 		}
-	}
-	
-	// automatically insures that this is only called once in the object's lifetime
-	void setup()
-	{
-		if (!isSetUp)
-		{
-			setupIfFirstInstance(this);
-			setupGlTexture();
-			isSetUp = true;
-		}
-	}
-	
-	void setupGlTexture()
-	{
+		
 		debug("setting up OpenGL texture");
 		
 		glGenTextures(1, &textureId);
@@ -51,6 +33,10 @@ struct Texture::Impl
 		glBindTexture(GL_TEXTURE_2D, textureId);
 		{
 			// Set the texture wrapping/filtering options (on the currently bound texture object)
+			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -59,21 +45,24 @@ struct Texture::Impl
 		glBindTexture(GL_TEXTURE_2D, false);
 	}
 	
-	static void firstInstanceSetup()
+	~Impl()
 	{
-		glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
+		debug("deleting texture");
+		glDeleteTextures(1, &textureId);
 	}
 };
 
-Texture::Texture()
+void Texture::setupEmpty()
 {
-	impl = make_shared<Impl>();
+	if (!impl)
+		impl = make_shared<Impl>();
 }
 
 void Texture::loadFromImage(string imagePath)
 {
 	debug("loading '" + imagePath + "' into texture...");
-	impl->setup();
+	if (!impl)
+		impl = make_shared<Impl>();
 	// Load and generate the texture
 	int width, height;
 	unsigned char* image = SOIL_load_image(imagePath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
@@ -94,7 +83,8 @@ void Texture::loadFromImage(string imagePath)
 
 void Texture::loadFromData(void * data, V2i dim)
 {
-	impl->setup();
+	if (!impl)
+		impl = make_shared<Impl>();
 	//impl->important("(" + to_string(dim.x) + ", " + to_string(dim.y) + ")");
 	/*
 	impl->important("loading from data, dim: " + to_string(dim));
@@ -127,7 +117,8 @@ void Texture::loadFromData(void * data, V2i dim)
 
 void Texture::loadFromEGLImage(void * image, V2i dim)
 {
-	impl->setup();
+	if (!impl)
+		impl = make_shared<Impl>();
 	ASSERT_ELSE(glEGLImageTargetTexture2DOES, return);
 	glBindTexture(GL_TEXTURE_2D, impl->textureId);
 	{
@@ -146,11 +137,13 @@ void Texture::bind()
 
 void Texture::unbind()
 {
+	ASSERT(impl);
 	glBindTexture(GL_TEXTURE_2D, false);
 }
 
-uint Texture::getTextureId()
+GLuint Texture::getTextureId()
 {
-	assert(impl->isSetUp);
+	ASSERT_ELSE(impl, return 0);
+	ASSERT(impl->textureId);
 	return impl->textureId;
 }

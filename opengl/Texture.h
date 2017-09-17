@@ -6,8 +6,9 @@
 class Texture
 {
 public:
-	Texture();
+	Texture() {}
 	
+	void setupEmpty();
 	void loadFromImage(string filepath);
 	void loadFromData(void * data, V2i dim);
 	void loadFromEGLImage(void * image, V2i dim);
@@ -15,7 +16,7 @@ public:
 	void bind();
 	void unbind();
 	
-	uint getTextureId();
+	GLuint getTextureId();
 	inline bool isNull() { return impl == nullptr; };
 	inline bool isValid() { return !isNull(); };
 	
