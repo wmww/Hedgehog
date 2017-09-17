@@ -141,6 +141,10 @@ void BackendX11Base::checkEvents()
 				glViewport(0, 0, dim.x, dim.y);
 				break;
 			
+			case DestroyNotify:
+				instance = nullptr;
+				break;
+			
 			default:
 				// ignore
 				break;
