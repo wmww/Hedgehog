@@ -10,7 +10,7 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
-struct WaylandSurface::Impl: Resource::Data, InputInterface
+struct WlSurface::Impl: Resource::Data, InputInterface
 {
 	// instance data
 	V2d dim;
@@ -51,9 +51,9 @@ struct WaylandSurface::Impl: Resource::Data, InputInterface
 	}
 };
 
-vector<Resource> WaylandSurface::Impl::frameCallbacks;
+vector<Resource> WlSurface::Impl::frameCallbacks;
 
-const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
+const struct wl_surface_interface WlSurface::Impl::surfaceInterface = {
 	.destroy = +[](wl_client * client, wl_resource * resource) {
 		debug("wl_surface.destroy called");
 		Resource(resource).destroy();
@@ -154,23 +154,23 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 	},
 };
 
-WaylandSurface::WaylandSurface(wl_client * client, uint32_t id, uint version)
+WlSurface::WlSurface(wl_client * client, uint32_t id, uint version)
 {
-	debug("creating WaylandSurface");
+	debug("creating WlSurface");
 	auto impl = make_shared<Impl>();
 	this->impl = impl;
 	impl->surfaceResource.setup(impl, client, id, &wl_surface_interface, version, &Impl::surfaceInterface);
 }
 
-WaylandSurface WaylandSurface::getFrom(Resource resource)
+WlSurface WlSurface::getFrom(Resource resource)
 {
 	ASSERT(resource.isValid());
-	WaylandSurface out;
+	WlSurface out;
 	out.impl = resource.get<Impl>();
 	return out;
 }
 
-void WaylandSurface::runFrameCallbacks()
+void WlSurface::runFrameCallbacks()
 {
 	for (auto i: Impl::frameCallbacks)
 	{
@@ -184,7 +184,7 @@ void WaylandSurface::runFrameCallbacks()
 	Impl::frameCallbacks.clear();
 }
 
-Texture WaylandSurface::getTexture()
+Texture WlSurface::getTexture()
 {
 	IMPL_ELSE(return Texture());
 	if (impl->texture.isNull())
@@ -192,7 +192,7 @@ Texture WaylandSurface::getTexture()
 	return impl->texture;
 }
 
-weak_ptr<InputInterface> WaylandSurface::getInputInterface()
+weak_ptr<InputInterface> WlSurface::getInputInterface()
 {
 	return impl;
 }

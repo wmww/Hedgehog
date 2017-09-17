@@ -41,7 +41,7 @@ const struct wl_pointer_interface WlSeat::Impl::pointerInterface = {
 	.set_cursor = +[](wl_client * client, wl_resource * resource, uint32_t serial, wl_resource * _surface, int32_t hotspot_x, int32_t hotspot_y) {
 		debug("wl_pointer.set_cursor called");
 		IMPL_FROM(resource);
-		WaylandSurface surface = WaylandSurface::getFrom(Resource(_surface));
+		WlSurface surface = WlSurface::getFrom(Resource(_surface));
 		Texture texture = surface.getTexture();
 		ASSERT_ELSE(texture.isValid(), return);
 		Scene::instance.setCursor(texture, V2d(0, 0));

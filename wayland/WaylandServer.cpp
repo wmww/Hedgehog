@@ -44,7 +44,7 @@ struct wl_compositor_interface compositorImpl = {
 	.create_surface = +[](wl_client * client, wl_resource * resource, uint32_t id) {
 		debug("wl_compositor.create_surface called");
 		uint version = Resource(resource).getVersion();
-		WaylandSurface(client, id, version);
+		WlSurface(client, id, version);
 	},
 	.create_region = +[](wl_client * client, wl_resource * resource, uint32_t id) {
 		debug("wl_compositor.create_region called");
@@ -64,7 +64,7 @@ void compositorBind(wl_client * client, void * data, uint32_t version, uint32_t 
 struct wl_shell_interface shellImpl = {
 	.get_shell_surface = +[](wl_client * client, wl_resource * resource, uint32_t id, wl_resource * surface) {
 		debug("wl_shell.get_shell_surface called");
-		WlShellSurface(client, id, wl_resource_get_version(resource), WaylandSurface::getFrom(Resource(resource)));
+		WlShellSurface(client, id, wl_resource_get_version(resource), WlSurface::getFrom(Resource(resource)));
 	}
 };
 
@@ -87,7 +87,7 @@ struct zxdg_shell_v6_interface xdgShellV6Impl {
 	},
 	.get_xdg_surface = +[](struct wl_client *client,struct wl_resource *resource, uint32_t id, struct wl_resource *surface) {
 		debug("zxdg_shell_v6.get_xdg_surface called");
-		XdgShellV6Surface(client, id, wl_resource_get_version(resource), WaylandSurface::getFrom(Resource(surface)));
+		XdgShellV6Surface(client, id, wl_resource_get_version(resource), WlSurface::getFrom(Resource(surface)));
 	},
 	.pong = +[](struct wl_client *client, struct wl_resource *resource, uint32_t serial)
 	{
@@ -181,7 +181,7 @@ void iteration()
 {
 	wl_event_loop_dispatch(eventLoop, 0);
 	wl_display_flush_clients(display);
-	WaylandSurface::runFrameCallbacks();
+	WlSurface::runFrameCallbacks();
 }
 
 uint32_t lastSerialNum = 1;

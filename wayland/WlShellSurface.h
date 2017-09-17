@@ -5,7 +5,7 @@
 class WlShellSurface
 {
 public:
-	WlShellSurface(wl_client * client, uint32_t id, uint version, WaylandSurface surface);
+	WlShellSurface(wl_client * client, uint32_t id, uint version, WlSurface surface);
 	
 private:
 	struct Impl;

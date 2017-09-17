@@ -6,12 +6,12 @@
 #include "../scene/InputInterface.h"
 #include "Resource.h"
 
-class WaylandSurface
+class WlSurface
 {
 public:
-	WaylandSurface() {}
-	WaylandSurface(wl_client * client, uint32_t id, uint version);
-	static WaylandSurface getFrom(Resource resource); // to use this the resource must have been created by this class
+	WlSurface() {}
+	WlSurface(wl_client * client, uint32_t id, uint version);
+	static WlSurface getFrom(Resource resource); // to use this the resource must have been created by this class
 	
 	static void runFrameCallbacks();
 	

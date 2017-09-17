@@ -12,7 +12,7 @@
 struct XdgShellV6Surface::Impl: Resource::Data, WindowInterface
 {
 	// instance data
-	WaylandSurface waylandSurface;
+	WlSurface waylandSurface;
 	Resource xdgSurfaceResource;
 	Resource xdgToplevelResource;
 	
@@ -201,7 +201,7 @@ const struct zxdg_toplevel_v6_interface XdgShellV6Surface::Impl::xdgToplevelV6In
 	},
 };
 
-XdgShellV6Surface::XdgShellV6Surface(wl_client * client, uint32_t id, uint version, WaylandSurface surface)
+XdgShellV6Surface::XdgShellV6Surface(wl_client * client, uint32_t id, uint version, WlSurface surface)
 {
 	debug("creating XdgShellV6Surface");
 	auto impl = make_shared<Impl>();

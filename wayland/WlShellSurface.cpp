@@ -11,7 +11,7 @@
 struct WlShellSurface::Impl: Resource::Data, WindowInterface
 {
 	// instance data
-	WaylandSurface waylandSurface;
+	WlSurface waylandSurface;
 	wl_client * client;
 	Resource resource;
 	
@@ -82,7 +82,7 @@ const struct wl_shell_surface_interface WlShellSurface::Impl::wlShellSurfaceInte
 	},
 };
 
-WlShellSurface::WlShellSurface(wl_client * client, uint32_t id, uint version, WaylandSurface surface)
+WlShellSurface::WlShellSurface(wl_client * client, uint32_t id, uint version, WlSurface surface)
 {
 	debug("creating WlShellSurface");
 	auto impl = make_shared<Impl>();
