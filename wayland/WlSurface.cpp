@@ -3,6 +3,7 @@
 #include "Resource.h"
 #include "../backend/Backend.h"
 #include "WlSeat.h"
+#include "WaylandEGL.h"
 
 #include <wayland-server-protocol.h>
 
@@ -96,8 +97,6 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 			Display * display = (Display *)Backend::instance->getXDisplay();
 			ASSERT_ELSE(display, return);
 			
-			assert(buffer != nullptr);
-			
 			// make sure this function pointer has been initialized
 			//assert(Impl::eglQueryWaylandBufferWL);
 			
@@ -119,16 +118,21 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 				impl->texture.loadFromEGLImage(image, bufferDim);
 				//eglDestroyImage(display, image);
 			}
-			else*/ {
-				// this is for sharing a memory buffer on the CPU
-				debug("using SHM for CPU buffer sharing");
-				struct wl_shm_buffer * shmBuffer = wl_shm_buffer_get(buffer);
-				assert(shmBuffer != nullptr);
+			else*/
+			// this is for sharing a memory buffer on the CPU
+			debug("using SHM for CPU buffer sharing");
+			struct wl_shm_buffer * shmBuffer = wl_shm_buffer_get(buffer);
+			if (shmBuffer)
+			{
 				uint32_t width = wl_shm_buffer_get_width(shmBuffer);
 				uint32_t height = wl_shm_buffer_get_height(shmBuffer);
 				bufferDim = V2i(width, height);
 				void * data = wl_shm_buffer_get_data(shmBuffer);
 				impl->texture.loadFromData(data, bufferDim);
+			}
+			else
+			{
+				WaylandEGL::loadIntoTexture(buffer, impl->texture);
 			}
 			wl_buffer_send_release(buffer);
 			impl->bufferResourceRaw = nullptr;

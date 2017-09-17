@@ -41,5 +41,10 @@ void setup(wl_display * display)
 	eglBindWaylandDisplayWL(eglDisplay, display);
 }
 
+void loadIntoTexture(wl_resource * buffer, Texture texture)
+{
+	warning(FUNC + " not implemented");
+}
+
 }
 
