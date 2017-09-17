@@ -5,8 +5,6 @@
 #include "WlSeat.h"
 
 #include <wayland-server-protocol.h>
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
 
 // change to toggle debug statements on and off
 #define debug debug_off
@@ -24,21 +22,7 @@ struct WaylandSurface::Impl: Resource::Data, InputInterface
 	// interface
 	static const struct wl_surface_interface surfaceInterface;
 	
-	// pointers to functions that need to be retrieved dynamically
-	// they will be fetched when the first instance of this class is created
-	static PFNEGLBINDWAYLANDDISPLAYWL eglBindWaylandDisplayWL;
-	static PFNEGLQUERYWAYLANDBUFFERWL eglQueryWaylandBufferWL;
 	static vector<Resource> frameCallbacks;
-	
-	Impl()
-	{
-		setupIfFirstInstance(this);
-	}
-	
-	~Impl()
-	{
-		debug("~Impl called");
-	}
 	
 	void pointerMotion(V2d normalizedPos)
 	{
@@ -64,17 +48,8 @@ struct WaylandSurface::Impl: Resource::Data, InputInterface
 		ASSERT_ELSE(surfaceResource.isValid(), return);
 		WlSeat::keyPress(key, down, surfaceResource);
 	}
-	
-	static void firstInstanceSetup()
-	{
-		// function pointers that need to be retrieved at run time. This is Cs sad, pathetic attempt at duck typing.
-		eglBindWaylandDisplayWL = (PFNEGLBINDWAYLANDDISPLAYWL)eglGetProcAddress("eglBindWaylandDisplayWL");
-		eglQueryWaylandBufferWL = (PFNEGLQUERYWAYLANDBUFFERWL)eglGetProcAddress("eglQueryWaylandBufferWL");
-	}
 };
 
-PFNEGLBINDWAYLANDDISPLAYWL WaylandSurface::Impl::eglBindWaylandDisplayWL = nullptr;
-PFNEGLQUERYWAYLANDBUFFERWL WaylandSurface::Impl::eglQueryWaylandBufferWL = nullptr;
 vector<Resource> WaylandSurface::Impl::frameCallbacks;
 
 const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
@@ -116,7 +91,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 		struct wl_resource * buffer = impl->bufferResourceRaw;
 		if (buffer != nullptr && impl->isDamaged)
 		{
-			EGLint texture_format;
+			//EGLint texture_format;
 			ASSERT_ELSE(Backend::instance, return);
 			Display * display = (Display *)Backend::instance->getXDisplay();
 			ASSERT_ELSE(display, return);
@@ -124,14 +99,14 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 			assert(buffer != nullptr);
 			
 			// make sure this function pointer has been initialized
-			assert(Impl::eglQueryWaylandBufferWL);
+			//assert(Impl::eglQueryWaylandBufferWL);
 			
 			// query the texture format of the buffer
-			bool idkWhatThisVarMeans = Impl::eglQueryWaylandBufferWL(display, buffer, EGL_TEXTURE_FORMAT, &texture_format);
+			//bool idkWhatThisVarMeans = Impl::eglQueryWaylandBufferWL(display, buffer, EGL_TEXTURE_FORMAT, &texture_format);
 			
 			V2i bufferDim;
 			
-			if (idkWhatThisVarMeans) {
+			/*if (idkWhatThisVarMeans) {
 				// I think this is for using EGL to share a buffer directly on the GPU
 				// this code path is currently untested
 				debug("using EGL for GPU buffer sharing");
@@ -144,7 +119,7 @@ const struct wl_surface_interface WaylandSurface::Impl::surfaceInterface = {
 				impl->texture.loadFromEGLImage(image, bufferDim);
 				//eglDestroyImage(display, image);
 			}
-			else {
+			else*/ {
 				// this is for sharing a memory buffer on the CPU
 				debug("using SHM for CPU buffer sharing");
 				struct wl_shm_buffer * shmBuffer = wl_shm_buffer_get(buffer);

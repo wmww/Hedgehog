@@ -7,6 +7,7 @@
 #include "WlRegion.h"
 #include "WlShellSurface.h"
 #include "XdgShellV6Surface.h"
+#include "WaylandEGL.h"
 
 #include <wayland-server.h>
 #include <wayland-server-protocol.h>
@@ -163,6 +164,8 @@ void setup()
 	
 	eventLoop = wl_display_get_event_loop(display);
 	eventLoopFileDescriptor = wl_event_loop_get_fd(eventLoop);
+	
+	WaylandEGL::setup(display);
 	
 	debug("Wayland server setup done");
 }

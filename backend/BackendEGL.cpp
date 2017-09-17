@@ -1,4 +1,5 @@
 #include "BackendX11Base.h"
+#include "../wayland/WaylandEGL.h"
 #include <wayland-server.h>
 #include <X11/Xlib.h>
 #include <linux/input.h>
@@ -21,6 +22,7 @@
 struct BackendEGL: BackendX11Base
 {
 	EGLDisplay eglDisplay;
+	EGLConfig config;
 	EGLContext windowContext;
 	EGLSurface windowSurface;
 	
@@ -36,8 +38,7 @@ struct BackendEGL: BackendX11Base
 			EGL_GREEN_SIZE,			1,
 			EGL_BLUE_SIZE,			1,
 			EGL_NONE
-			};
-		EGLConfig config;
+		};
 		EGLint configsCount;
 		eglChooseConfig(eglDisplay, eglAttribs, &config, 1, &configsCount);
 		EGLint visualId;
@@ -61,6 +62,8 @@ struct BackendEGL: BackendX11Base
 		windowSurface = eglCreateWindowSurface(eglDisplay, config, window, nullptr);
 		ASSERT(windowSurface != EGL_NO_SURFACE);
 		eglMakeCurrent(eglDisplay, windowSurface, windowSurface, windowContext);
+		
+		WaylandEGL::setEglDisplay(eglDisplay);
 	}
 	
 	~BackendEGL()
