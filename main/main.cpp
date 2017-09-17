@@ -23,6 +23,8 @@ int main (int argc, char ** argv)
 	Backend::setup(V2i(800, 800));
 	ASSERT_ELSE(Backend::instance, exit(1));
 	
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glewInit();
 	
 	auto texture = Texture();
