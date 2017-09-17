@@ -10,33 +10,11 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
-ShaderProgram shaderProgram(nullptr);
-
-const string vertShaderCode = "#version 330 core\n"
-"layout (location = 0) in vec2 position; "
-"layout (location = 1) in vec2 texturePositionIn; "
-"out vec2 texturePosition; "
-"void main() "
-"{ "
-	"gl_Position = vec4(position, 0.0f, 1.0f); "
-    "texturePosition = texturePositionIn; "
-"} ";
-
-const string fragShaderCode = "#version 330 core\n"
-"in vec2 texturePosition; "
-"out vec4 color; "
-"uniform sampler2D textureData; "
-"void main() "
-"{ "
-	"color = texture(textureData, texturePosition); "
-"} ";
-
 typedef void (*PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) (GLenum target, EGLImage image);
 PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES = nullptr;
 
 struct Texture::Impl
 {
-	GLuint squareVAOId = 0;
 	GLuint textureId = 0;
 	V2i dim;
 	bool isSetUp = false;
@@ -49,7 +27,6 @@ struct Texture::Impl
 		debug("deleting texture");
 		if (isSetUp)
 		{
-			glDeleteVertexArrays(1, &squareVAOId);
 			glDeleteTextures(1, &textureId);
 		}
 	}
@@ -60,69 +37,9 @@ struct Texture::Impl
 		if (!isSetUp)
 		{
 			setupIfFirstInstance(this);
-			setupVAO();
 			setupGlTexture();
 			isSetUp = true;
 		}
-	}
-	
-	void setupVAO()
-	{
-		debug("setting up a VAO");
-		
-		GLuint VBO, EBO;
-		
-		GLfloat vertices[] =
-		{
-			// position		// texture position
-			1.0f,	1.0f,	1.0f,	0.0f,	// Top Right
-			1.0f,	-1.0f,	1.0f,	1.0f,	// Bottom Right
-			-1.0f,	-1.0f,	0.0f,	1.0f,	// Bottom Left
-			-1.0f,	1.0f,	0.0f,	0.0f,	// Top Left 
-		};
-		
-		GLuint indices[] =
-		{
-			0, 1, 3,  // First Triangle
-			1, 2, 3   // Second Triangle
-		};
-		
-		//glViewport(0, 0, width, height);
-		
-		glGenVertexArrays(1, &squareVAOId);
-		glGenBuffers(1, &VBO);
-		glGenBuffers(1, &EBO);
-		
-		// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
-		glBindVertexArray(squareVAOId);
-		{
-			glBindBuffer(GL_ARRAY_BUFFER, VBO);
-			{
-				glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-				
-				glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0);
-				glEnableVertexAttribArray(0);
-				
-				glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*) (2 * sizeof(GLfloat)));
-				glEnableVertexAttribArray(1);
-			}
-			glBindBuffer(GL_ARRAY_BUFFER, false);
-			// Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
-			
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-			{
-				glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-			}
-			//remember: do NOT unbind the EBO, keep it bound to this VAO
-		}
-		glBindVertexArray(false); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs)
-		
-		// this is legal as per https://stackoverflow.com/a/13342549/4327513
-		// the buffers will not really be deleted until the vertex array object is deleted
-		// its apparently like reference counting, and here we are lowering the reference count
-		// I know, OpenGL is fucking stupid
-		glDeleteBuffers(1, &VBO);
-		glDeleteBuffers(1, &EBO);
 	}
 	
 	void setupGlTexture()
@@ -144,7 +61,6 @@ struct Texture::Impl
 	
 	static void firstInstanceSetup()
 	{
-		shaderProgram = ShaderProgram::fromCode(vertShaderCode, fragShaderCode);
 		glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
 	}
 };
@@ -209,7 +125,7 @@ void Texture::loadFromData(void * data, V2i dim)
 	impl->dim = dim;
 }
 
-void Texture::loadFromEGLImage(EGLImage image, V2i dim)
+void Texture::loadFromEGLImage(void * image, V2i dim)
 {
 	impl->setup();
 	ASSERT_ELSE(glEGLImageTargetTexture2DOES, return);
@@ -222,35 +138,19 @@ void Texture::loadFromEGLImage(EGLImage image, V2i dim)
 	impl->dim = dim;
 }
 
-void Texture::draw()
+void Texture::bind()
 {
-	if (!impl->isSetUp)
-	{
-		warning(FUNC + " called before texture was set up");
-	}
-	//debug("drawing texture");
-	shaderProgram.activete();
-	{
-		glBindTexture(GL_TEXTURE_2D, impl->textureId);
-		{
-			glBindVertexArray(impl->squareVAOId);
-			{
-				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-			}
-			glBindVertexArray(false);
-		}
-		glBindTexture(GL_TEXTURE_2D, false);
-	}
-	shaderProgram.deactivate();
+	ASSERT_ELSE(impl, return);
+	glBindTexture(GL_TEXTURE_2D, impl->textureId);
 }
 
-GLuint Texture::getTextureId()
+void Texture::unbind()
+{
+	glBindTexture(GL_TEXTURE_2D, false);
+}
+
+uint Texture::getTextureId()
 {
 	assert(impl->isSetUp);
 	return impl->textureId;
-}
-
-bool Texture::isSetUp()
-{
-	return impl->isSetUp;
 }

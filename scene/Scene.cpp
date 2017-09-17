@@ -1,4 +1,5 @@
 #include "Scene.h"
+#include "../opengl/RectRenderer.h"
 
 // change to toggle debug statements on and off
 #define debug debug_off
@@ -8,6 +9,7 @@ Scene Scene::instance;
 struct Scene::Impl: InputInterface
 {
 	vector<weak_ptr<WindowInterface>> windows;
+	RectRenderer renderer;
 	
 	weak_ptr<WindowInterface> getActiveWindow()
 	{
@@ -88,9 +90,9 @@ void Scene::draw()
 	for (auto i: impl->windows)
 	{
 		auto window = i.lock();
-		if (window && window->texture.isSetUp())
+		if (window && window->texture.isValid())
 		{
-			window->texture.draw();
+			impl->renderer.draw(window->texture);
 		}
 	}
 }

@@ -6,12 +6,13 @@
 #include <stdio.h>
 
 #include "../opengl/Texture.h"
+#include "../opengl/RectRenderer.h"
 #include "../backend/Backend.h"
 #include "../wayland/WaylandServer.h"
 #include "../scene/Scene.h"
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 unique_ptr<Backend> Backend::instance;
 
@@ -26,6 +27,7 @@ int main (int argc, char ** argv)
 	
 	auto texture = Texture();
 	texture.loadFromImage("assets/hedgehog.jpg");
+	RectRenderer renderer;
 	
 	debug("setting up wayland server");
 	
@@ -38,7 +40,7 @@ int main (int argc, char ** argv)
 	debug("starting main loop");
 	while (Backend::instance)
 	{
-		texture.draw();
+		renderer.draw(texture);
 		WaylandServer::iteration();
 		scene.draw();
 		Backend::instance->swapBuffer();

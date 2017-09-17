@@ -25,6 +25,7 @@ class ShaderProgram
 public:
 	struct Impl;
 	
+	ShaderProgram() {}
 	ShaderProgram(shared_ptr<Impl> implIn);
 	
 	static ShaderProgram fromFiles(string vertFile, string fragFile);
@@ -36,8 +37,9 @@ public:
 	
 	GLuint getProgramId();
 	
+	inline bool isNull() { return impl == nullptr; };
+	inline bool isValid() { return !isNull(); };
 private:
-	ShaderProgram();
 	string getInfoLog();
 	
 	// this can be null and assertions should be done whenever assuming its not

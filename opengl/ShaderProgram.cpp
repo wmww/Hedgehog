@@ -82,11 +82,6 @@ struct ShaderProgram::Impl
 	}
 };
 
-ShaderProgram::ShaderProgram()
-{
-	impl = make_shared<Impl>();
-}
-
 ShaderProgram::ShaderProgram(shared_ptr<Impl> implIn)
 {
 	impl = implIn;
@@ -111,6 +106,7 @@ ShaderProgram ShaderProgram::fromCode(string vertCode, string fragCode)
 ShaderProgram ShaderProgram::fromShaders(SingleShader vertShader, SingleShader fragShader)
 {
 	ShaderProgram program;
+	program.impl = make_shared<Impl>();
 	
 	debug("creating shader program...");
 	

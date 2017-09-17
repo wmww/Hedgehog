@@ -2,30 +2,25 @@
 
 #include "../main/util.h"
 
-#include <EGL/egl.h>
-
 // there is almost no cost to creating a texture, initialization is lazy and done on first load
 class Texture
 {
 public:
 	Texture();
 	
-	// load functions
 	void loadFromImage(string filepath);
 	void loadFromData(void * data, V2i dim);
-	void loadFromEGLImage(EGLImage image, V2i dim);
+	void loadFromEGLImage(void * image, V2i dim);
 	
-	// use
-	void draw();
+	void bind();
+	void unbind();
 	
-	// getters
-	GLuint getTextureId();
-	bool isSetUp();
+	uint getTextureId();
+	inline bool isNull() { return impl == nullptr; };
+	inline bool isValid() { return !isNull(); };
 	
 private:
 	struct Impl;
-	shared_ptr<Impl> impl; // never null after creation
+	shared_ptr<Impl> impl;
 };
 
-//const string textureShaderVertFile = "shader0.vert";
-//const string textureShaderFragFile = "shader0.frag";
