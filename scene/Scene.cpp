@@ -92,7 +92,7 @@ void Scene::draw()
 		auto window = i.lock();
 		if (window && window->texture.isValid())
 		{
-			impl->renderer.draw(window->texture, V2d(0, 0), V2d(0.5, 0.5));
+			impl->renderer.draw(window->texture, V2d(0.25, 0.25), V2d(0.75, 0.75));
 		}
 	}
 }
