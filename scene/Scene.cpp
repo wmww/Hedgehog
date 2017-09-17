@@ -8,19 +8,26 @@ Scene Scene::instance;
 
 struct Scene::Impl: InputInterface
 {
-	vector<weak_ptr<WindowInterface>> windows;
+	struct Window
+	{
+		weak_ptr<WindowInterface> interface;
+		V2d pos = V2d();
+		V2d size = V2d(0.5, 0.5);
+	};
+	
+	vector<Window> windows;
 	Texture cursorTexture;
 	V2d cursorHotspot;
 	RectRenderer renderer;
 	V2d lastMousePos;
 	
-	weak_ptr<WindowInterface> getActiveWindow()
+	Window getActiveWindow()
 	{
 		// TODO: OPTIMIZATION: do this well
-		weak_ptr<WindowInterface> active;
+		Window active;
 		for (auto i: windows)
 		{
-			if (!i.expired())
+			if (!i.interface.expired())
 				active = i;
 		}
 		return active;
@@ -28,20 +35,23 @@ struct Scene::Impl: InputInterface
 	
 	void pointerMotion(V2d newPos)
 	{
-		if (auto window = getActiveWindow().lock())
+		Window window = getActiveWindow();
+		if (auto interface = window.interface.lock())
 		{
-			auto input = window->getInputInterface().lock();
+			auto input = interface->getInputInterface().lock();
 			ASSERT_ELSE(input, return);
 			lastMousePos = newPos;
-			input->pointerMotion(newPos);
+			V2d transformed = V2d((newPos.x - window.pos.x) / window.size.x, (newPos.y - window.pos.y) / window.size.y);
+			input->pointerMotion(transformed);
 		}
 	}
 	
 	void pointerLeave()
 	{
-		if (auto window = getActiveWindow().lock())
+		Window window = getActiveWindow();
+		if (auto interface = window.interface.lock())
 		{
-			auto input = window->getInputInterface().lock();
+			auto input = interface->getInputInterface().lock();
 			ASSERT_ELSE(input, return);
 			input->pointerLeave();
 			cursorTexture = Texture();
@@ -51,9 +61,10 @@ struct Scene::Impl: InputInterface
 	
 	void pointerClick(uint button, bool down)
 	{
-		if (auto window = getActiveWindow().lock())
+		Window window = getActiveWindow();
+		if (auto interface = window.interface.lock())
 		{
-			auto input = window->getInputInterface().lock();
+			auto input = interface->getInputInterface().lock();
 			ASSERT_ELSE(input, return);
 			input->pointerClick(button, down);
 		}
@@ -61,9 +72,10 @@ struct Scene::Impl: InputInterface
 	
 	void keyPress(uint key, bool down)
 	{
-		if (auto window = getActiveWindow().lock())
+		Window window = getActiveWindow();
+		if (auto interface = window.interface.lock())
 		{
-			auto input = window->getInputInterface().lock();
+			auto input = interface->getInputInterface().lock();
 			ASSERT_ELSE(input, return);
 			input->keyPress(key, down);
 		}
@@ -81,7 +93,9 @@ void Scene::addWindow(weak_ptr<WindowInterface> window)
 {
 	debug("adding window to scene");
 	ASSERT_ELSE(impl, return);
-	impl->windows.push_back(window);
+	Impl::Window data;
+	data.interface = window;
+	impl->windows.push_back(data);
 }
 
 void Scene::setCursor(Texture texture, V2d hotspot)
@@ -102,12 +116,12 @@ void Scene::draw()
 {
 	ASSERT_ELSE(impl, return);
 	//warning(to_string(impl->windows.size()) + " windows");
-	for (auto i: impl->windows)
+	for (auto window: impl->windows)
 	{
-		auto window = i.lock();
-		if (window && window->texture.isValid())
+		auto interface = window.interface.lock();
+		if (interface && interface->texture.isValid())
 		{
-			impl->renderer.draw(window->texture, V2d(0.25, 0.25), V2d(0.5, 0.5));
+			impl->renderer.draw(interface->texture, window.pos, window.size);
 			//mpl->renderer.draw(window->texture, V2d(0, 0), V2d(1, 1));
 		}
 	}
