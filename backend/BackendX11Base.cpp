@@ -50,7 +50,18 @@ void BackendX11Base::openWindow(XVisualInfo * visual, string name)
 	windowAttribs.colormap = XCreateColormap(xDisplay, RootWindow(xDisplay, visual->screen), visual->visual, AllocNone);
 	windowAttribs.border_pixel = 0;
 	//windowAttribs.event_mask = StructureNotifyMask;
-	windowAttribs.event_mask = ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
+	windowAttribs.event_mask
+		= ExposureMask
+		| KeyPressMask
+		| KeyReleaseMask
+		| ButtonPressMask
+		| ButtonReleaseMask
+		| PointerMotionMask
+		| EnterWindowMask
+		| LeaveWindowMask
+		| FocusChangeMask
+		| StructureNotifyMask
+		;
 	
 	int x = 0;
 	int y = 0;
@@ -93,7 +104,6 @@ uint BackendX11Base::x11BtnToLinuxBtn(uint x11Btn)
 	}
 }
 
-
 void BackendX11Base::checkEvents()
 {
 	XEvent event;
@@ -103,24 +113,37 @@ void BackendX11Base::checkEvents()
 		
 		if (auto interface = inputInterface.lock())
 		{
-			if (event.type == MotionNotify)
+			switch (event.type)
 			{
+			case MotionNotify: {
 				auto movement = V2d((double)event.xbutton.x / dim.x, (double)event.xbutton.y / dim.y);
 				interface->pointerMotion(movement);
-			}
-			else if (event.type == ButtonPress)
-			{
+			}	break;
+				
+			case ButtonPress:
 				interface->pointerClick(x11BtnToLinuxBtn(event.xbutton.button), true);
-			}
-			else if (event.type == ButtonRelease)
-			{
+				break;
+				
+			case ButtonRelease:
 				interface->pointerClick(x11BtnToLinuxBtn(event.xbutton.button), false);
-			}
-			else if (event.type == KeyPress) {
+				break;
+				
+			case KeyPress:
 				interface->keyPress(event.xkey.keycode - 8, true);
-			}
-			else if (event.type == KeyRelease) {
+				break;
+				
+			case KeyRelease:
 				interface->keyPress(event.xkey.keycode - 8, false);
+				break;
+				
+			case ConfigureNotify:
+				dim = V2i(event.xconfigure.width, event.xconfigure.height);
+				glViewport(0, 0, dim.x, dim.y);
+				break;
+			
+			default:
+				// ignore
+				break;
 			}
 			/*
 			else if (event.type == ConfigureNotify) {
