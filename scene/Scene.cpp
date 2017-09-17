@@ -9,6 +9,8 @@ Scene Scene::instance;
 struct Scene::Impl: InputInterface
 {
 	vector<weak_ptr<WindowInterface>> windows;
+	Texture cursorTexture;
+	V2d cursorHotspot;
 	RectRenderer renderer;
 	
 	weak_ptr<WindowInterface> getActiveWindow()
@@ -78,6 +80,14 @@ void Scene::addWindow(weak_ptr<WindowInterface> window)
 	impl->windows.push_back(window);
 }
 
+void Scene::setCursor(Texture texture, V2d hotspot)
+{
+	debug("setting cursor");
+	ASSERT_ELSE(impl, return);
+	impl->cursorTexture = texture;
+	impl->cursorHotspot = hotspot;
+}
+
 weak_ptr<InputInterface> Scene::getInputInterface()
 {
 	ASSERT_ELSE(impl, return weak_ptr<InputInterface>());
@@ -95,4 +105,6 @@ void Scene::draw()
 			impl->renderer.draw(window->texture, V2d(0.25, 0.25), V2d(0.5, 0.5));
 		}
 	}
+	if (impl->cursorTexture.isValid())
+		impl->renderer.draw(impl->cursorTexture, V2d(0, 0), V2d(0.5, 0.5));
 }

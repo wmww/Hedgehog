@@ -19,6 +19,9 @@ using std::unique_ptr;
 using std::make_unique;
 using std::weak_ptr;
 
+#include <functional>
+using std::function;
+
 #include <GL/glew.h>
 #include <GL/gl.h>
 
