@@ -95,6 +95,7 @@ void Scene::addWindow(weak_ptr<WindowInterface> window)
 	ASSERT_ELSE(impl, return);
 	Impl::Window data;
 	data.interface = window;
+	data.pos = V2d(impl->windows.size() % 2 ? 0 : 0.5, (impl->windows.size() / 2) % 2 ? 0 : 0.5);
 	impl->windows.push_back(data);
 }
 
