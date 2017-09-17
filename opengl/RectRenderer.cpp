@@ -29,7 +29,7 @@ RectRenderer::RectRenderer()
 {
 	if (shaderProgram.isNull())
 	{
-		shaderProgram = ShaderProgram::fromCode(vertShaderCode, fragShaderCode);
+		shaderProgram.setupFromCode(vertShaderCode, fragShaderCode);
 	}
 	
 	debug("setting up a VAO");
@@ -97,7 +97,7 @@ RectRenderer::~RectRenderer()
 
 void RectRenderer::draw(Texture texture)
 {
-	shaderProgram.activete();
+	shaderProgram.bind();
 	{
 		texture.bind();
 		{
@@ -109,5 +109,5 @@ void RectRenderer::draw(Texture texture)
 		}
 		texture.unbind();
 	}
-	shaderProgram.deactivate();
+	shaderProgram.unbind();
 }
