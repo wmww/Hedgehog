@@ -12,6 +12,7 @@ struct Scene::Impl: InputInterface
 	Texture cursorTexture;
 	V2d cursorHotspot;
 	RectRenderer renderer;
+	V2d lastMousePos;
 	
 	weak_ptr<WindowInterface> getActiveWindow()
 	{
@@ -31,6 +32,7 @@ struct Scene::Impl: InputInterface
 		{
 			auto input = window->getInputInterface().lock();
 			ASSERT_ELSE(input, return);
+			lastMousePos = newPos;
 			input->pointerMotion(newPos);
 		}
 	}
@@ -42,6 +44,8 @@ struct Scene::Impl: InputInterface
 			auto input = window->getInputInterface().lock();
 			ASSERT_ELSE(input, return);
 			input->pointerLeave();
+			cursorTexture = Texture();
+			cursorHotspot = V2d();
 		}
 	}
 	
@@ -84,7 +88,7 @@ void Scene::setCursor(Texture texture, V2d hotspot)
 {
 	debug("setting cursor");
 	ASSERT_ELSE(impl, return);
-	//impl->cursorTexture = texture;
+	impl->cursorTexture = texture;
 	impl->cursorHotspot = hotspot;
 }
 
@@ -109,6 +113,6 @@ void Scene::draw()
 	}
 	if (impl->cursorTexture.isValid())
 	{
-		impl->renderer.draw(impl->cursorTexture, V2d(0, 0), V2d(0.5, 0.5));
+		impl->renderer.draw(impl->cursorTexture, impl->lastMousePos, V2d(0.2, 0.2));
 	}
 }
