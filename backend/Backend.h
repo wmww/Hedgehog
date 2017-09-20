@@ -10,7 +10,6 @@ public:
 	virtual void swapBuffer() = 0;
 	virtual void checkEvents() = 0;
 	virtual string getKeymap() = 0;
-	virtual void * getXDisplay() = 0; // will be of type Display * or null
 	
 	void setInputInterface(weak_ptr<InputInterface> ptr) { inputInterface = ptr; }
 	

@@ -94,8 +94,8 @@ const struct wl_surface_interface WlSurface::Impl::surfaceInterface = {
 		{
 			//EGLint texture_format;
 			ASSERT_ELSE(Backend::instance, return);
-			Display * display = (Display *)Backend::instance->getXDisplay();
-			ASSERT_ELSE(display, return);
+			//Display * display = (Display *)Backend::instance->getXDisplay();
+			//ASSERT_ELSE(display, return);
 			
 			// make sure this function pointer has been initialized
 			//assert(Impl::eglQueryWaylandBufferWL);

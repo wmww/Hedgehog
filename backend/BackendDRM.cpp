@@ -63,12 +63,6 @@ struct BackendDRM: Backend
 		warning(FUNC + " not implemented");
 		return "";
 	}
-	
-	void * getXDisplay()
-	{
-		warning(FUNC + " not implemented and shouldn't even exist");
-		return nullptr;
-	}
 };
 
 unique_ptr<Backend> Backend::makeDRM()

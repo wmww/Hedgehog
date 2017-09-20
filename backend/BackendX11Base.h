@@ -25,5 +25,4 @@ public:
 	~BackendX11Base();
 	void checkEvents();
 	string getKeymap();
-	void * getXDisplay() { return xDisplay; }
 };
