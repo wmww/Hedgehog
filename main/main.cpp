@@ -20,7 +20,7 @@ int main (int argc, char ** argv)
 {
 	debug("setting up backend");
 	//auto backend = Backend::makeGLX(V2i(800, 800));
-	Backend::setup(V2i(800, 800));
+	Backend::setup(Backend::EGL);
 	ASSERT_ELSE(Backend::instance, exit(1));
 	
 	glEnable(GL_BLEND);
@@ -53,5 +53,5 @@ int main (int argc, char ** argv)
 	debug("shutting down wayland server");
 	WaylandServer::shutdown();
 	
-	debug("exiting");
+	std::cout << "exiting" << std::endl;
 }
