@@ -6,10 +6,16 @@ obj_file_path = 'build/obj'
 exe_bin_path = 'build/run'
 debug_symbols = True
 
-env.Append(CCFLAGS=[
-	'-g' if debug_symbols else None,
-	'-Wall',
-])
+env.Append(
+	CCFLAGS = [
+		'-g' if debug_symbols else None,
+		'-Wall',
+		'`pkg-config --cflags libdrm`',
+	],
+	LINKFLAGS = [
+		'`pkg-config --libs libdrm`',
+	]
+)
 
 libs = [
 	'wayland-server',
@@ -22,6 +28,7 @@ libs = [
 	'GLU',
 	'GLEW',
 	'SOIL',
+	'gbm',
 ]
 
 def get_contents_of_dir(base):
