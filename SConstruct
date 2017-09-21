@@ -29,6 +29,7 @@ libs = [
 	'GLEW',
 	'SOIL',
 	'gbm',
+	'libinput',
 ]
 
 def get_contents_of_dir(base):
