@@ -6,17 +6,6 @@ obj_file_path = 'build/obj'
 exe_bin_path = 'build/run'
 debug_symbols = True
 
-env.Append(
-	CCFLAGS = [
-		'-g' if debug_symbols else None,
-		'-Wall',
-		'`pkg-config --cflags libdrm`',
-	],
-	LINKFLAGS = [
-		'`pkg-config --libs libdrm`',
-	]
-)
-
 libs = [
 	'wayland-server',
 	'X11',
@@ -29,8 +18,29 @@ libs = [
 	'GLEW',
 	'SOIL',
 	'gbm',
+	'udev',
+	'evdev',
 	'libinput',
+	'drm',
 ]
+
+pkg_config_libs = [
+	'libdrm',
+	'libevdev',
+]
+
+env.Append(
+	CCFLAGS = [
+		'-g' if debug_symbols else None,
+		'-Wall',
+	],
+	LINKFLAGS = [
+	]
+)
+
+for lib in pkg_config_libs:
+	env.ParseConfig('pkg-config --cflags --libs ' + lib);
+
 
 def get_contents_of_dir(base):
 	return [ os.path.abspath(os.path.join(base, i)) for i in os.listdir(base) if not i.startswith('.') ]
