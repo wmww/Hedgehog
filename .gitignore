@@ -4,3 +4,4 @@ bin
 build
 *.sconsign.dblite
 nogit
+*__pycache__
