@@ -63,6 +63,7 @@ void logMessage(string source, MessageType type, string messaage); // this funct
 //#define ASSERT_ELSE_RETURN(condition) if (!(condition)) { logMessage(FILE_INFO, MESSAGE_WARNING, "assertion '" #condition "' failed; returning early from " + FUNC); return; }
 #define ASSERT_ELSE(condition, action) if (!(condition)) { logMessage(FILE_INFO, MESSAGE_WARNING, "assertion '" #condition "' failed in " + FUNC); action; }
 #define ASSERT_THEN(condition) ASSERT_ELSE(condition, ) else
+#define ASSERT_FATAL(condition) if (!(condition)) { logMessage(FILE_INFO, MESSAGE_FATAL_ERROR, "assertion '" #condition "' failed in " + FUNC); exit(1); }
 #define ASSERT(condition) ASSERT_ELSE(condition, )
 //#define ASSERT_ELSE_IGNORE(condition) ASSERT_ELSE(condition, )
 

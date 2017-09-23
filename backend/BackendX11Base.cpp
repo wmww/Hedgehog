@@ -10,6 +10,10 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
+bool libinput_setup();
+void libinput_destroy();
+void libinput_check_events(InputInterface * interface);
+
 BackendX11Base::BackendX11Base(V2i dim)
 {
 	this->dim = dim;
@@ -46,6 +50,7 @@ void BackendX11Base::setWindowName(string name)
 
 void BackendX11Base::openWindow(XVisualInfo * visual, string name)
 {
+	ASSERT_FATAL(libinput_setup());
 	XSetWindowAttributes windowAttribs;
 	windowAttribs.colormap = XCreateColormap(xDisplay, RootWindow(xDisplay, visual->screen), visual->visual, AllocNone);
 	windowAttribs.border_pixel = 0;
@@ -106,6 +111,12 @@ uint BackendX11Base::x11BtnToLinuxBtn(uint x11Btn)
 
 void BackendX11Base::checkEvents()
 {
+	if (auto input = inputInterface.lock())
+	{
+		libinput_check_events(&*input);
+		//warning(FUNC + " not implemented");
+	}
+	
 	XEvent event;
 	while (XPending(xDisplay))
 	{

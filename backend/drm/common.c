@@ -182,7 +182,7 @@ int init_egl(struct egl *egl, const struct gbm *gbm)
 struct egl egl;
 static const struct drm *drm;
 
-int setup_everything()
+int drmSetup()
 {
 	const char *device = "/dev/dri/card0";
 	uint64_t modifier = DRM_FORMAT_MOD_INVALID;
@@ -221,17 +221,17 @@ int setup_everything()
 	return 0;
 }
 
-void swap_buffers()
+void drmSwapBuffers()
 {
 	drm_legacy_swap_buffers(&gbm, &egl);
 }
 
-void * getEglDisplay()
+void * drmGetEglDisplay()
 {
 	return egl.display;
 }
 
-void * getEglContext()
+void * drmGetEglContext()
 {
 	return egl.context;
 }

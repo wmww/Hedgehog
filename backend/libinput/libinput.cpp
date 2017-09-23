@@ -44,6 +44,9 @@
 
 bool stop = false;
 
+V2d pointerPos;
+const double pointerScaleFactor = 0.002;
+
 struct {
 	//struct wlr_backend backend;
 
@@ -186,6 +189,7 @@ void libinput_destroy()
 
 void libinput_check_events(InputInterface * interface)
 {
+	ASSERT_ELSE(interface, return);
 	struct libinput_event *ev;
 	auto backend = &backend_data;
 
@@ -212,9 +216,28 @@ void libinput_check_events(InputInterface * interface)
 			//print_key_event(li, ev);
 			break;
 		case LIBINPUT_EVENT_POINTER_MOTION:
+		{
 			debug("LIBINPUT_EVENT_POINTER_MOTION");
+			auto pointerEvent = libinput_event_get_pointer_event(ev);
+			ASSERT(pointerEvent);
+			V2d d;
+			d.x = libinput_event_pointer_get_dx(pointerEvent) * pointerScaleFactor;
+			d.y = - libinput_event_pointer_get_dy(pointerEvent) * pointerScaleFactor;
+			pointerPos.x += d.x;
+			pointerPos.y += d.y;
+			if (pointerPos.x < 0)
+				pointerPos.x = 0;
+			if (pointerPos.x > 1)
+				pointerPos.x = 1;
+			if (pointerPos.y < 0)
+				pointerPos.y = 0;
+			if (pointerPos.y > 1)
+				pointerPos.y = 1;
+			interface->pointerMotion(pointerPos);
+			debug("pointer moved to " + to_string(pointerPos));
 			//print_motion_event(ev);
 			break;
+		}
 		case LIBINPUT_EVENT_POINTER_MOTION_ABSOLUTE:
 			debug("LIBINPUT_EVENT_POINTER_MOTION_ABSOLUTE");
 			//print_absmotion_event(ev);

@@ -22,12 +22,16 @@
 extern "C"
 {
 
-int setup_everything();
-void swap_buffers();
-void * getEglDisplay();
-void * getEglContext();
+int drmSetup();
+void drmSwapBuffers();
+void * drmGetEglDisplay();
+void * drmGetEglContext();
 
 }
+
+bool libinput_setup();
+void libinput_destroy();
+void libinput_check_events(InputInterface * interface);
 
 struct BackendDRM: Backend
 {
@@ -38,24 +42,30 @@ struct BackendDRM: Backend
 	
 	BackendDRM()
 	{
-		int ret = setup_everything();
+		int ret = drmSetup();
 		ASSERT_ELSE(ret == 0, exit(1));
-		WaylandEGL::setEglVars(getEglDisplay(), getEglContext());
+		WaylandEGL::setEglVars(drmGetEglDisplay(), drmGetEglContext());
+		ASSERT_FATAL(libinput_setup());
 	}
 	
 	~BackendDRM()
 	{
 		warning("~BackendDRM not implemented");
+		libinput_destroy();
 	}
 	
 	void swapBuffer()
 	{
-		swap_buffers();
+		drmSwapBuffers();
 	}
 	
 	void checkEvents()
 	{
-		//warning(FUNC + " not implemented");
+		if (auto input = inputInterface.lock())
+		{
+			libinput_check_events(&*input);
+			//warning(FUNC + " not implemented");
+		}
 	}
 	
 	string getKeymap()
