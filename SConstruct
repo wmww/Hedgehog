@@ -11,7 +11,6 @@ libs = [
 	'X11',
 	'EGL',
 	'GL',
-	'X11-xcb',
 	'xkbcommon-x11',
 	'xkbcommon',
 	'GLU',

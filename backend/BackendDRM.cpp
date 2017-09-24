@@ -29,6 +29,7 @@ void * drmGetEglContext();
 
 }
 
+extern bool stop;
 bool libinput_setup();
 void libinput_destroy();
 void libinput_check_events(InputInterface * interface);
@@ -64,6 +65,8 @@ struct BackendDRM: Backend
 		if (auto input = inputInterface.lock())
 		{
 			libinput_check_events(&*input);
+			if (stop)
+				Backend::instance = nullptr;
 			//warning(FUNC + " not implemented");
 		}
 	}

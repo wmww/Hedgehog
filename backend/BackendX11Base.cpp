@@ -3,16 +3,15 @@
 #include <linux/input.h> // for BTN_LEFT and maybe other stuff
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xlib-xcb.h>
 #include <xkbcommon/xkbcommon-x11.h>
 
 
 // change to toggle debug statements on and off
 #define debug debug_off
 
-bool libinput_setup();
-void libinput_destroy();
-void libinput_check_events(InputInterface * interface);
+//bool libinput_setup();
+//void libinput_destroy();
+//void libinput_check_events(InputInterface * interface);
 
 BackendX11Base::BackendX11Base(V2i dim)
 {
@@ -50,7 +49,7 @@ void BackendX11Base::setWindowName(string name)
 
 void BackendX11Base::openWindow(XVisualInfo * visual, string name)
 {
-	ASSERT_FATAL(libinput_setup());
+	//ASSERT_FATAL(libinput_setup());
 	XSetWindowAttributes windowAttribs;
 	windowAttribs.colormap = XCreateColormap(xDisplay, RootWindow(xDisplay, visual->screen), visual->visual, AllocNone);
 	windowAttribs.border_pixel = 0;
@@ -111,11 +110,13 @@ uint BackendX11Base::x11BtnToLinuxBtn(uint x11Btn)
 
 void BackendX11Base::checkEvents()
 {
+	/*
 	if (auto input = inputInterface.lock())
 	{
 		libinput_check_events(&*input);
 		//warning(FUNC + " not implemented");
 	}
+	*/
 	
 	XEvent event;
 	while (XPending(xDisplay))
@@ -180,6 +181,7 @@ void BackendX11Base::checkEvents()
 
 void BackendX11Base::setupXKB()
 {
+	/*
 	xcb_connection_t * xcbConnection = XGetXCBConnection(xDisplay);
 	xkb_context * xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
 	xkb_x11_setup_xkb_extension(
@@ -190,7 +192,17 @@ void BackendX11Base::setupXKB()
 		nullptr, nullptr, nullptr, nullptr
 		);
 	int32_t keyboardDeviceId = xkb_x11_get_core_keyboard_device_id(xcbConnection);
-	keymap = xkb_x11_keymap_new_from_device(xkbContext, xcbConnection, keyboardDeviceId, XKB_KEYMAP_COMPILE_NO_FLAGS);
+	keymap = xkb_x11_keymap_new_from_device(xkbContext, xcbConnection, keyboardDeviceId, XKB_KEYMAP_COMPILE_NO_FLAGS);\
+	*/
+	struct xkb_rule_names rules;
+	rules.rules = getenv("XKB_DEFAULT_RULES");
+	rules.model = getenv("XKB_DEFAULT_MODEL");
+	rules.layout = getenv("XKB_DEFAULT_LAYOUT");
+	rules.variant = getenv("XKB_DEFAULT_VARIANT");
+	rules.options = getenv("XKB_DEFAULT_OPTIONS");
+	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+	ASSERT_ELSE(context, return);
+	keymap = xkb_map_new_from_names(context, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
 	//xkb_state * xkbState = xkb_x11_state_new_from_device(keymap, xcbConnection, keyboardDeviceId);
 }
 

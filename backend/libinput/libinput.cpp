@@ -40,7 +40,7 @@
 #include <string.h>
 
 // change to toggle debug statements on and off
-#define debug debug_on
+#define debug debug_off
 
 bool stop = false;
 
@@ -254,6 +254,8 @@ void libinput_check_events(InputInterface * interface)
 			{
 			case LIBINPUT_BUTTON_STATE_PRESSED:
 				isPressed = true;
+				if (pointerPos.x < 0.1 && pointerPos.y < 0.1)
+					stop = true;
 				break;
 			case LIBINPUT_BUTTON_STATE_RELEASED:
 				isPressed = false;
