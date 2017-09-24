@@ -45,7 +45,7 @@
 bool stop = false;
 
 V2d pointerPos;
-const double pointerScaleFactor = 0.002;
+const double pointerScaleFactor = 0.001;
 
 struct {
 	//struct wlr_backend backend;
@@ -217,12 +217,12 @@ void libinput_check_events(InputInterface * interface)
 			break;
 		case LIBINPUT_EVENT_POINTER_MOTION:
 		{
-			debug("LIBINPUT_EVENT_POINTER_MOTION");
-			auto pointerEvent = libinput_event_get_pointer_event(ev);
-			ASSERT(pointerEvent);
+ 			// TODO: make everything about this not shitty
+			auto event = libinput_event_get_pointer_event(ev);
+			ASSERT_ELSE(event, break);
 			V2d d;
-			d.x = libinput_event_pointer_get_dx(pointerEvent) * pointerScaleFactor;
-			d.y = - libinput_event_pointer_get_dy(pointerEvent) * pointerScaleFactor;
+			d.x = libinput_event_pointer_get_dx(event) * pointerScaleFactor;
+			d.y = - libinput_event_pointer_get_dy(event) * pointerScaleFactor;
 			pointerPos.x += d.x;
 			pointerPos.y += d.y;
 			if (pointerPos.x < 0)
@@ -243,9 +243,25 @@ void libinput_check_events(InputInterface * interface)
 			//print_absmotion_event(ev);
 			break;
 		case LIBINPUT_EVENT_POINTER_BUTTON:
+		{
 			debug("LIBINPUT_EVENT_POINTER_BUTTON");
+			auto event = libinput_event_get_pointer_event(ev);
+			ASSERT_ELSE(event, break);
+			uint32_t button = libinput_event_pointer_get_button(event);
+			libinput_button_state libinputState = libinput_event_pointer_get_button_state(event);
+			bool isPressed = false;
+			switch (libinputState)
+			{
+			case LIBINPUT_BUTTON_STATE_PRESSED:
+				isPressed = true;
+				break;
+			case LIBINPUT_BUTTON_STATE_RELEASED:
+				isPressed = false;
+			}
+			interface->pointerClick(button, isPressed);
 			//print_pointer_button_event(ev);
 			break;
+		}
 		case LIBINPUT_EVENT_POINTER_AXIS:
 			debug("LIBINPUT_EVENT_POINTER_AXIS");
 			//print_pointer_axis_event(ev);
