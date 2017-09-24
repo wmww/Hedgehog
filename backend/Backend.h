@@ -9,7 +9,7 @@ public:
 	
 	virtual void swapBuffer() = 0;
 	virtual void checkEvents() = 0;
-	virtual string getKeymap() = 0;
+	string getKeymap() { return keymapString; }
 	
 	void setInputInterface(weak_ptr<InputInterface> ptr) { inputInterface = ptr; }
 	
@@ -34,14 +34,19 @@ public:
 		ASSERT(instance);
 	}
 	
-	static unique_ptr<Backend> instance; // defined in main.cpp because there is no Backend.cpp
+	static unique_ptr<Backend> instance;
 	
 protected:
 	
+	Backend();
 	static unique_ptr<Backend> makeGLX(V2i dim);
 	static unique_ptr<Backend> makeEGL(V2i dim);
 	static unique_ptr<Backend> makeDRM();
 	
 	weak_ptr<InputInterface> inputInterface;
+	
+private:
+	
+	string keymapString;
 };
 

@@ -10,10 +10,8 @@ class BackendX11Base: public Backend
 protected:
 	Display * xDisplay = nullptr;
 	Window window;
-	xkb_keymap * keymap = nullptr;
 	V2i dim;
 	
-	void setupXKB();
 	void openWindow(XVisualInfo * visual, string name);
 	void setWindowName(string name);
 	
@@ -24,5 +22,4 @@ public:
 	BackendX11Base(V2i dim);
 	~BackendX11Base();
 	void checkEvents();
-	string getKeymap();
 };

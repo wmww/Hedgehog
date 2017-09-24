@@ -212,9 +212,26 @@ void libinput_check_events(InputInterface * interface)
 			//tools_device_apply_config(libinput_event_get_device(ev), &options);
 			break;
 		case LIBINPUT_EVENT_KEYBOARD_KEY:
+		{
 			debug("LIBINPUT_EVENT_KEYBOARD_KEY");
+			auto event = libinput_event_get_keyboard_event(ev);
+			ASSERT_ELSE(event, break);
+			uint32_t key = libinput_event_keyboard_get_key(event);
+			libinput_key_state state = libinput_event_keyboard_get_key_state(event);
+			bool isPressed = false;
+			switch (state)
+			{
+			case LIBINPUT_KEY_STATE_PRESSED:
+				isPressed = true;
+				break;
+			case LIBINPUT_KEY_STATE_RELEASED:
+				isPressed = false;
+				break;
+			}
+			interface->keyPress(key, isPressed);
 			//print_key_event(li, ev);
 			break;
+		}
 		case LIBINPUT_EVENT_POINTER_MOTION:
 		{
  			// TODO: make everything about this not shitty

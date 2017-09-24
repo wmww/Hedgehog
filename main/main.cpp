@@ -14,13 +14,11 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
-unique_ptr<Backend> Backend::instance;
-
 int main (int argc, char ** argv)
 {
 	debug("setting up backend");
 	//auto backend = Backend::makeGLX(V2i(800, 800));
-	Backend::setup(Backend::EGL);
+	Backend::setup(Backend::DRM);
 	ASSERT_ELSE(Backend::instance, exit(1));
 	
 	glEnable(GL_BLEND);

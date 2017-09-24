@@ -13,7 +13,7 @@
 #include <cstring>
 
 // change to toggle debug statements on and off
-#define debug debug_off
+#define debug debug_on
 
 struct WlSeat::Impl: Resource::Data
 {
