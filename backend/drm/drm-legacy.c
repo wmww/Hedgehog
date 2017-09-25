@@ -21,13 +21,14 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include "common.h"
+#include "drm-common.h"
+
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/select.h>
-
-#include "common.h"
-#include "drm-common.h"
+#include <unistd.h>
 
 static struct drm drm;
 struct drm_fb *fb;
@@ -85,6 +86,12 @@ void drm_legacy_swap_buffers(const struct gbm *gbm, const struct egl *egl)
 
 	eglSwapBuffers(egl->display, egl->surface);
 	next_bo = gbm_surface_lock_front_buffer(gbm->surface);
+	if (next_bo == NULL)
+	{
+		fprintf(stderr, "next_bo is null, not swapping buffers\n");
+		usleep(10000); // without this the entire program becomes unresponsive because this function failing stops the only sleep
+		return;
+	}
 	fb = drm_fb_get_from_bo(next_bo);
 	if (!fb) {
 		fprintf(stderr, "Failed to get a new framebuffer BO\n");

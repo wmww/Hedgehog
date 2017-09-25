@@ -12,11 +12,18 @@ struct BackendX11EGL: BackendX11Base
 	EGLConfig config;
 	EGLContext windowContext;
 	EGLSurface windowSurface;
+	bool valid = false;
 	
 	BackendX11EGL(V2i dim): BackendX11Base(dim)
 	{
+		// if returns before 'valid' is set to true, this object will be considered invalid
+		ASSERT_ELSE(xDisplay, return);
+		
 		eglDisplay = eglGetDisplay(xDisplay);
-		eglInitialize(eglDisplay, nullptr, nullptr);
+		ASSERT_ELSE(eglDisplay != EGL_NO_DISPLAY, return);
+		
+		bool eglInitializeSuccess = eglInitialize(eglDisplay, nullptr, nullptr);
+		ASSERT_ELSE(eglInitializeSuccess, return);
 		
 		// setup EGL
 		EGLint eglAttribs[] = {
@@ -27,13 +34,15 @@ struct BackendX11EGL: BackendX11Base
 			EGL_NONE
 		};
 		EGLint configsCount;
-		eglChooseConfig(eglDisplay, eglAttribs, &config, 1, &configsCount);
+		bool eglConfigSuccess = eglChooseConfig(eglDisplay, eglAttribs, &config, 1, &configsCount);
+		ASSERT_ELSE(eglConfigSuccess, return);
 		EGLint visualId;
 		eglGetConfigAttrib(eglDisplay, config, EGL_NATIVE_VISUAL_ID, &visualId);
 		XVisualInfo visualTemplate;
 		visualTemplate.visualid = visualId;
 		int visualsCount;
 		XVisualInfo * visual = XGetVisualInfo(xDisplay, VisualIDMask, &visualTemplate, &visualsCount);
+		ASSERT_ELSE(visual, return);
 		
 		openWindow(visual, "Hedgehog");
 		
@@ -49,6 +58,7 @@ struct BackendX11EGL: BackendX11Base
 		windowSurface = eglCreateWindowSurface(eglDisplay, config, window, nullptr);
 		ASSERT(windowSurface != EGL_NO_SURFACE);
 		eglMakeCurrent(eglDisplay, windowSurface, windowSurface, windowContext);
+		valid = true;
 		
 		WaylandEGL::setEglVars(eglDisplay, windowContext);
 	}
@@ -60,6 +70,7 @@ struct BackendX11EGL: BackendX11Base
 	
 	void swapBuffer()
 	{
+		ASSERT_ELSE(valid, return);
 		eglSwapBuffers(eglDisplay, windowSurface);
 	}
 };
