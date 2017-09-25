@@ -35,7 +35,7 @@ BackendX11Base::BackendX11Base(V2i dim)
 
 BackendX11Base::~BackendX11Base()
 {
-	XDestroyWindow(xDisplay, window);
+	XCloseDisplay(xDisplay);
 }
 
 void BackendX11Base::setWindowName(string name)
@@ -90,6 +90,9 @@ void BackendX11Base::openWindow(XVisualInfo * visual, string name)
 		&windowAttribs
 	);
 	
+	Atom WM_DELETE_WINDOW = XInternAtom(xDisplay, "WM_DELETE_WINDOW", false); 
+    XSetWMProtocols(xDisplay, window, &WM_DELETE_WINDOW, 1);
+	
 	setWindowName(name);
 	
 	ASSERT(window != 0);
@@ -141,9 +144,16 @@ void BackendX11Base::checkEvents()
 				break;
 			
 			case DestroyNotify:
+				// no need to use this, do stuff in the destructor instead
+				break;
+			
+			case ClientMessage:
+				// assume this is a window close event because that is the only atom we support
+				debug("X window closed");
+				XDestroyWindow(xDisplay, window);
 				instance = nullptr;
 				return; // 'this' will now be invalid
-			
+				
 			default:
 				// ignore other events
 				break;
