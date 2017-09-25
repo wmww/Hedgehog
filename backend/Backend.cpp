@@ -7,6 +7,10 @@
 
 unique_ptr<Backend> Backend::instance;
 
+unique_ptr<Backend> makeX11GLXBackend(V2i dim);
+unique_ptr<Backend> makeX11EGLBackend(V2i dim);
+unique_ptr<Backend> makeDRMBackend();
+
 Backend::Backend()
 {
 	// TODO: don't leak keymap and context memory
@@ -26,4 +30,23 @@ Backend::Backend()
 	}
 	if (keymapString == "")
 		warning("keymap string is empty");
+}
+
+void Backend::setup(Type type)
+{
+	ASSERT_ELSE(instance == nullptr, return);
+	static const V2i defaultDim = V2i(800, 800);
+	switch (type)
+	{
+	case GLX:
+		instance = makeX11GLXBackend(defaultDim);
+		break;
+	case EGL:
+		instance = makeX11EGLBackend(defaultDim);
+		break;
+	case DRM:
+		instance = makeDRMBackend();
+		break;
+	}
+	ASSERT(instance);
 }

@@ -4,13 +4,24 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-
 // change to toggle debug statements on and off
 #define debug debug_off
 
-//bool libinput_setup();
-//void libinput_destroy();
-//void libinput_check_events(InputInterface * interface);
+uint x11BtnToLinuxBtn(uint x11Btn)
+{
+	switch (x11Btn)
+	{
+	case Button1:
+		return BTN_LEFT;
+	case Button2:
+		return BTN_MIDDLE;
+	case Button3:
+		return BTN_RIGHT;
+	default:
+		warning("your mouse has a weird-ass button");
+		return BTN_EXTRA;
+	}
+}
 
 BackendX11Base::BackendX11Base(V2i dim)
 {
@@ -29,7 +40,7 @@ BackendX11Base::~BackendX11Base()
 
 void BackendX11Base::setWindowName(string name)
 {
-	ASSERT(window != 0);
+	ASSERT(window);
 	// We use the XTextProperty structure to store the title.
 	XTextProperty windowName;
 	windowName.value = (unsigned char *)name.c_str();
@@ -47,85 +58,62 @@ void BackendX11Base::setWindowName(string name)
 
 void BackendX11Base::openWindow(XVisualInfo * visual, string name)
 {
-	//ASSERT_FATAL(libinput_setup());
 	XSetWindowAttributes windowAttribs;
 	windowAttribs.colormap = XCreateColormap(xDisplay, RootWindow(xDisplay, visual->screen), visual->visual, AllocNone);
 	windowAttribs.border_pixel = 0;
-	//windowAttribs.event_mask = StructureNotifyMask;
-	windowAttribs.event_mask
-		= ExposureMask
-		| KeyPressMask
-		| KeyReleaseMask
-		| ButtonPressMask
-		| ButtonReleaseMask
-		| PointerMotionMask
-		| EnterWindowMask
-		| LeaveWindowMask
-		| FocusChangeMask
-		| StructureNotifyMask
-		;
+	windowAttribs.event_mask =
+		ExposureMask			|
+		KeyPressMask			|
+		KeyReleaseMask			|
+		ButtonPressMask			|
+		ButtonReleaseMask		|
+		PointerMotionMask		|
+		EnterWindowMask			|
+		LeaveWindowMask			|
+		FocusChangeMask			|
+		StructureNotifyMask		;
 	
 	int x = 0;
 	int y = 0;
 	
-	debug("creating window...");
+	debug("creating window");
 	
 	window = XCreateWindow(
 		xDisplay,
 		RootWindow(xDisplay, visual->screen), // parent
 		x, y, dim.x, dim.y, // geometry
-		0, // I think this is Z-depth
+		0,
 		visual->depth,
 		InputOutput,
 		visual->visual,
 		CWBorderPixel|CWColormap|CWEventMask,
-		&windowAttribs);
+		&windowAttribs
+	);
 	
 	setWindowName(name);
 	
 	ASSERT(window != 0);
 	
-	debug("mapping window...");
+	debug("mapping window");
 	
 	XMapWindow(xDisplay, window);
 }
 
-uint BackendX11Base::x11BtnToLinuxBtn(uint x11Btn)
-{
-	switch (x11Btn)
-	{
-	case Button1:
-		return BTN_LEFT;
-	case Button2:
-		return BTN_MIDDLE;
-	case Button3:
-		return BTN_RIGHT;
-	default:
-		warning("your mouse has a weird-ass button");
-		return BTN_EXTRA;
-	}
-}
-
 void BackendX11Base::checkEvents()
 {
-	/*
-	if (auto input = inputInterface.lock())
-	{
-		libinput_check_events(&*input);
-		//warning(FUNC + " not implemented");
-	}
-	*/
+	auto interface = inputInterface.lock();
+	if (!interface)
+		return;
 	
-	XEvent event;
 	while (XPending(xDisplay))
 	{
+		XEvent event;
 		XNextEvent(xDisplay, &event);
 		
-		if (auto interface = inputInterface.lock())
+		switch (event.type)
 		{
-			switch (event.type)
-			{
 			case MotionNotify: {
+				// pointer motion
 				auto movement = V2d((double)event.xbutton.x / dim.x, 1 - (double)event.xbutton.y / dim.y);
 				interface->pointerMotion(movement);
 			}	break;
@@ -147,32 +135,18 @@ void BackendX11Base::checkEvents()
 				break;
 				
 			case ConfigureNotify:
+				// window was resized
 				dim = V2i(event.xconfigure.width, event.xconfigure.height);
 				glViewport(0, 0, dim.x, dim.y);
 				break;
 			
 			case DestroyNotify:
 				instance = nullptr;
-				break;
+				return; // 'this' will now be invalid
 			
 			default:
-				// ignore
+				// ignore other events
 				break;
-			}
-			/*
-			else if (event.type == ConfigureNotify) {
-				event.xconfigure.width and event.xconfigure.height are used;
-			}
-			else if (event.type == Expose) {
-				// time to redraw?
-			}
-			else if (event.type == FocusIn) {
-				// idk what these things do:s
-				xkb_state_unref(state);
-				state = xkb_x11_state_new_from_device(keymap, xcb_connection, keyboard_device_id);
-				update_modifiers();
-			}
-			*/
 		}
 	}
 }

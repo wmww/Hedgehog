@@ -1,32 +1,19 @@
 #include "BackendX11Base.h"
 #include "../wayland/WaylandEGL.h"
-#include <wayland-server.h>
-#include <X11/Xlib.h>
-#include <linux/input.h>
-#include <EGL/egl.h>
+
 #include <EGL/eglext.h>
-#include <X11/Xlib-xcb.h>
-#include <xkbcommon/xkbcommon-x11.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
-#include <stdio.h>
-#include <poll.h>
 
 // change to toggle debug statements on and off
 #define debug debug_off
 
-struct BackendEGL: BackendX11Base
+struct BackendX11EGL: BackendX11Base
 {
 	EGLDisplay eglDisplay;
 	EGLConfig config;
 	EGLContext windowContext;
 	EGLSurface windowSurface;
 	
-	BackendEGL(V2i dim): BackendX11Base(dim)
+	BackendX11EGL(V2i dim): BackendX11Base(dim)
 	{
 		eglDisplay = eglGetDisplay(xDisplay);
 		eglInitialize(eglDisplay, nullptr, nullptr);
@@ -66,7 +53,7 @@ struct BackendEGL: BackendX11Base
 		WaylandEGL::setEglVars(eglDisplay, windowContext);
 	}
 	
-	~BackendEGL()
+	~BackendX11EGL()
 	{
 		warning("~BackendEGL not implemented");
 	}
@@ -77,8 +64,8 @@ struct BackendEGL: BackendX11Base
 	}
 };
 
-unique_ptr<Backend> Backend::makeEGL(V2i dim)
+unique_ptr<Backend> makeX11EGLBackend(V2i dim)
 {
-	return make_unique<BackendEGL>(dim);
+	return make_unique<BackendX11EGL>(dim);
 }
 

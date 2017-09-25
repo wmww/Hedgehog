@@ -8,15 +8,12 @@
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 
-struct BackendGLX: BackendX11Base
+struct BackendX11GLX: BackendX11Base
 {
 	GLXContext glxContext;
 	
-	BackendGLX(V2i dim): BackendX11Base(dim)
+	BackendX11GLX(V2i dim): BackendX11Base(dim)
 	{
-		//const char *extensions = glXQueryExtensionsString(display, DefaultScreen(display));
-		//cout << extensions << endl;
-		
 		static int visual_attribs[] =
 		{
 			GLX_RENDER_TYPE, GLX_RGBA_BIT,
@@ -66,14 +63,9 @@ struct BackendGLX: BackendX11Base
 		XFree(visual);
 		XFree(glxfb);
 		
-		//debug("getting keymap with xkbcommon");
-		//xkb_context * xkbContext;
-		//xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-		//ASSERT_ELSE(xkbContext != nullptr, return);
-		
 	}
 	
-	~BackendGLX()
+	~BackendX11GLX()
 	{
 		debug("cleaning up GLX context");
 		glXDestroyContext(xDisplay, glxContext);
@@ -85,8 +77,8 @@ struct BackendGLX: BackendX11Base
 	}
 };
 
-unique_ptr<Backend> Backend::makeGLX(V2i dim)
+unique_ptr<Backend> makeX11GLXBackend(V2i dim)
 {
-	return make_unique<BackendGLX>(dim);
+	return make_unique<BackendX11GLX>(dim);
 }
 

@@ -1,20 +1,5 @@
 #include "Backend.h"
 #include "../wayland/WaylandEGL.h"
-#include <wayland-server.h>
-#include <X11/Xlib.h>
-#include <linux/input.h>
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-#include <X11/Xlib-xcb.h>
-#include <xkbcommon/xkbcommon-x11.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
-#include <stdio.h>
-#include <poll.h>
 
 // change to toggle debug statements on and off
 #define debug debug_off
@@ -36,15 +21,10 @@ void libinput_check_events(InputInterface * interface);
 
 struct BackendDRM: Backend
 {
-	//EGLDisplay eglDisplay;
-	//EGLConfig config;
-	//EGLContext windowContext;
-	//EGLSurface windowSurface;
-	
 	BackendDRM()
 	{
-		int ret = drmSetup();
-		ASSERT_ELSE(ret == 0, exit(1));
+		int setupRet = drmSetup();
+		ASSERT_FATAL(setupRet == 0);
 		WaylandEGL::setEglVars(drmGetEglDisplay(), drmGetEglContext());
 		ASSERT_FATAL(libinput_setup());
 	}
@@ -67,18 +47,11 @@ struct BackendDRM: Backend
 			libinput_check_events(&*input);
 			if (stop)
 				Backend::instance = nullptr;
-			//warning(FUNC + " not implemented");
 		}
-	}
-	
-	string getKeymap()
-	{
-		warning(FUNC + " not implemented");
-		return "";
 	}
 };
 
-unique_ptr<Backend> Backend::makeDRM()
+unique_ptr<Backend> makeDRMBackend()
 {
 	return make_unique<BackendDRM>();
 }
