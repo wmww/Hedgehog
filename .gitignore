@@ -5,3 +5,5 @@ build
 *.sconsign.dblite
 nogit
 *__pycache__
+wayland/protocols/*.h
+wayland/protocols/*.c
