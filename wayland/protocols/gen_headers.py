@@ -1,4 +1,5 @@
 #! /bin/python3
+print('generating code from xml protocols')
 from os import path, listdir;
 from sys import argv;
 from subprocess import run;

@@ -4,6 +4,7 @@ env = Environment()
 
 obj_file_path = 'build/obj'
 exe_bin_path = 'build/run'
+protocol_path = 'wayland/protocols'
 debug_symbols = True
 
 libs = [
@@ -66,6 +67,9 @@ def get_all_files_with_extension(base, extensions):
 
 def get_all_cpp_files():
 	return get_all_files_with_extension('.', ['.cpp', '.c'])
+
+if get_all_files_with_extension(protocol_path, ['.h']) != get_all_files_with_extension(protocol_path, ['.xml']):
+	os.system('python3 ' + protocol_path + '/gen_headers.py ' + protocol_path)
 
 sources = get_all_cpp_files()
 
