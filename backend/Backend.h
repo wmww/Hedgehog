@@ -11,7 +11,7 @@ public:
 	string getKeymap() { return keymapString; }
 	void setInputInterface(weak_ptr<InputInterface> ptr) { inputInterface = ptr; }
 	
-	enum Type {GLX, EGL, DRM};
+	enum Type {X11_GLX, X11_EGL, DRM};
 	static void setup(Type type);
 	
 	static unique_ptr<Backend> instance;

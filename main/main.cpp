@@ -14,11 +14,16 @@
 // change to toggle debug statements on and off
 #define debug debug_off
 
+// select the backend, X11_EGL is recommended to run nested in an X environment
+const Backend::Type backendType = Backend::X11_EGL;
+// const backendType = Backend::X11_GLX;
+// const backendType = Backend::DRM;
+
 int main (int argc, char ** argv)
 {
 	debug("setting up backend");
 	//auto backend = Backend::makeGLX(V2i(800, 800));
-	Backend::setup(Backend::EGL);
+	Backend::setup(backendType);
 	ASSERT_ELSE(Backend::instance, exit(1));
 	
 	glEnable(GL_BLEND);

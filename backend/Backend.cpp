@@ -38,15 +38,15 @@ void Backend::setup(Type type)
 	static const V2i defaultDim = V2i(800, 800);
 	switch (type)
 	{
-	case GLX:
+	case X11_GLX:
 		instance = makeX11GLXBackend(defaultDim);
 		break;
-	case EGL:
+	case X11_EGL:
 		instance = makeX11EGLBackend(defaultDim);
 		break;
 	case DRM:
 		instance = makeDRMBackend();
 		break;
 	}
-	ASSERT(instance);
+	ASSERT_FATAL(instance);
 }
